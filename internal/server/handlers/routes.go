@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (h *HttpServer) rootHandler(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) rootHandler(res http.ResponseWriter, req *http.Request) {
 
 	// only POST
 	if req.Method != http.MethodPost {
@@ -61,7 +61,7 @@ func (h *HttpServer) rootHandler(res http.ResponseWriter, req *http.Request) {
 
 	// некорректное значение метрики (неправильный тип)
 	if parts[2] == "gauge" {
-		counterVal, err := strconv.ParseFloat(parts[4], 10)
+		counterVal, err := strconv.ParseFloat(parts[4], 64)
 
 		if err != nil {
 			http.Error(res, "Incorrect metric value!", http.StatusBadRequest)
@@ -94,10 +94,10 @@ func (h *HttpServer) rootHandler(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusNotFound)
 }
 
-func (h *HttpServer) unrecognized(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) unrecognized(res http.ResponseWriter, req *http.Request) {
 	http.Error(res, "Not found!", http.StatusNotFound)
 }
 
-func (h *HttpServer) updateCounter(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) updateCounter(res http.ResponseWriter, req *http.Request) {
 
 }

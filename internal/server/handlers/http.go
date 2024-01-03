@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type HttpServer struct {
+type HTTPServer struct {
 	Mux       *http.ServeMux
 	collector Collector
 }
@@ -15,9 +15,9 @@ type Collector interface {
 	UpdateCounter(metricName string, metricValue int64)
 }
 
-func NewHttpServer() HttpServer {
+func NewHTTPServer() HTTPServer {
 
-	httpServer := HttpServer{
+	httpServer := HTTPServer{
 		Mux:       http.NewServeMux(),
 		collector: collector.NewCollector(),
 	}

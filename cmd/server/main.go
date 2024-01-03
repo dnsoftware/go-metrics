@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	server := handlers.NewHttpServer()
+	server := handlers.NewHTTPServer()
 
 	err := http.ListenAndServe(":8080", server.Mux)
 	if err != nil {
