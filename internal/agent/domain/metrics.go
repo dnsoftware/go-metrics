@@ -122,7 +122,7 @@ func (m *Metrics) sendMetrics() {
 	err = m.SendCounter("PollCount", cValue)
 	if err != nil {
 		// обработка
-
+		fmt.Println("Set PollCounter error: " + err.Error())
 	}
 
 }
