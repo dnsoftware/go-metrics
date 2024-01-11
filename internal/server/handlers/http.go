@@ -1,45 +1,30 @@
 package handlers
 
 import (
-	"github.com/dnsoftware/go-metrics/internal/server/collector"
 	"net/http"
 )
+
+type Collector interface {
+	SetGaugeMetric(name string, value float64) error
+	GetGaugeMetric(name string) (float64, error)
+
+	SetCounterMetric(name string, value int64) error
+	GetCounterMetric(name string) (int64, error)
+}
 
 type HTTPServer struct {
 	Mux       *http.ServeMux
 	collector Collector
 }
 
-type Collector interface {
-	UpdateGauge(metricName string, metricValue float64)
-	UpdateCounter(metricName string, metricValue int64)
-}
-
-func NewHTTPServer() HTTPServer {
+func NewHTTPServer(collector Collector) HTTPServer {
 
 	httpServer := HTTPServer{
 		Mux:       http.NewServeMux(),
-		collector: collector.NewCollector(),
+		collector: collector,
 	}
 
-	httpServer.Mux.HandleFunc("/", httpServer.rootHandler)
-
-	//httpServer.Mux.HandleFunc("/update/gauge", httpServer.updateGauge)
-	////httpServer.Mux.HandleFunc("/update/gauge/", httpServer.updateGauge)
-	//
-	////httpServer.Mux.HandleFunc("/update/counter", httpServer.updateCounter)
-	//httpServer.Mux.HandleFunc("/update/counter/", httpServer.updateCounter)
-	//
-	//httpServer.Mux.HandleFunc("/update/", httpServer.badMetricType)
+	httpServer.Mux.HandleFunc("/", httpServer.RootHandler)
 
 	return httpServer
 }
-
-//func (h *HttpServer) onlyPostGuard(res http.ResponseWriter, req *http.Request) bool {
-//	if req.Method != http.MethodPost {
-//		http.Error(res, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
-//		return false
-//	}
-//
-//	return true
-//}

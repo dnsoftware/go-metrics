@@ -1,13 +1,12 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-func (h *HTTPServer) rootHandler(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 
 	// only POST
 	if req.Method != http.MethodPost {
@@ -23,8 +22,8 @@ func (h *HTTPServer) rootHandler(res http.ResponseWriter, req *http.Request) {
 		_, err := res.Write([]byte("Mainpage"))
 		if err != nil {
 			http.Error(res, "Incorrect metric type!", http.StatusInternalServerError)
+			return
 		}
-		return
 	}
 
 	// очистка от конечных слешей
@@ -50,40 +49,50 @@ func (h *HTTPServer) rootHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// имя метрики должно быть из списка допустимых
-	//...
-
 	// некорректное значение метрики (отсутствует)
 	if len(parts) == 4 {
 		http.Error(res, "Metric value required!", http.StatusBadRequest)
 		return
 	}
 
-	// некорректное значение метрики (неправильный тип)
-	if parts[2] == "gauge" {
-		counterVal, err := strconv.ParseFloat(parts[4], 64)
-
-		if err != nil {
-			http.Error(res, "Incorrect metric value!", http.StatusBadRequest)
-			return
-		}
-
-		fmt.Println(counterVal)
-	}
-
-	if parts[2] == "counter" {
-		gaugeVal, err := strconv.ParseInt(parts[4], 10, 64)
-
-		if err != nil {
-			http.Error(res, "Incorrect metric value!", http.StatusBadRequest)
-			return
-		}
-
-		fmt.Println(gaugeVal)
-	}
-
 	switch parts[1] {
 	case "update":
+
+		metricType := parts[2]
+		metricName := parts[3]
+		if metricType == "gauge" {
+			gaugeVal, err := strconv.ParseFloat(parts[4], 64)
+
+			if err != nil {
+				http.Error(res, "Incorrect metric value!", http.StatusBadRequest)
+				return
+			}
+
+			err = h.collector.SetGaugeMetric(metricName, gaugeVal)
+			if err != nil {
+				http.Error(res, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			res.WriteHeader(http.StatusOK)
+		}
+
+		if metricType == "counter" {
+			counterVal, err := strconv.ParseInt(parts[4], 10, 64)
+
+			if err != nil {
+				http.Error(res, "Incorrect metric value!", http.StatusBadRequest)
+				return
+			}
+
+			err = h.collector.SetCounterMetric(metricName, counterVal)
+			if err != nil {
+				http.Error(res, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			res.WriteHeader(http.StatusOK)
+		}
 
 		return
 
@@ -91,13 +100,8 @@ func (h *HTTPServer) rootHandler(res http.ResponseWriter, req *http.Request) {
 		h.unrecognized(res, req)
 	}
 
-	res.WriteHeader(http.StatusNotFound)
 }
 
 func (h *HTTPServer) unrecognized(res http.ResponseWriter, req *http.Request) {
 	http.Error(res, "Not found!", http.StatusNotFound)
-}
-
-func (h *HTTPServer) updateCounter(res http.ResponseWriter, req *http.Request) {
-
 }
