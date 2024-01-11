@@ -15,10 +15,7 @@ func NewMemStorage() MemStorage {
 }
 
 func (m *MemStorage) SetGauge(name string, value float64) {
-
 	m.Gauges[name] = value
-
-	return
 }
 
 func (m *MemStorage) GetGauge(name string) (float64, error) {
@@ -33,8 +30,6 @@ func (m *MemStorage) GetGauge(name string) (float64, error) {
 
 func (m *MemStorage) SetCounter(name string, value int64) {
 	m.Counters[name] = value
-
-	return
 }
 
 func (m *MemStorage) GetCounter(name string) (int64, error) {

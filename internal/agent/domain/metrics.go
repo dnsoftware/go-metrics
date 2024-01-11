@@ -64,6 +64,8 @@ func (m *Metrics) Start() {
 
 func (m *Metrics) updateMetrics() {
 
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	runtime.ReadMemStats(&m.metrics)
 	for _, metricName := range gaugeMetricsList {
 		mType, ok := reflect.TypeOf(&m.metrics).Elem().FieldByName(metricName)
@@ -83,7 +85,7 @@ func (m *Metrics) updateMetrics() {
 			}
 
 		} else if metricName == "RandomValue" {
-			m.storage.SetGauge(metricName, rand.Float64())
+			m.storage.SetGauge(metricName, rng.Float64())
 		} else {
 			// ... логируем ошибку, или еще что-то
 			continue
@@ -120,6 +122,7 @@ func (m *Metrics) sendMetrics() {
 	err = m.SendCounter("PollCount", cValue)
 	if err != nil {
 		// обработка
+
 	}
 
 }
