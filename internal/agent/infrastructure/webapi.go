@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -25,7 +26,17 @@ func (w *WebSender) SendData(mType string, name string, value string) error {
 
 	url := w.protocol + "://" + w.domain + "/update/" + mType + "/" + name + "/" + value
 
-	resp, err := http.Post(url, w.contentType, nil)
+	request, err := http.NewRequest(http.MethodPost, url, http.NoBody)
+	if err != nil {
+		// обрабатываем ошибку
+		fmt.Println(err)
+		return err
+	}
+
+	request.Header.Set("Content-Type", w.contentType)
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
 	if err != nil {
 		return err
 	}

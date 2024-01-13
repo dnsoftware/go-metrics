@@ -14,7 +14,7 @@ func ServerRun() {
 	collect := collector.NewCollector(&repository)
 
 	server := handlers.NewHTTPServer(collect)
-	err := http.ListenAndServe(":8080", server.Mux)
+	err := http.ListenAndServe(":8080", server.Router)
 	if err != nil {
 		panic(err)
 	}

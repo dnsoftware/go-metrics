@@ -39,3 +39,8 @@ func (m *MemStorage) GetCounter(name string) (int64, error) {
 		return 0, errors.New("no such metric")
 	}
 }
+
+// возврат карт gauge и counters
+func (m *MemStorage) GetAll() (map[string]float64, map[string]int64) {
+	return m.Gauges, m.Counters
+}
