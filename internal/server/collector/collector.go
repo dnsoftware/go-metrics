@@ -69,9 +69,9 @@ func (c *Collector) SetGaugeMetric(metricName string, metricValue float64) error
 }
 func (c *Collector) GetGaugeMetric(metricName string) (float64, error) {
 
-	if !c.isMetric(gaugeSelector, metricName) {
-		return 0, errors.New("invalid metric")
-	}
+	//if !c.isMetric(gaugeSelector, metricName) {
+	//	return 0, errors.New("invalid metric")
+	//}
 
 	return c.storage.GetGauge(metricName)
 }
@@ -90,9 +90,9 @@ func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error
 }
 func (c *Collector) GetCounterMetric(metricName string) (int64, error) {
 
-	if !c.isMetric(counterSelector, metricName) {
-		return 0, errors.New("invalid metric")
-	}
+	//if !c.isMetric(counterSelector, metricName) {
+	//	return 0, errors.New("invalid metric")
+	//}
 
 	return c.storage.GetCounter(metricName)
 }
