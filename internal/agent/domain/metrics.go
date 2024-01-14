@@ -23,22 +23,26 @@ type MetricsSender interface {
 }
 
 type Metrics struct {
-	metrics runtime.MemStats
-	storage AgentStorage
-	sender  MetricsSender
+	metrics        runtime.MemStats
+	storage        AgentStorage
+	sender         MetricsSender
+	pollInterval   int64
+	reportInterval int64
 }
 
-const (
-	pollInterval   int64 = 2  // интервал обновления метрик
-	reportInterval int64 = 10 // интервал отправки метрик на сервер
-)
+//const (
+//	pollInterval   int64 = 2  // интервал обновления метрик
+//	reportInterval int64 = 10 // интервал отправки метрик на сервер
+//)
 
 var gaugeMetricsList []string = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
-func NewMetrics(storage AgentStorage, sender MetricsSender) Metrics {
+func NewMetrics(storage AgentStorage, sender MetricsSender, pollInterval int64, reportInterval int64) Metrics {
 	return Metrics{
-		storage: storage,
-		sender:  sender,
+		storage:        storage,
+		sender:         sender,
+		pollInterval:   pollInterval,
+		reportInterval: reportInterval,
 	}
 }
 
@@ -48,14 +52,14 @@ func (m *Metrics) Start() {
 	go func() {
 		for {
 			m.updateMetrics()
-			time.Sleep(time.Duration(pollInterval) * time.Second)
+			time.Sleep(time.Duration(m.pollInterval) * time.Second)
 		}
 	}()
 
 	// отправка метрик
 	go func() {
 		for {
-			time.Sleep(time.Duration(reportInterval) * time.Second)
+			time.Sleep(time.Duration(m.reportInterval) * time.Second)
 			m.sendMetrics()
 		}
 	}()
