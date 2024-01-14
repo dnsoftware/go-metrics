@@ -36,8 +36,7 @@ func (m *MemStorage) GetCounter(name string) (int64, error) {
 	if value, ok := m.Counters[name]; ok {
 		return value, nil
 	} else {
-		//return 0, errors.New("no such metric")
-		return 0, nil
+		return 0, errors.New("no such metric")
 	}
 }
 
