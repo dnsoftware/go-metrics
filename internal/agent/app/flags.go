@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"log"
+	"os"
 )
 
 var (
@@ -46,6 +47,14 @@ func parseFlags() {
 	if cfg.PollInterval != 0 {
 		flagPollInterval = cfg.PollInterval
 	}
+
+	file, err := os.OpenFile("/home/dmitry/tmp/agent.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal("Failed to open log file:", err)
+	}
+	log.SetOutput(file)
+
+	log.Printf("%v, %v, %v", flagRunAddr, flagReportInterval, flagPollInterval)
 
 	fmt.Println(flagRunAddr, flagReportInterval, flagPollInterval)
 

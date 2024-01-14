@@ -6,12 +6,18 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/server/handlers"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"net/http"
+	"os"
 )
 
 func ServerRun() {
 
 	endpoint := flag.String("a", "localhost:8080", "server endpoint")
 	flag.Parse()
+
+	runAddr := os.Getenv("ADDRESS")
+	if runAddr != "" {
+		endpoint = &runAddr
+	}
 
 	repository := storage.NewMemStorage()
 
