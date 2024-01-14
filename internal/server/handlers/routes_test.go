@@ -174,9 +174,13 @@ func TestRouter(t *testing.T) {
 
 	postData := "982"
 	respPost, _ := testRequest(t, ts, "POST", "/update/counter/testSetGet33/"+postData)
+	defer respPost.Body.Close()
+
 	assert.Equal(t, http.StatusOK, respPost.StatusCode)
 
 	respGet, get := testRequest(t, ts, "GET", "/value/counter/testSetGet33")
+	defer respGet.Body.Close()
+
 	assert.Equal(t, http.StatusOK, respGet.StatusCode)
 
 	assert.Equal(t, postData, get)
