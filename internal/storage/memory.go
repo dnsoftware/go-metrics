@@ -29,7 +29,7 @@ func (m *MemStorage) GetGauge(name string) (float64, error) {
 }
 
 func (m *MemStorage) SetCounter(name string, value int64) {
-	m.Counters[name] = value
+	m.Counters[name] = m.Counters[name] + value
 }
 
 func (m *MemStorage) GetCounter(name string) (int64, error) {

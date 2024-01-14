@@ -66,6 +66,11 @@ func (m *Metrics) updateMetrics() {
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
+	mCounter, err := m.storage.GetCounter("PollCount")
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	runtime.ReadMemStats(&m.metrics)
 	for _, metricName := range gaugeMetricsList {
 		mType, ok := reflect.TypeOf(&m.metrics).Elem().FieldByName(metricName)
@@ -84,13 +89,18 @@ func (m *Metrics) updateMetrics() {
 				// действия при неучтенном типе
 			}
 
+			mCounter++
+
 		} else if metricName == "RandomValue" {
 			m.storage.SetGauge(metricName, rng.Float64())
+			mCounter++
 		} else {
 			// ... логируем ошибку, или еще что-то
 			continue
 		}
 	}
+
+	m.storage.SetCounter("PollCount", mCounter)
 
 }
 
@@ -116,14 +126,14 @@ func (m *Metrics) sendMetrics() {
 	if err != nil {
 		cValue = 0
 	}
-	cValue++
-	m.storage.SetCounter("PollCount", cValue)
 
 	err = m.SendCounter("PollCount", cValue)
 	if err != nil {
 		// обработка
 		fmt.Println("Set PollCounter error: " + err.Error())
 	}
+
+	m.storage.SetCounter("PollCount", 0)
 
 }
 
