@@ -14,7 +14,7 @@ func parseFlags() {
 
 	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
 	flag.Int64Var(&flagReportInterval, "r", 10, "report interval")
-	flag.Int64Var(&flagPollInterval, "r", 2, "poll interval")
+	flag.Int64Var(&flagPollInterval, "p", 2, "poll interval")
 
 	flag.Parse()
 }
