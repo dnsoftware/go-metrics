@@ -3,6 +3,7 @@ package collector
 import (
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 type ServerStorage interface {
@@ -108,7 +109,8 @@ func (c *Collector) GetMetric(metricType string, metricName string) (string, err
 		if err != nil {
 			return "", err
 		}
-		valStr = fmt.Sprintf("%f", val)
+
+		valStr = strconv.FormatFloat(val, 'f', -1, 64)
 
 	case "counter":
 		val, err := c.GetCounterMetric(metricName)

@@ -36,8 +36,8 @@ func NewHTTPServer(collector Collector) HTTPServer {
 	h.Router.Post("/update/{metricType}/{metricName}", h.noMetricValue)
 	h.Router.Post("/update/{metricType}/{metricName}/{metricValue}", h.updateMetric)
 
-	h.Router.Post("/value/{metricType}", h.noMetricName)
-	h.Router.Post("/value/{metricType}/{metricName}", h.getMetricValue)
+	h.Router.Get("/value/{metricType}", h.noMetricName)
+	h.Router.Get("/value/{metricType}/{metricName}", h.getMetricValue)
 
 	return h
 }
