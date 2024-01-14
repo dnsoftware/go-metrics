@@ -84,7 +84,6 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusOK)
 	}
 
-	return
 }
 
 func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) {
