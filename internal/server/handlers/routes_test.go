@@ -4,6 +4,8 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -146,4 +148,37 @@ func TestHTTPServer_rootHandler(t *testing.T) {
 
 		})
 	}
+
+}
+
+func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
+	req, err := http.NewRequest(method, ts.URL+path, nil)
+	require.NoError(t, err)
+
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp, string(respBody)
+}
+
+func TestRouter(t *testing.T) {
+
+	repository := storage.NewMemStorage()
+	collect := collector.NewCollector(&repository)
+	server := NewHTTPServer(collect)
+	ts := httptest.NewServer(server.Router)
+
+	postData := "982"
+	respPost, _ := testRequest(t, ts, "POST", "/update/counter/testSetGet33/"+postData)
+	assert.Equal(t, http.StatusOK, respPost.StatusCode)
+
+	respGet, get := testRequest(t, ts, "GET", "/value/counter/testSetGet33")
+	assert.Equal(t, http.StatusOK, respGet.StatusCode)
+
+	assert.Equal(t, postData, get)
+
 }
