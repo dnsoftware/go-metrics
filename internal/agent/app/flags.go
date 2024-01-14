@@ -2,6 +2,7 @@ package app
 
 import (
 	"flag"
+	"fmt"
 	"github.com/caarlos0/env/v6"
 	"log"
 )
@@ -17,9 +18,9 @@ var (
 func parseFlags() {
 
 	type Config struct {
-		runAddr        string `env:"ADDRESS"`
-		reportInterval int64  `env:"REPORT_INTERVAL"`
-		pollInterval   int64  `env:"POLL_INTERVAL"`
+		RunAddr        string `env:"ADDRESS"`
+		ReportInterval int64  `env:"REPORT_INTERVAL"`
+		PollInterval   int64  `env:"POLL_INTERVAL"`
 	}
 
 	var cfg Config
@@ -36,13 +37,16 @@ func parseFlags() {
 	flag.Parse()
 
 	// переменные окружения
-	if cfg.runAddr != "" {
-		flagRunAddr = cfg.runAddr
+	if cfg.RunAddr != "" {
+		flagRunAddr = cfg.RunAddr
 	}
-	if cfg.reportInterval != 0 {
-		flagReportInterval = cfg.reportInterval
+	if cfg.ReportInterval != 0 {
+		flagReportInterval = cfg.ReportInterval
 	}
-	if cfg.pollInterval != 0 {
-		flagPollInterval = cfg.pollInterval
+	if cfg.PollInterval != 0 {
+		flagPollInterval = cfg.PollInterval
 	}
+
+	fmt.Println(flagRunAddr, flagReportInterval, flagPollInterval)
+
 }
