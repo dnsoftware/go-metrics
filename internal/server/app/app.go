@@ -2,6 +2,7 @@ package app
 
 import (
 	"flag"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
 	"github.com/dnsoftware/go-metrics/internal/server/handlers"
 	"github.com/dnsoftware/go-metrics/internal/storage"
@@ -11,7 +12,7 @@ import (
 
 func ServerRun() {
 
-	endpoint := flag.String("a", "localhost:8080", "server endpoint")
+	endpoint := flag.String("a", constants.ServerDefault, "server endpoint")
 	flag.Parse()
 
 	runAddr := os.Getenv("ADDRESS")

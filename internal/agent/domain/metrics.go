@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"math/rand"
 	"reflect"
 	"runtime"
@@ -29,11 +30,6 @@ type Metrics struct {
 	pollInterval   int64
 	reportInterval int64
 }
-
-//const (
-//	pollInterval   int64 = 2  // интервал обновления метрик
-//	reportInterval int64 = 10 // интервал отправки метрик на сервер
-//)
 
 var gaugeMetricsList []string = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
@@ -70,7 +66,7 @@ func (m *Metrics) updateMetrics() {
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	mCounter, err := m.storage.GetCounter("PollCount")
+	mCounter, err := m.storage.GetCounter(constants.PollCount)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -95,7 +91,7 @@ func (m *Metrics) updateMetrics() {
 
 			mCounter++
 
-		} else if metricName == "RandomValue" {
+		} else if metricName == constants.RandomValue {
 			m.storage.SetGauge(metricName, rng.Float64())
 			mCounter++
 		} else {
@@ -104,7 +100,7 @@ func (m *Metrics) updateMetrics() {
 		}
 	}
 
-	m.storage.SetCounter("PollCount", mCounter)
+	m.storage.SetCounter(constants.PollCount, mCounter)
 
 }
 
@@ -126,24 +122,24 @@ func (m *Metrics) sendMetrics() {
 	}
 
 	// counter
-	cValue, err := m.storage.GetCounter("PollCount")
+	cValue, err := m.storage.GetCounter(constants.PollCount)
 	if err != nil {
 		cValue = 0
 	}
 
-	err = m.SendCounter("PollCount", cValue)
+	err = m.SendCounter(constants.PollCount, cValue)
 	if err != nil {
 		// обработка
 		fmt.Println("Set PollCounter error: " + err.Error())
 	}
 
-	m.storage.SetCounter("PollCount", 0)
+	m.storage.SetCounter(constants.PollCount, 0)
 
 }
 
 func (m *Metrics) SendGauge(name string, value float64) error {
 
-	err := m.sender.SendData("gauge", name, fmt.Sprintf("%f", value))
+	err := m.sender.SendData(constants.Gauge, name, fmt.Sprintf("%f", value))
 	if err != nil {
 		return err
 	}
@@ -154,7 +150,7 @@ func (m *Metrics) SendGauge(name string, value float64) error {
 func (m *Metrics) SendCounter(name string, value int64) error {
 
 	v := fmt.Sprintf("%d", value)
-	err := m.sender.SendData("counter", name, v)
+	err := m.sender.SendData(constants.Counter, name, v)
 	if err != nil {
 		return err
 	}

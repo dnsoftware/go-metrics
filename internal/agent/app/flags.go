@@ -3,6 +3,7 @@ package app
 import (
 	"flag"
 	"github.com/caarlos0/env/v6"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"log"
 )
 
@@ -14,6 +15,7 @@ var (
 
 // parseFlags обрабатывает аргументы командной строки
 // и сохраняет их значения в соответствующих переменных
+// а также проверяет переменные окружения и задействует их при наличии
 func parseFlags() {
 
 	type Config struct {
@@ -29,9 +31,9 @@ func parseFlags() {
 		log.Fatal(err)
 	}
 
-	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
-	flag.Int64Var(&flagReportInterval, "r", 10, "report interval")
-	flag.Int64Var(&flagPollInterval, "p", 2, "poll interval")
+	flag.StringVar(&flagRunAddr, "a", constants.ServerDefault, "address and port to run server")
+	flag.Int64Var(&flagReportInterval, "r", constants.ReportInterval, "report interval")
+	flag.Int64Var(&flagPollInterval, "p", constants.PollInterval, "poll interval")
 
 	flag.Parse()
 

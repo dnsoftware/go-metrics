@@ -1,8 +1,12 @@
 package storage
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 type MemStorage struct {
+	mutex    sync.Mutex
 	Gauges   map[string]float64
 	Counters map[string]int64
 }
@@ -15,10 +19,14 @@ func NewMemStorage() MemStorage {
 }
 
 func (m *MemStorage) SetGauge(name string, value float64) {
+	m.mutex.Lock()
 	m.Gauges[name] = value
+	m.mutex.Unlock()
 }
 
 func (m *MemStorage) GetGauge(name string) (float64, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 
 	if value, ok := m.Gauges[name]; ok {
 		return value, nil
@@ -29,10 +37,15 @@ func (m *MemStorage) GetGauge(name string) (float64, error) {
 }
 
 func (m *MemStorage) SetCounter(name string, value int64) {
+	m.mutex.Lock()
 	m.Counters[name] = m.Counters[name] + value
+	m.mutex.Unlock()
 }
 
 func (m *MemStorage) GetCounter(name string) (int64, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	if value, ok := m.Counters[name]; ok {
 		return value, nil
 	} else {
@@ -42,5 +55,8 @@ func (m *MemStorage) GetCounter(name string) (int64, error) {
 
 // возврат карт gauge и counters
 func (m *MemStorage) GetAll() (map[string]float64, map[string]int64) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	return m.Gauges, m.Counters
 }

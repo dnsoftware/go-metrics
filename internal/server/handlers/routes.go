@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
@@ -45,12 +46,12 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 	metricName := chi.URLParam(req, "metricName")
 	metricValue := chi.URLParam(req, "metricValue")
 
-	if metricType != "gauge" && metricType != "counter" {
+	if metricType != constants.Gauge && metricType != constants.Counter {
 		http.Error(res, "Bad metric type!", http.StatusBadRequest)
 		return
 	}
 
-	if metricType == "gauge" {
+	if metricType == constants.Gauge {
 		gaugeVal, err := strconv.ParseFloat(metricValue, 64)
 
 		if err != nil {
@@ -67,7 +68,7 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusOK)
 	}
 
-	if metricType == "counter" {
+	if metricType == constants.Counter {
 		counterVal, err := strconv.ParseInt(metricValue, 10, 64)
 
 		if err != nil {
@@ -91,7 +92,7 @@ func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) 
 	metricType := chi.URLParam(req, "metricType")
 	metricName := chi.URLParam(req, "metricName")
 
-	if metricType != "gauge" && metricType != "counter" {
+	if metricType != constants.Gauge && metricType != constants.Counter {
 		http.Error(res, "Bad metric type!", http.StatusBadRequest)
 		return
 	}
@@ -139,7 +140,7 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// некорректный тип метрики
-	if parts[2] != "gauge" && parts[2] != "counter" {
+	if parts[2] != constants.Gauge && parts[2] != constants.Counter {
 		http.Error(res, "Incorrect metric type!", http.StatusBadRequest)
 		return
 	}
@@ -157,11 +158,11 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	switch parts[1] {
-	case "update":
+	case constants.UpdateAction:
 
 		metricType := parts[2]
 		metricName := parts[3]
-		if metricType == "gauge" {
+		if metricType == constants.Gauge {
 			gaugeVal, err := strconv.ParseFloat(parts[4], 64)
 
 			if err != nil {
@@ -178,7 +179,7 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusOK)
 		}
 
-		if metricType == "counter" {
+		if metricType == constants.Counter {
 			counterVal, err := strconv.ParseInt(parts[4], 10, 64)
 
 			if err != nil {

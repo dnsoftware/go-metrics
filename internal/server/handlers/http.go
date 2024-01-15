@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -31,13 +32,13 @@ func NewHTTPServer(collector Collector) HTTPServer {
 	h.Router.Use(trimEnd)
 
 	h.Router.Post("/", h.getAllMetrics)
-	h.Router.Post("/update", h.noMetricType)
-	h.Router.Post("/update/{metricType}", h.noMetricName)
-	h.Router.Post("/update/{metricType}/{metricName}", h.noMetricValue)
-	h.Router.Post("/update/{metricType}/{metricName}/{metricValue}", h.updateMetric)
+	h.Router.Post("/"+constants.UpdateAction, h.noMetricType)
+	h.Router.Post("/"+constants.UpdateAction+"/{metricType}", h.noMetricName)
+	h.Router.Post("/"+constants.UpdateAction+"/{metricType}/{metricName}", h.noMetricValue)
+	h.Router.Post("/"+constants.UpdateAction+"/{metricType}/{metricName}/{metricValue}", h.updateMetric)
 
-	h.Router.Get("/value/{metricType}", h.noMetricName)
-	h.Router.Get("/value/{metricType}/{metricName}", h.getMetricValue)
+	h.Router.Get("/"+constants.ValueAction+"/{metricType}", h.noMetricName)
+	h.Router.Get("/"+constants.ValueAction+"/{metricType}/{metricName}", h.getMetricValue)
 
 	return h
 }

@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"fmt"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"net/http"
 )
 
@@ -24,7 +25,7 @@ func NewWebSender(protocol string, domain string) WebSender {
 
 func (w *WebSender) SendData(mType string, name string, value string) error {
 
-	url := w.protocol + "://" + w.domain + "/update/" + mType + "/" + name + "/" + value
+	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction + "/" + mType + "/" + name + "/" + value
 
 	request, err := http.NewRequest(http.MethodPost, url, http.NoBody)
 	if err != nil {

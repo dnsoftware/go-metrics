@@ -3,6 +3,7 @@ package collector
 import (
 	"errors"
 	"fmt"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"strconv"
 )
 
@@ -20,11 +21,6 @@ type Collector struct {
 	storage ServerStorage
 }
 
-const (
-	gaugeSelector   string = "gauge"
-	counterSelector string = "counter"
-)
-
 var gaugeMetricsList []string = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
 func NewCollector(storage ServerStorage) *Collector {
@@ -39,7 +35,7 @@ func NewCollector(storage ServerStorage) *Collector {
 // проверка на допустимую метрику
 func (c *Collector) isMetric(mType string, name string) bool {
 
-	if mType == gaugeSelector {
+	if mType == constants.Gauge {
 		for _, val := range gaugeMetricsList {
 			if val == name {
 				return true
@@ -47,8 +43,8 @@ func (c *Collector) isMetric(mType string, name string) bool {
 		}
 	}
 
-	if mType == counterSelector {
-		if name == "PollCount" {
+	if mType == constants.Counter {
+		if name == constants.PollCount {
 			return true
 		}
 	}
@@ -104,7 +100,7 @@ func (c *Collector) GetMetric(metricType string, metricName string) (string, err
 	var valStr string
 
 	switch metricType {
-	case "gauge":
+	case constants.Gauge:
 		val, err := c.GetGaugeMetric(metricName)
 		if err != nil {
 			return "", err
@@ -112,7 +108,7 @@ func (c *Collector) GetMetric(metricType string, metricName string) (string, err
 
 		valStr = strconv.FormatFloat(val, 'f', -1, 64)
 
-	case "counter":
+	case constants.Counter:
 		val, err := c.GetCounterMetric(metricName)
 		if err != nil {
 			return "", err
