@@ -17,7 +17,6 @@ type Collector interface {
 }
 
 type HTTPServer struct {
-	//Mux       *http.ServeMux
 	collector Collector
 	Router    chi.Router
 }
@@ -25,7 +24,6 @@ type HTTPServer struct {
 func NewHTTPServer(collector Collector) HTTPServer {
 
 	h := HTTPServer{
-		//Mux:       http.NewServeMux(),
 		collector: collector,
 		Router:    NewRouter(),
 	}

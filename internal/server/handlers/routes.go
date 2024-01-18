@@ -9,10 +9,7 @@ import (
 )
 
 func NewRouter() chi.Router {
-
 	r := chi.NewRouter()
-	//	r.Use(middleware.RedirectSlashes)
-
 	return r
 }
 
@@ -42,9 +39,9 @@ func (h *HTTPServer) noMetricValue(res http.ResponseWriter, req *http.Request) {
 
 func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 
-	metricType := chi.URLParam(req, "metricType")
-	metricName := chi.URLParam(req, "metricName")
-	metricValue := chi.URLParam(req, "metricValue")
+	metricType := chi.URLParam(req, constants.MetricType)
+	metricName := chi.URLParam(req, constants.MetricName)
+	metricValue := chi.URLParam(req, constants.MetricValue)
 
 	if metricType != constants.Gauge && metricType != constants.Counter {
 		http.Error(res, "Bad metric type!", http.StatusBadRequest)
@@ -89,8 +86,8 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 
 func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) {
 
-	metricType := chi.URLParam(req, "metricType")
-	metricName := chi.URLParam(req, "metricName")
+	metricType := chi.URLParam(req, constants.MetricType)
+	metricName := chi.URLParam(req, constants.MetricName)
 
 	if metricType != constants.Gauge && metricType != constants.Counter {
 		http.Error(res, "Bad metric type!", http.StatusBadRequest)
@@ -132,7 +129,7 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 	url = strings.TrimRight(url, "/")
 
 	parts := strings.Split(url, "/")
-	/**/
+
 	// тип метрики отсутствует
 	if len(parts) <= 2 {
 		http.Error(res, "Incorrect metric type!", http.StatusBadRequest)
@@ -204,7 +201,6 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 
 }
 
-// deprecated
 func (h *HTTPServer) unrecognized(res http.ResponseWriter, req *http.Request) {
 	http.Error(res, "Not found!", http.StatusNotFound)
 }

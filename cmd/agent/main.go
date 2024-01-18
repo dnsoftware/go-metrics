@@ -6,5 +6,4 @@ func main() {
 
 	app.AgentRun()
 
-	select {}
 }

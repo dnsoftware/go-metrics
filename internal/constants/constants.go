@@ -18,6 +18,13 @@ const (
 	Counter string = "counter"
 )
 
+// названия параметров
+const (
+	MetricType  string = "metricType"
+	MetricName  string = "metricName"
+	MetricValue string = "metricValue"
+)
+
 // метрики
 const (
 	PollCount   string = "PollCount"   // имя метрики счетчика

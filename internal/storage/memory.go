@@ -20,8 +20,9 @@ func NewMemStorage() MemStorage {
 
 func (m *MemStorage) SetGauge(name string, value float64) {
 	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	m.Gauges[name] = value
-	m.mutex.Unlock()
 }
 
 func (m *MemStorage) GetGauge(name string) (float64, error) {
@@ -38,8 +39,10 @@ func (m *MemStorage) GetGauge(name string) (float64, error) {
 
 func (m *MemStorage) SetCounter(name string, value int64) {
 	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	m.Counters[name] = m.Counters[name] + value
-	m.mutex.Unlock()
+
 }
 
 func (m *MemStorage) GetCounter(name string) (int64, error) {

@@ -9,16 +9,20 @@ import (
 type Sender interface {
 }
 
+type Flags interface {
+	RunAddr() string
+}
+
 type WebSender struct {
 	protocol    string
 	domain      string
 	contentType string
 }
 
-func NewWebSender(protocol string, domain string) WebSender {
+func NewWebSender(protocol string, flags Flags) WebSender {
 	return WebSender{
 		protocol:    protocol,
-		domain:      domain,
+		domain:      flags.RunAddr(),
 		contentType: "text/plain",
 	}
 }

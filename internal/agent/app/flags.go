@@ -7,16 +7,16 @@ import (
 	"log"
 )
 
-var (
+type AgentFlags struct {
 	flagRunAddr        string
 	flagReportInterval int64
 	flagPollInterval   int64
-)
+}
 
-// parseFlags обрабатывает аргументы командной строки
-// и сохраняет их значения в соответствующих переменных
+// обрабатывает аргументы командной строки
+// возвращает соответствующую структуру
 // а также проверяет переменные окружения и задействует их при наличии
-func parseFlags() {
+func NewAgentFlags() AgentFlags {
 
 	type Config struct {
 		RunAddr        string `env:"ADDRESS"`
@@ -25,27 +25,41 @@ func parseFlags() {
 	}
 
 	var cfg Config
+	var flags AgentFlags
 
 	err := env.Parse(&cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	flag.StringVar(&flagRunAddr, "a", constants.ServerDefault, "address and port to run server")
-	flag.Int64Var(&flagReportInterval, "r", constants.ReportInterval, "report interval")
-	flag.Int64Var(&flagPollInterval, "p", constants.PollInterval, "poll interval")
+	flag.StringVar(&flags.flagRunAddr, "a", constants.ServerDefault, "address and port to run server")
+	flag.Int64Var(&flags.flagReportInterval, "r", constants.ReportInterval, "report interval")
+	flag.Int64Var(&flags.flagPollInterval, "p", constants.PollInterval, "poll interval")
 
 	flag.Parse()
 
 	// переменные окружения
 	if cfg.RunAddr != "" {
-		flagRunAddr = cfg.RunAddr
+		flags.flagRunAddr = cfg.RunAddr
 	}
 	if cfg.ReportInterval != 0 {
-		flagReportInterval = cfg.ReportInterval
+		flags.flagReportInterval = cfg.ReportInterval
 	}
 	if cfg.PollInterval != 0 {
-		flagPollInterval = cfg.PollInterval
+		flags.flagPollInterval = cfg.PollInterval
 	}
 
+	return flags
+}
+
+func (f *AgentFlags) RunAddr() string {
+	return f.flagRunAddr
+}
+
+func (f *AgentFlags) ReportInterval() int64 {
+	return f.flagReportInterval
+}
+
+func (f *AgentFlags) PollInterval() int64 {
+	return f.flagPollInterval
 }

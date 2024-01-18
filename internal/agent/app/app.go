@@ -8,13 +8,13 @@ import (
 
 func AgentRun() {
 
-	parseFlags()
+	flags := NewAgentFlags()
 
 	repository := storage.NewMemStorage()
 
-	sender := infrastructure.NewWebSender("http", flagRunAddr)
+	sender := infrastructure.NewWebSender("http", &flags)
 
-	metrics := domain.NewMetrics(&repository, &sender, flagPollInterval, flagReportInterval)
+	metrics := domain.NewMetrics(&repository, &sender, &flags)
 	metrics.Start()
 
 }

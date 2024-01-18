@@ -1,11 +1,16 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"math/rand"
+	"os"
+	"os/signal"
 	"reflect"
 	"runtime"
+	"sync"
+	"syscall"
 	"time"
 )
 
@@ -23,6 +28,11 @@ type MetricsSender interface {
 	SendData(mType string, name string, value string) error
 }
 
+type Flags interface {
+	ReportInterval() int64
+	PollInterval() int64
+}
+
 type Metrics struct {
 	metrics        runtime.MemStats
 	storage        AgentStorage
@@ -33,33 +43,58 @@ type Metrics struct {
 
 var gaugeMetricsList []string = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
-func NewMetrics(storage AgentStorage, sender MetricsSender, pollInterval int64, reportInterval int64) Metrics {
+func NewMetrics(storage AgentStorage, sender MetricsSender, flags Flags) Metrics {
 	return Metrics{
 		storage:        storage,
 		sender:         sender,
-		pollInterval:   pollInterval,
-		reportInterval: reportInterval,
+		pollInterval:   flags.PollInterval(),
+		reportInterval: flags.ReportInterval(),
 	}
 }
 
 func (m *Metrics) Start() {
+	var wg sync.WaitGroup
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	// обновление метрик
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
+
 		for {
 			m.updateMetrics()
 			time.Sleep(time.Duration(m.pollInterval) * time.Second)
+
+			select {
+			case <-ctx.Done():
+				fmt.Println("\nОбновление метрик завершено...")
+				return
+			}
 		}
 	}()
 
 	// отправка метрик
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
+
 		for {
 			time.Sleep(time.Duration(m.reportInterval) * time.Second)
 			m.sendMetrics()
+
+			select {
+			case <-ctx.Done():
+				fmt.Println("\nОтправка метрик завершена...")
+				return
+			}
+
 		}
 	}()
 
+	wg.Wait()
+	fmt.Println("Программа завершена!")
 }
 
 func (m *Metrics) updateMetrics() {
