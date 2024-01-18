@@ -64,15 +64,16 @@ func (m *Metrics) Start() {
 		defer wg.Done()
 
 		for {
-			m.updateMetrics()
-			time.Sleep(time.Duration(m.pollInterval) * time.Second)
-
 			select {
 			case <-ctx.Done():
 				fmt.Println("\nОбновление метрик завершено...")
 				return
+			default:
+				m.updateMetrics()
+				time.Sleep(time.Duration(m.pollInterval) * time.Second)
 			}
 		}
+
 	}()
 
 	// отправка метрик
@@ -81,13 +82,13 @@ func (m *Metrics) Start() {
 		defer wg.Done()
 
 		for {
-			time.Sleep(time.Duration(m.reportInterval) * time.Second)
-			m.sendMetrics()
-
 			select {
 			case <-ctx.Done():
 				fmt.Println("\nОтправка метрик завершена...")
 				return
+			default:
+				time.Sleep(time.Duration(m.reportInterval) * time.Second)
+				m.sendMetrics()
 			}
 
 		}
