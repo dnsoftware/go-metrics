@@ -1,5 +1,7 @@
 package constants
 
+import "go.uber.org/zap/zapcore"
+
 // интервалы
 const (
 	PollInterval   int64 = 2  // интервал обновления метрик
@@ -33,4 +35,10 @@ const (
 
 const (
 	ServerDefault string = "localhost:8080" // адрес:порт сервера по умолчанию
+)
+
+// логгер
+const (
+	LogFile  string = "./log.log"
+	LogLevel        = zapcore.InfoLevel
 )

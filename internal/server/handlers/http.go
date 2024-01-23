@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/go-chi/chi/v5"
+	"net/http"
 )
 
 type Collector interface {
@@ -21,6 +22,20 @@ type HTTPServer struct {
 	Router    chi.Router
 }
 
+type (
+	// структура для хранения сведений об ответе
+	responseData struct {
+		status int
+		size   int
+	}
+
+	// расширенный ResponseWriter
+	loggingResponseWriter struct {
+		http.ResponseWriter // встраиваем оригинальный http.ResponseWriter
+		responseData        *responseData
+	}
+)
+
 func NewHTTPServer(collector Collector) HTTPServer {
 
 	h := HTTPServer{
@@ -28,6 +43,7 @@ func NewHTTPServer(collector Collector) HTTPServer {
 		Router:    NewRouter(),
 	}
 	h.Router.Use(trimEnd)
+	h.Router.Use(WithLogging)
 
 	h.Router.Post("/", h.getAllMetrics)
 	h.Router.Post("/"+constants.UpdateAction, h.noMetricType)
@@ -39,4 +55,17 @@ func NewHTTPServer(collector Collector) HTTPServer {
 	h.Router.Get("/"+constants.ValueAction+"/{metricType}/{metricName}", h.getMetricValue)
 
 	return h
+}
+
+func (r *loggingResponseWriter) Write(b []byte) (int, error) {
+	// записываем ответ, используя оригинальный http.ResponseWriter
+	size, err := r.ResponseWriter.Write(b)
+	r.responseData.size += size // захватываем размер
+	return size, err
+}
+
+func (r *loggingResponseWriter) WriteHeader(statusCode int) {
+	// записываем код статуса, используя оригинальный http.ResponseWriter
+	r.ResponseWriter.WriteHeader(statusCode)
+	r.responseData.status = statusCode // захватываем код статуса
 }
