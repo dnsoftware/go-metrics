@@ -63,9 +63,12 @@ func (c *Collector) GetGaugeMetric(metricName string) (float64, error) {
 	return c.storage.GetGauge(metricName)
 }
 
+// Прибавляем к уже существующему значению
 func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error {
 
-	c.storage.SetCounter(metricName, metricValue)
+	oldVal, _ := c.storage.GetCounter(metricName)
+	newVal := oldVal + metricValue
+	c.storage.SetCounter(metricName, newVal)
 
 	return nil
 }

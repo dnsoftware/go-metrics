@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/go-chi/chi/v5"
 	"net/http"
@@ -83,6 +85,98 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 
 }
 
+// обновление метрики json формат
+func (h *HTTPServer) updateMetricJson(res http.ResponseWriter, req *http.Request) {
+	var buf bytes.Buffer
+	var metrics Metrics
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = json.Unmarshal(buf.Bytes(), &metrics); err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if metrics.MType != constants.Gauge && metrics.MType != constants.Counter {
+		http.Error(res, "Bad metric type!", http.StatusBadRequest)
+		return
+	}
+
+	if metrics.MType == constants.Gauge {
+
+		if err != nil {
+			http.Error(res, "Incorrect metric value!", http.StatusBadRequest)
+			return
+		}
+
+		err = h.collector.SetGaugeMetric(metrics.ID, *metrics.Value)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		newMetric, err := h.collector.GetGaugeMetric(metrics.ID)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		respMetric := Metrics{
+			ID:    metrics.ID,
+			MType: metrics.MType,
+			Value: &newMetric,
+		}
+		resp, err := json.Marshal(respMetric)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res.Header().Set("Content-Type", constants.ApplicationJson)
+		res.WriteHeader(http.StatusOK)
+		res.Write(resp)
+	}
+
+	if metrics.MType == constants.Counter {
+
+		if err != nil {
+			http.Error(res, "Incorrect metric value!", http.StatusBadRequest)
+			return
+		}
+
+		err = h.collector.SetCounterMetric(metrics.ID, *metrics.Delta)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		newMetric, err := h.collector.GetCounterMetric(metrics.ID)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		respMetric := Metrics{
+			ID:    metrics.ID,
+			MType: metrics.MType,
+			Delta: &newMetric,
+		}
+		resp, err := json.Marshal(respMetric)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res.Header().Set("Content-Type", constants.ApplicationJson)
+		res.WriteHeader(http.StatusOK)
+		res.Write(resp)
+	}
+}
+
 func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) {
 
 	metricType := chi.URLParam(req, constants.MetricType)
@@ -100,6 +194,53 @@ func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) 
 
 	res.WriteHeader(http.StatusOK)
 	res.Write([]byte(val))
+}
+
+func (h *HTTPServer) getMetricValueJson(res http.ResponseWriter, req *http.Request) {
+
+	var buf bytes.Buffer
+	var metrics Metrics
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = json.Unmarshal(buf.Bytes(), &metrics); err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if metrics.MType != constants.Gauge && metrics.MType != constants.Counter {
+		http.Error(res, "Bad metric type!", http.StatusBadRequest)
+		return
+	}
+
+	switch metrics.MType {
+	case constants.Gauge:
+		val, err := h.collector.GetGaugeMetric(metrics.ID)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusNotFound)
+		}
+		metrics.Value = &val
+	case constants.Counter:
+		val, err := h.collector.GetCounterMetric(metrics.ID)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusNotFound)
+		}
+		metrics.Delta = &val
+	}
+
+	resp, err := json.Marshal(metrics)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", constants.ApplicationJson)
+	res.WriteHeader(http.StatusOK)
+	res.Write(resp)
 }
 
 // deprecated

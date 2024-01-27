@@ -22,6 +22,14 @@ type HTTPServer struct {
 	Router    chi.Router
 }
 
+// структура для получения json данных от агента
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
+
 type (
 	// структура для хранения сведений об ответе
 	responseData struct {
@@ -46,11 +54,12 @@ func NewHTTPServer(collector Collector) HTTPServer {
 	h.Router.Use(WithLogging)
 
 	h.Router.Post("/", h.getAllMetrics)
-	h.Router.Post("/"+constants.UpdateAction, h.noMetricType)
+	h.Router.Post("/"+constants.UpdateAction, h.updateMetricJson)
 	h.Router.Post("/"+constants.UpdateAction+"/{metricType}", h.noMetricName)
 	h.Router.Post("/"+constants.UpdateAction+"/{metricType}/{metricName}", h.noMetricValue)
 	h.Router.Post("/"+constants.UpdateAction+"/{metricType}/{metricName}/{metricValue}", h.updateMetric)
 
+	h.Router.Post("/"+constants.ValueAction, h.getMetricValueJson)
 	h.Router.Get("/"+constants.ValueAction+"/{metricType}", h.noMetricName)
 	h.Router.Get("/"+constants.ValueAction+"/{metricType}/{metricName}", h.getMetricValue)
 

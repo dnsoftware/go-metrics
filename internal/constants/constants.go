@@ -42,3 +42,9 @@ const (
 	LogFile  string = "./log.log"
 	LogLevel        = zapcore.InfoLevel
 )
+
+// тип контентк
+const (
+	TextPlain       string = "text/plain"
+	ApplicationJson string = "application/json"
+)

@@ -41,7 +41,7 @@ func (m *MemStorage) SetCounter(name string, value int64) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	m.Counters[name] = m.Counters[name] + value
+	m.Counters[name] = value
 
 }
 

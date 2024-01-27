@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/dnsoftware/go-metrics/internal/agent/domain"
 	"github.com/dnsoftware/go-metrics/internal/agent/infrastructure"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	storage "github.com/dnsoftware/go-metrics/internal/storage"
 )
 
@@ -12,7 +13,8 @@ func AgentRun() {
 
 	repository := storage.NewMemStorage()
 
-	sender := infrastructure.NewWebSender("http", &flags)
+	// для нового API - constants.ApplicationJson (для старого - constants.TextPlain)
+	sender := infrastructure.NewWebSender("http", &flags, constants.ApplicationJson)
 
 	metrics := domain.NewMetrics(&repository, &sender, &flags)
 	metrics.Start()
