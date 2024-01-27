@@ -46,5 +46,5 @@ const (
 // тип контентк
 const (
 	TextPlain       string = "text/plain"
-	ApplicationJson string = "application/json"
+	ApplicationJSON string = "application/json"
 )

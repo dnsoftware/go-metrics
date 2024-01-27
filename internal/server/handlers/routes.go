@@ -86,7 +86,7 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 }
 
 // обновление метрики json формат
-func (h *HTTPServer) updateMetricJson(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request) {
 	var buf bytes.Buffer
 	var metrics Metrics
 
@@ -107,11 +107,6 @@ func (h *HTTPServer) updateMetricJson(res http.ResponseWriter, req *http.Request
 	}
 
 	if metrics.MType == constants.Gauge {
-
-		if err != nil {
-			http.Error(res, "Incorrect metric value!", http.StatusBadRequest)
-			return
-		}
 
 		err = h.collector.SetGaugeMetric(metrics.ID, *metrics.Value)
 		if err != nil {
@@ -136,7 +131,7 @@ func (h *HTTPServer) updateMetricJson(res http.ResponseWriter, req *http.Request
 			return
 		}
 
-		res.Header().Set("Content-Type", constants.ApplicationJson)
+		res.Header().Set("Content-Type", constants.ApplicationJSON)
 		res.WriteHeader(http.StatusOK)
 		res.Write(resp)
 	}
@@ -171,7 +166,7 @@ func (h *HTTPServer) updateMetricJson(res http.ResponseWriter, req *http.Request
 			return
 		}
 
-		res.Header().Set("Content-Type", constants.ApplicationJson)
+		res.Header().Set("Content-Type", constants.ApplicationJSON)
 		res.WriteHeader(http.StatusOK)
 		res.Write(resp)
 	}
@@ -196,7 +191,7 @@ func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) 
 	res.Write([]byte(val))
 }
 
-func (h *HTTPServer) getMetricValueJson(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Request) {
 
 	var buf bytes.Buffer
 	var metrics Metrics
@@ -238,7 +233,7 @@ func (h *HTTPServer) getMetricValueJson(res http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	res.Header().Set("Content-Type", constants.ApplicationJson)
+	res.Header().Set("Content-Type", constants.ApplicationJSON)
 	res.WriteHeader(http.StatusOK)
 	res.Write(resp)
 }

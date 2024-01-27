@@ -54,12 +54,12 @@ func NewHTTPServer(collector Collector) HTTPServer {
 	h.Router.Use(WithLogging)
 
 	h.Router.Post("/", h.getAllMetrics)
-	h.Router.Post("/"+constants.UpdateAction, h.updateMetricJson)
+	h.Router.Post("/"+constants.UpdateAction, h.updateMetricJSON)
 	h.Router.Post("/"+constants.UpdateAction+"/{metricType}", h.noMetricName)
 	h.Router.Post("/"+constants.UpdateAction+"/{metricType}/{metricName}", h.noMetricValue)
 	h.Router.Post("/"+constants.UpdateAction+"/{metricType}/{metricName}/{metricValue}", h.updateMetric)
 
-	h.Router.Post("/"+constants.ValueAction, h.getMetricValueJson)
+	h.Router.Post("/"+constants.ValueAction, h.getMetricValueJSON)
 	h.Router.Get("/"+constants.ValueAction+"/{metricType}", h.noMetricName)
 	h.Router.Get("/"+constants.ValueAction+"/{metricType}/{metricName}", h.getMetricValue)
 

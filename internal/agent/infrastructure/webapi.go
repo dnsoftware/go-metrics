@@ -41,8 +41,8 @@ func (w *WebSender) SendData(mType string, name string, value string) error {
 	switch w.contentType {
 	case constants.TextPlain:
 		return w.sendPlain(mType, name, value)
-	case constants.ApplicationJson:
-		return w.sendJson(mType, name, value)
+	case constants.ApplicationJSON:
+		return w.sendJSON(mType, name, value)
 	}
 
 	return errors.New("bad send data content type")
@@ -72,7 +72,7 @@ func (w *WebSender) sendPlain(mType string, name string, value string) error {
 
 }
 
-func (w *WebSender) sendJson(mType string, name string, value string) error {
+func (w *WebSender) sendJSON(mType string, name string, value string) error {
 
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction
 
