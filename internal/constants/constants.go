@@ -46,5 +46,11 @@ const (
 // тип контентк
 const (
 	TextPlain       string = "text/plain"
+	TextHTML        string = "text/html"
 	ApplicationJSON string = "application/json"
+)
+
+// Encoding
+const (
+	EncodingGzip string = "gzip"
 )

@@ -21,6 +21,7 @@ func (h *HTTPServer) getAllMetrics(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusNotFound)
 	}
+	res.Header().Set("Content-Type", constants.TextHTML)
 	res.WriteHeader(http.StatusOK)
 	res.Write([]byte(val))
 

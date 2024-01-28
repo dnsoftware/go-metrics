@@ -1,13 +1,14 @@
 package infrastructure
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type Flags interface {
@@ -39,7 +40,7 @@ func NewWebSender(protocol string, flags Flags, contentType string) WebSender {
 func (w *WebSender) SendData(mType string, name string, value string) error {
 
 	switch w.contentType {
-	case constants.TextPlain:
+	case constants.TextPlain, constants.TextHTML:
 		return w.sendPlain(mType, name, value)
 	case constants.ApplicationJSON:
 		return w.sendJSON(mType, name, value)
@@ -95,7 +96,14 @@ func (w *WebSender) sendJSON(mType string, name string, value string) error {
 		return err
 	}
 
-	request, err := http.NewRequest(http.MethodPost, url, strings.NewReader(string(body)))
+	// gzip сжатие
+	buf, err := w.getGzipReader(body)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	request, err := http.NewRequest(http.MethodPost, url, buf)
 	if err != nil {
 		// обрабатываем ошибку
 		fmt.Println(err)
@@ -103,6 +111,7 @@ func (w *WebSender) sendJSON(mType string, name string, value string) error {
 	}
 
 	request.Header.Set("Content-Type", w.contentType)
+	request.Header.Set("Content-Encoding", constants.EncodingGzip)
 
 	client := &http.Client{}
 	resp, err := client.Do(request)
@@ -112,4 +121,19 @@ func (w *WebSender) sendJSON(mType string, name string, value string) error {
 	defer resp.Body.Close()
 
 	return nil
+}
+
+// gzip компрессор входяшего потока байтов
+// возврат *bytes.Buffer, реализующего интерфейс io.Reader
+func (w *WebSender) getGzipReader(data []byte) (*bytes.Buffer, error) {
+
+	buf := bytes.NewBuffer(nil)
+	zb := gzip.NewWriter(buf)
+	_, err := zb.Write(data)
+	if err != nil {
+		return nil, err
+	}
+	zb.Close()
+
+	return buf, nil
 }
