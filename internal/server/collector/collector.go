@@ -43,7 +43,7 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
 		backupStorage: backupStorage,
 	}
 
-	// Загружаем сохраненную базу, если нужно
+	//Загружаем сохраненную базу, если нужно
 	if cfg.RestoreSaved {
 		err := collector.loadFromDump()
 		if err != nil {
@@ -101,6 +101,14 @@ func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error
 	oldVal, _ := c.storage.GetCounter(metricName)
 	newVal := oldVal + metricValue
 	c.storage.SetCounter(metricName, newVal)
+
+	// если бэкап синхронный и указан файл
+	if c.cfg.StoreInterval == constants.BackupPeriodSync && c.cfg.FileStoragePath != "" {
+		err := c.generateDump()
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -203,7 +211,7 @@ func (c *Collector) startBackup() {
 	}
 
 	// если файл не указан - не запускаем сохранение на диск
-	if c.cfg.FileStoragePath != "" {
+	if c.cfg.FileStoragePath == "" {
 		return
 	}
 

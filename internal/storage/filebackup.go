@@ -17,7 +17,7 @@ type BackupStorage struct {
 
 func NewBackupStorage(filename string) (*BackupStorage, error) {
 
-	// открываем и очищаем
+	// открываем
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return nil, err
