@@ -216,18 +216,12 @@ func (c *Collector) startBackup() {
 	}
 
 	backupPeriod := time.Duration(c.cfg.StoreInterval) * time.Second
-	backupTimer := time.NewTimer(backupPeriod)
 	go func() {
 		for {
-			select {
-			case <-backupTimer.C:
-
-				err := c.generateDump()
-				if err != nil {
-					logger.Log().Error(err.Error())
-				}
-
-				backupTimer.Reset(backupPeriod)
+			time.Sleep(backupPeriod)
+			err := c.generateDump()
+			if err != nil {
+				logger.Log().Error(err.Error())
 			}
 		}
 	}()
