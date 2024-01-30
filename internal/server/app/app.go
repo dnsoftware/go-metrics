@@ -1,14 +1,12 @@
 package app
 
 import (
-	"flag"
-	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/logger"
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
+	"github.com/dnsoftware/go-metrics/internal/server/config"
 	"github.com/dnsoftware/go-metrics/internal/server/handlers"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"net/http"
-	"os"
 )
 
 func ServerRun() {
@@ -16,20 +14,21 @@ func ServerRun() {
 	srvLogger := logger.Log()
 	defer srvLogger.Sync()
 
-	endpoint := flag.String("a", constants.ServerDefault, "server endpoint")
-	flag.Parse()
-
-	runAddr := os.Getenv("ADDRESS")
-	if runAddr != "" {
-		endpoint = &runAddr
-	}
+	cfg := config.NewServerConfig()
 
 	repository := storage.NewMemStorage()
+	backupStorage, err := storage.NewBackupStorage(cfg.FileStoragePath)
+	if err != nil {
+		panic(err)
+	}
 
-	collect := collector.NewCollector(&repository)
+	collect, err := collector.NewCollector(cfg, repository, backupStorage)
+	if err != nil {
+		panic(err)
+	}
 
 	server := handlers.NewHTTPServer(collect)
-	err := http.ListenAndServe(*endpoint, server.Router)
+	err = http.ListenAndServe(cfg.ServerAddress, server.Router)
 	if err != nil {
 		panic(err)
 	}

@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
+	"github.com/dnsoftware/go-metrics/internal/server/config"
 	"strconv"
+	"time"
 )
 
 type ServerStorage interface {
@@ -15,21 +18,42 @@ type ServerStorage interface {
 	GetCounter(name string) (int64, error)
 
 	GetAll() (map[string]float64, map[string]int64)
+	GetDump() (string, error)
+	RestoreFromDump(dump string) error
+}
+
+type BackupStorage interface {
+	Save(dump string) error
+	Load() (string, error)
 }
 
 type Collector struct {
-	storage ServerStorage
+	cfg           *config.ServerConfig
+	storage       ServerStorage
+	backupStorage BackupStorage
 }
 
 var gaugeMetricsList []string = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
-func NewCollector(storage ServerStorage) *Collector {
+func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage BackupStorage) (*Collector, error) {
 
 	collector := &Collector{
-		storage: storage,
+		cfg:           cfg,
+		storage:       storage,
+		backupStorage: backupStorage,
 	}
 
-	return collector
+	// Загружаем сохраненную базу, если нужно
+	if cfg.RestoreSaved {
+		err := collector.loadFromDump()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	collector.startBackup()
+
+	return collector, nil
 }
 
 // проверка на допустимую метрику
@@ -55,6 +79,14 @@ func (c *Collector) isMetric(mType string, name string) bool {
 func (c *Collector) SetGaugeMetric(metricName string, metricValue float64) error {
 
 	c.storage.SetGauge(metricName, metricValue)
+
+	// если бэкап синхронный и указан файл
+	if c.cfg.StoreInterval == constants.BackupPeriodSync && c.cfg.FileStoragePath != "" {
+		err := c.generateDump()
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -119,4 +151,77 @@ func (c *Collector) GetAll() (string, error) {
 	}
 
 	return mList, nil
+}
+
+// сохранение дампа в файл
+func (c *Collector) generateDump() error {
+
+	dump, err := c.storage.GetDump()
+	if err != nil {
+		logger.Log().Error(err.Error())
+		return err
+	}
+
+	err = c.backupStorage.Save(dump)
+	if err != nil {
+		logger.Log().Error(err.Error())
+		return err
+	}
+
+	return nil
+}
+
+// загрузка данных из дампа
+func (c *Collector) loadFromDump() error {
+
+	dump, err := c.backupStorage.Load()
+	if err != nil {
+		logger.Log().Error(err.Error())
+		return err
+	}
+
+	// пустой файл
+	if len(dump) == 0 {
+		return nil
+	}
+
+	err = c.storage.RestoreFromDump(dump)
+	if err != nil {
+		logger.Log().Error(err.Error())
+		return err
+	}
+
+	return nil
+}
+
+// периодическое сохранение метрик
+func (c *Collector) startBackup() {
+
+	// если обновление синхронное - не запускаем периодическое обновление
+	if c.cfg.StoreInterval == constants.BackupPeriodSync {
+		return
+	}
+
+	// если файл не указан - не запускаем сохранение на диск
+	if c.cfg.FileStoragePath != "" {
+		return
+	}
+
+	backupPeriod := time.Duration(c.cfg.StoreInterval) * time.Second
+	backupTimer := time.NewTimer(backupPeriod)
+	go func() {
+		for {
+			select {
+			case <-backupTimer.C:
+
+				err := c.generateDump()
+				if err != nil {
+					logger.Log().Error(err.Error())
+				}
+
+				backupTimer.Reset(backupPeriod)
+			}
+		}
+	}()
+
 }

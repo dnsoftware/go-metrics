@@ -16,7 +16,7 @@ func AgentRun() {
 	// для нового API - constants.ApplicationJson (для старого - constants.TextPlain)
 	sender := infrastructure.NewWebSender("http", &flags, constants.ApplicationJSON)
 
-	metrics := domain.NewMetrics(&repository, &sender, &flags)
+	metrics := domain.NewMetrics(repository, &sender, &flags)
 	metrics.Start()
 
 }

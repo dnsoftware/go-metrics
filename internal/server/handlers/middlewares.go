@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"bytes"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/logger"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -42,6 +45,11 @@ func WithLogging(h http.Handler) http.Handler {
 		uri := r.RequestURI
 		method := r.Method
 
+		// вычитываем тело запроса для логирования, а потом записываем обратно
+		var buf bytes.Buffer
+		buf.ReadFrom(r.Body)
+		r.Body = io.NopCloser(bytes.NewBuffer(buf.Bytes()))
+
 		h.ServeHTTP(&lw, r) // внедряем свою реализацию http.ResponseWriter
 
 		// время выполнения запроса.
@@ -54,6 +62,7 @@ func WithLogging(h http.Handler) http.Handler {
 			zap.Duration("duration", duration),
 			zap.Int("status", rd.status),
 			zap.Int("size", rd.size),
+			zap.String("body", buf.String()),
 		)
 	}
 
@@ -70,7 +79,7 @@ func GzipMiddleware(h http.Handler) http.Handler {
 
 		// проверяем, что клиент умеет получать от сервера сжатые данные в формате gzip
 		acceptEncoding := r.Header.Get("Accept-Encoding")
-		supportsGzip := strings.Contains(acceptEncoding, "gzip")
+		supportsGzip := strings.Contains(acceptEncoding, constants.EncodingGzip)
 		if supportsGzip {
 			// оборачиваем оригинальный http.ResponseWriter новым с поддержкой сжатия
 			changedWriter := newCompressWriter(w)
@@ -82,7 +91,7 @@ func GzipMiddleware(h http.Handler) http.Handler {
 
 		// проверяем, что клиент отправил серверу сжатые данные в формате gzip
 		contentEncoding := r.Header.Get("Content-Encoding")
-		sendsGzip := strings.Contains(contentEncoding, "gzip")
+		sendsGzip := strings.Contains(contentEncoding, constants.EncodingGzip)
 		if sendsGzip {
 			// оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
 			cr, err := newCompressReader(r.Body)

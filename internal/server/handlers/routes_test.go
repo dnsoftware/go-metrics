@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
+	"github.com/dnsoftware/go-metrics/internal/server/config"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -132,8 +134,16 @@ func TestHTTPServer_rootHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
+			cfg := config.ServerConfig{
+				ServerAddress:   "localhost:8080",
+				StoreInterval:   constants.BackupPeriod,
+				FileStoragePath: constants.FileStoragePath,
+				RestoreSaved:    false,
+			}
+
 			repository := storage.NewMemStorage()
-			collect := collector.NewCollector(&repository)
+			backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
+			collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
 			server := NewHTTPServer(collect)
 
 			request := httptest.NewRequest(tt.method, tt.request, nil)
@@ -167,8 +177,16 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 
 func TestRouter(t *testing.T) {
 
+	cfg := config.ServerConfig{
+		ServerAddress:   "localhost:8080",
+		StoreInterval:   constants.BackupPeriod,
+		FileStoragePath: constants.FileStoragePath,
+		RestoreSaved:    false,
+	}
+
 	repository := storage.NewMemStorage()
-	collect := collector.NewCollector(&repository)
+	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
+	collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
 	server := NewHTTPServer(collect)
 	ts := httptest.NewServer(server.Router)
 

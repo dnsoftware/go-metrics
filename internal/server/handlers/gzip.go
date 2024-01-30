@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"compress/gzip"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"io"
 	"net/http"
 )
@@ -29,7 +30,7 @@ func (c *compressWriter) Write(p []byte) (int, error) {
 }
 
 func (c *compressWriter) WriteHeader(statusCode int) {
-	c.w.Header().Set("Content-Encoding", "gzip")
+	c.w.Header().Set("Content-Encoding", constants.EncodingGzip)
 	c.w.WriteHeader(statusCode)
 }
 

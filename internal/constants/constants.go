@@ -4,8 +4,10 @@ import "go.uber.org/zap/zapcore"
 
 // интервалы
 const (
-	PollInterval   int64 = 2  // интервал обновления метрик
-	ReportInterval int64 = 10 // интервал отправки метрик на сервер
+	PollInterval     int64 = 2   // интервал обновления метрик
+	ReportInterval   int64 = 10  // интервал отправки метрик на сервер
+	BackupPeriod     int64 = 300 // период в секундах, при указании которого происходит сохранение метрик в файл
+	BackupPeriodSync int64 = 0   // период в секундах, при указании которого происходит синхронное с получением данных сохранение в файл
 )
 
 // действия
@@ -25,6 +27,8 @@ const (
 	MetricType  string = "metricType"
 	MetricName  string = "metricName"
 	MetricValue string = "metricValue"
+
+	RestoreSavedEnv string = "RESTORE"
 )
 
 // метрики
@@ -33,8 +37,12 @@ const (
 	RandomValue string = "RandomValue" // имя случайной метрики
 )
 
+// параметры работы сервера по умолчанию
 const (
-	ServerDefault string = "localhost:8080" // адрес:порт сервера по умолчанию
+	ServerDefault   string = "localhost:8080"       // адрес:порт сервера по умолчанию
+	StoreInterval   int64  = 300                    // интервалс сохранения значений метрик в файл
+	FileStoragePath string = "/tmp/metrics-db.json" // полное имя файла, куда сохраняются значения метрик
+	RestoreSaved    bool   = true                   // загружать или нет ранее сохранённые значения из указанного файла при старте сервера
 )
 
 // логгер
@@ -43,7 +51,7 @@ const (
 	LogLevel        = zapcore.InfoLevel
 )
 
-// тип контентк
+// тип контента
 const (
 	TextPlain       string = "text/plain"
 	TextHTML        string = "text/html"
