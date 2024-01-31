@@ -69,6 +69,9 @@ func (m *MemStorage) GetAll() (map[string]float64, map[string]int64) {
 // получение json дампа
 func (m *MemStorage) GetDump() (string, error) {
 
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	data, err := json.Marshal(m)
 	if err != nil {
 		return "", err
