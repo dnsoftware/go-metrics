@@ -27,6 +27,9 @@ type BackupStorage interface {
 	Load() (string, error)
 }
 
+type Database interface {
+}
+
 type Collector struct {
 	cfg           *config.ServerConfig
 	storage       ServerStorage
@@ -35,7 +38,7 @@ type Collector struct {
 
 var gaugeMetricsList []string = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
-func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage BackupStorage) (*Collector, error) {
+func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage BackupStorage, database Database) (*Collector, error) {
 
 	collector := &Collector{
 		cfg:           cfg,

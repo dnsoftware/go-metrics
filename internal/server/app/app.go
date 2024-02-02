@@ -22,7 +22,12 @@ func ServerRun() {
 		panic(err)
 	}
 
-	collect, err := collector.NewCollector(cfg, repository, backupStorage)
+	pgStorage, err := storage.NewPostgresqlStorage()
+	if err != nil {
+		panic(err)
+	}
+
+	collect, err := collector.NewCollector(cfg, repository, backupStorage, pgStorage)
 	if err != nil {
 		panic(err)
 	}
