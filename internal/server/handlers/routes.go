@@ -340,3 +340,15 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 func (h *HTTPServer) unrecognized(res http.ResponseWriter, req *http.Request) {
 	http.Error(res, "Not found!", http.StatusNotFound)
 }
+
+func (h *HTTPServer) databasePing(res http.ResponseWriter, req *http.Request) {
+
+	isConnected := h.collector.DatabasePing()
+
+	if isConnected {
+		res.WriteHeader(http.StatusOK)
+	} else {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
+
+}

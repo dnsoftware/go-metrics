@@ -22,7 +22,7 @@ func ServerRun() {
 		panic(err)
 	}
 
-	pgStorage, err := storage.NewPostgresqlStorage()
+	pgStorage, err := storage.NewPostgresqlStorage(cfg.DatabaseDSN)
 	if err != nil {
 		panic(err)
 	}

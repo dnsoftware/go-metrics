@@ -13,6 +13,7 @@ type ServerConfig struct {
 	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"none"`
 	RestoreSaved    bool   `env:"RESTORE" envDefault:"true"`
+	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:""`
 }
 
 type serverFlags struct {
@@ -20,6 +21,7 @@ type serverFlags struct {
 	storeInterval   int64
 	fileStoragePath string
 	restoreSaved    bool
+	databaseDSN     string
 }
 
 func NewServerConfig() *ServerConfig {
@@ -36,6 +38,7 @@ func NewServerConfig() *ServerConfig {
 	flag.Int64Var(&sf.storeInterval, "i", constants.StoreInterval, "store interval")
 	flag.StringVar(&sf.fileStoragePath, "f", constants.FileStoragePath, "file store path")
 	flag.BoolVar(&sf.restoreSaved, "r", constants.RestoreSaved, "to restore?")
+	flag.StringVar(&sf.databaseDSN, "d", "", "data source name")
 	flag.Parse()
 
 	// если какого-то параметра нет в переменных окружения - берем значение флага, а если и флага нет - берем по умолчанию
@@ -50,6 +53,9 @@ func NewServerConfig() *ServerConfig {
 	}
 	if _, ok := os.LookupEnv(constants.RestoreSavedEnv); !ok {
 		cfg.RestoreSaved = sf.restoreSaved
+	}
+	if cfg.DatabaseDSN == "" {
+		cfg.DatabaseDSN = sf.databaseDSN
 	}
 
 	return cfg

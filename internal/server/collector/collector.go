@@ -28,12 +28,14 @@ type BackupStorage interface {
 }
 
 type Database interface {
+	Ping() bool
 }
 
 type Collector struct {
 	cfg           *config.ServerConfig
 	storage       ServerStorage
 	backupStorage BackupStorage
+	database      Database
 }
 
 var gaugeMetricsList []string = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
@@ -44,6 +46,7 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
 		cfg:           cfg,
 		storage:       storage,
 		backupStorage: backupStorage,
+		database:      database,
 	}
 
 	//Загружаем сохраненную базу, если нужно
@@ -229,4 +232,8 @@ func (c *Collector) startBackup() {
 		}
 	}()
 
+}
+
+func (c *Collector) DatabasePing() bool {
+	return c.database.Ping()
 }

@@ -15,6 +15,8 @@ type Collector interface {
 
 	GetMetric(metricType string, metricName string) (string, error)
 	GetAll() (string, error)
+
+	DatabasePing() bool
 }
 
 type HTTPServer struct {
@@ -65,6 +67,8 @@ func NewHTTPServer(collector Collector) HTTPServer {
 	h.Router.Get("/", h.getAllMetrics)
 	h.Router.Get("/"+constants.ValueAction+"/{metricType}", h.noMetricName)
 	h.Router.Get("/"+constants.ValueAction+"/{metricType}/{metricName}", h.getMetricValue)
+
+	h.Router.Get("/ping", h.databasePing)
 
 	return h
 }

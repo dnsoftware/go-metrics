@@ -139,11 +139,13 @@ func TestHTTPServer_rootHandler(t *testing.T) {
 				StoreInterval:   constants.BackupPeriod,
 				FileStoragePath: constants.FileStoragePath,
 				RestoreSaved:    false,
+				DatabaseDSN:     "",
 			}
 
 			repository := storage.NewMemStorage()
 			backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
-			collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
+			pgStorage, _ := storage.NewPostgresqlStorage(cfg.DatabaseDSN)
+			collect, _ := collector.NewCollector(&cfg, repository, backupStorage, pgStorage)
 			server := NewHTTPServer(collect)
 
 			request := httptest.NewRequest(tt.method, tt.request, nil)
@@ -186,7 +188,8 @@ func TestRouter(t *testing.T) {
 
 	repository := storage.NewMemStorage()
 	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
-	collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
+	pgStorage, _ := storage.NewPostgresqlStorage(cfg.DatabaseDSN)
+	collect, _ := collector.NewCollector(&cfg, repository, backupStorage, pgStorage)
 	server := NewHTTPServer(collect)
 	ts := httptest.NewServer(server.Router)
 
