@@ -174,6 +174,11 @@ func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
 		dump.Gauges[v.name] = v.value
 	}
 
+	err = gRows.Err()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// counters
 	cRows, err := p.db.Query(`SELECT id, val FROM counters`)
 	if err != nil {
@@ -189,6 +194,11 @@ func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
 			return nil, nil, err
 		}
 		dump.Counters[v.name] = v.value
+	}
+
+	err = cRows.Err()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return dump.Gauges, dump.Counters, nil
