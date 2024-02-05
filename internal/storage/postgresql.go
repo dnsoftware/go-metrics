@@ -2,27 +2,34 @@ package storage
 
 import (
 	"database/sql"
+	"encoding/json"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/logger"
-
 	//"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type PgStorage struct {
-	db *sql.DB
+	storageType string
+	db          *sql.DB
+}
+
+type Gauge struct {
+	name  string
+	value float64
+}
+
+type Counter struct {
+	name  string
+	value int64
+}
+
+type DumpData struct {
+	Gauges   map[string]float64 `json:"gauges"`
+	Counters map[string]int64   `json:"counters"`
 }
 
 func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
-
-	// urlExample := "postgres://username:password@localhost:5432/database_name"
-	//urlExample := "postgres://p1pool:Rextra516255@localhost:54321/metrics"
-	////conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
-	//conn, err := pgx.Connect(context.Background(), urlExample)
-	//if err != nil {
-	//	fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-	//	os.Exit(1)
-	//}
-	//fmt.Println(conn)
 
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
@@ -31,17 +38,204 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
 	}
 
 	ps := &PgStorage{
-		db: db,
+		storageType: constants.DBMS,
+		db:          db,
+	}
+
+	// создание таблиц, если не существуют
+	err = ps.createDatabaseTables()
+	if err != nil {
+		return nil, err
 	}
 
 	return ps, nil
 }
 
-// Ping проверка работоспособности соединения с БД
-func (p *PgStorage) Ping() bool {
-	if p.db.Ping() != nil {
-		return false
+// формирование структуры БД
+func (p *PgStorage) createDatabaseTables() error {
+
+	var query string
+
+	// gauges
+	query = `CREATE TABLE IF NOT EXISTS gauges
+			(
+			    id character varying(64) PRIMARY KEY,
+			    val double precision NOT NULL,
+			    updated_at timestamp with time zone NOT NULL
+			)`
+	_, err := p.db.Exec(query)
+	if err != nil {
+		return err
 	}
 
-	return true
+	// counters
+	query = `CREATE TABLE IF NOT EXISTS counters
+			(
+			    id character varying(64) PRIMARY KEY,
+			    val bigint NOT NULL,
+			    updated_at timestamp with time zone NOT NULL
+			)`
+	_, err = p.db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *PgStorage) Type() string {
+	return p.storageType
+}
+
+// Health проверка работоспособности соединения с БД
+func (p *PgStorage) Health() bool {
+	return p.db.Ping() == nil
+}
+
+func (p *PgStorage) SetGauge(name string, value float64) error {
+
+	query := `INSERT INTO gauges (id, val, updated_at)
+			VALUES ($1, $2, now())
+			ON CONFLICT (id)
+			DO UPDATE
+			SET id = $1, val = $2`
+	_, err := p.db.Exec(query, name, value)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *PgStorage) GetGauge(name string) (float64, error) {
+
+	query := `SELECT val FROM gauges WHERE id = $1`
+	row := p.db.QueryRow(query, name)
+
+	var val float64
+	err := row.Scan(&val)
+	if err != nil {
+		return 0, err
+	}
+
+	return val, nil
+}
+
+func (p *PgStorage) SetCounter(name string, value int64) error {
+
+	query := `INSERT INTO counters (id, val, updated_at)
+			VALUES ($1, $2, now())
+			ON CONFLICT (id)
+			DO UPDATE
+			SET id = $1, val = $2`
+	_, err := p.db.Exec(query, name, value)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *PgStorage) GetCounter(name string) (int64, error) {
+
+	query := `SELECT val FROM counters WHERE id = $1`
+	row := p.db.QueryRow(query, name)
+
+	var val int64
+	err := row.Scan(&val)
+	if err != nil {
+		return 0, err
+	}
+
+	return val, nil
+}
+
+// возврат карт gauge и counters
+func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
+
+	// gauges
+	gRows, err := p.db.Query(`SELECT id, val FROM gauges`)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer gRows.Close()
+
+	dump := DumpData{
+		Gauges:   make(map[string]float64),
+		Counters: make(map[string]int64),
+	}
+	for gRows.Next() {
+		v := Gauge{}
+
+		err = gRows.Scan(&v.name, &v.value)
+		if err != nil {
+			return nil, nil, err
+		}
+		dump.Gauges[v.name] = v.value
+	}
+
+	// counters
+	cRows, err := p.db.Query(`SELECT id, val FROM counters`)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer cRows.Close()
+
+	for cRows.Next() {
+		v := Counter{}
+
+		err = cRows.Scan(&v.name, &v.value)
+		if err != nil {
+			return nil, nil, err
+		}
+		dump.Counters[v.name] = v.value
+	}
+
+	return dump.Gauges, dump.Counters, nil
+}
+
+// получение json дампа
+func (p *PgStorage) GetDump() (string, error) {
+
+	dump := DumpData{}
+
+	err := *new(error)
+	dump.Gauges, dump.Counters, err = p.GetAll()
+	if err != nil {
+		return "", err
+	}
+
+	data, err := json.Marshal(dump)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
+
+// восстановление из json дампа
+func (p *PgStorage) RestoreFromDump(dump string) error {
+
+	data := DumpData{}
+
+	err := json.Unmarshal([]byte(dump), &data)
+	if err != nil {
+		return err
+	}
+
+	for name, val := range data.Gauges {
+		err = p.SetGauge(name, val)
+		if err != nil {
+			logger.Log().Error(err.Error())
+		}
+	}
+
+	for name, val := range data.Counters {
+		err = p.SetCounter(name, val)
+		if err != nil {
+			logger.Log().Error(err.Error())
+		}
+	}
+
+	return nil
 }

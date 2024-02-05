@@ -144,8 +144,7 @@ func TestHTTPServer_rootHandler(t *testing.T) {
 
 			repository := storage.NewMemStorage()
 			backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
-			pgStorage, _ := storage.NewPostgresqlStorage(cfg.DatabaseDSN)
-			collect, _ := collector.NewCollector(&cfg, repository, backupStorage, pgStorage)
+			collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
 			server := NewHTTPServer(collect)
 
 			request := httptest.NewRequest(tt.method, tt.request, nil)
@@ -188,8 +187,7 @@ func TestRouter(t *testing.T) {
 
 	repository := storage.NewMemStorage()
 	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
-	pgStorage, _ := storage.NewPostgresqlStorage(cfg.DatabaseDSN)
-	collect, _ := collector.NewCollector(&cfg, repository, backupStorage, pgStorage)
+	collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
 	server := NewHTTPServer(collect)
 	ts := httptest.NewServer(server.Router)
 

@@ -16,20 +16,24 @@ func ServerRun() {
 
 	cfg := config.NewServerConfig()
 
-	repository := storage.NewMemStorage()
 	backupStorage, err := storage.NewBackupStorage(cfg.FileStoragePath)
 	if err != nil {
 		panic(err)
 	}
 
-	pgStorage, err := storage.NewPostgresqlStorage(cfg.DatabaseDSN)
-	if err != nil {
-		panic(err)
-	}
-
-	collect, err := collector.NewCollector(cfg, repository, backupStorage, pgStorage)
-	if err != nil {
-		panic(err)
+	var collect *collector.Collector
+	repoPostgresql, err := storage.NewPostgresqlStorage(cfg.DatabaseDSN)
+	if err == nil { // значит база рабочая - используем Postgresql
+		collect, err = collector.NewCollector(cfg, repoPostgresql, backupStorage)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		repoMemory := storage.NewMemStorage()
+		collect, err = collector.NewCollector(cfg, repoMemory, backupStorage)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	server := handlers.NewHTTPServer(collect)

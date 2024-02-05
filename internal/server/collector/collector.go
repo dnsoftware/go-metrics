@@ -11,15 +11,18 @@ import (
 )
 
 type ServerStorage interface {
-	SetGauge(name string, value float64)
+	SetGauge(name string, value float64) error
 	GetGauge(name string) (float64, error)
 
-	SetCounter(name string, value int64)
+	SetCounter(name string, value int64) error
 	GetCounter(name string) (int64, error)
 
-	GetAll() (map[string]float64, map[string]int64)
+	GetAll() (map[string]float64, map[string]int64, error)
 	GetDump() (string, error)
 	RestoreFromDump(dump string) error
+
+	Type() string // тип хранилища, memory | dbms
+	Health() bool // проверка работоспособности
 }
 
 type BackupStorage interface {
@@ -27,37 +30,37 @@ type BackupStorage interface {
 	Load() (string, error)
 }
 
-type Database interface {
-	Ping() bool
-}
+//type Database interface {
+//	Ping() bool
+//}
 
 type Collector struct {
 	cfg           *config.ServerConfig
 	storage       ServerStorage
 	backupStorage BackupStorage
-	database      Database
 }
 
 var gaugeMetricsList []string = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
-func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage BackupStorage, database Database) (*Collector, error) {
+func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage BackupStorage) (*Collector, error) {
 
 	collector := &Collector{
 		cfg:           cfg,
 		storage:       storage,
 		backupStorage: backupStorage,
-		database:      database,
 	}
 
-	//Загружаем сохраненную базу, если нужно
-	if cfg.RestoreSaved {
-		err := collector.loadFromDump()
-		if err != nil {
-			return nil, err
+	// Если в базой данных не работаем, значит запускаем механизм загрузки дампа базы в память и сохранения дампа базы на диск
+	if !(storage.Type() == constants.DBMS && storage.Health()) {
+		//Загружаем сохраненную базу, если нужно
+		if cfg.RestoreSaved {
+			err := collector.loadFromDump()
+			if err != nil {
+				return nil, err
+			}
 		}
+		collector.startBackup()
 	}
-
-	collector.startBackup()
 
 	return collector, nil
 }
@@ -84,11 +87,14 @@ func (c *Collector) isMetric(mType string, name string) bool {
 
 func (c *Collector) SetGaugeMetric(metricName string, metricValue float64) error {
 
-	c.storage.SetGauge(metricName, metricValue)
+	err := c.storage.SetGauge(metricName, metricValue)
+	if err != nil {
+		return err
+	}
 
 	// если бэкап синхронный и указан файл
 	if c.cfg.StoreInterval == constants.BackupPeriodSync && c.cfg.FileStoragePath != "" {
-		err := c.generateDump()
+		err = c.generateDump()
 		if err != nil {
 			return err
 		}
@@ -106,7 +112,10 @@ func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error
 
 	oldVal, _ := c.storage.GetCounter(metricName)
 	newVal := oldVal + metricValue
-	c.storage.SetCounter(metricName, newVal)
+	err := c.storage.SetCounter(metricName, newVal)
+	if err != nil {
+		return err
+	}
 
 	// если бэкап синхронный и указан файл
 	if c.cfg.StoreInterval == constants.BackupPeriodSync && c.cfg.FileStoragePath != "" {
@@ -153,7 +162,10 @@ func (c *Collector) GetMetric(metricType string, metricName string) (string, err
 
 // все метрики списком
 func (c *Collector) GetAll() (string, error) {
-	gauges, counters := c.storage.GetAll()
+	gauges, counters, err := c.storage.GetAll()
+	if err != nil {
+		return "", err
+	}
 
 	mList := ""
 	for key, val := range gauges {
@@ -234,6 +246,16 @@ func (c *Collector) startBackup() {
 
 }
 
+// DatabasePing проверка работоспособности СУБД
 func (c *Collector) DatabasePing() bool {
-	return c.database.Ping()
+
+	t := c.storage.Type()
+	h := c.storage.Health()
+	fmt.Println(t, h)
+
+	if c.storage.Type() == constants.DBMS && c.storage.Health() {
+		return true
+	}
+
+	return false
 }

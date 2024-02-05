@@ -3,28 +3,32 @@ package storage
 import (
 	"encoding/json"
 	"errors"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 	"sync"
 )
 
 type MemStorage struct {
-	mutex    sync.Mutex
-	Gauges   map[string]float64 `json:"gauges"`
-	Counters map[string]int64   `json:"counters"`
+	storageType string
+	mutex       sync.Mutex
+	Gauges      map[string]float64 `json:"gauges"`
+	Counters    map[string]int64   `json:"counters"`
 }
 
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
-		Gauges:   make(map[string]float64),
-		Counters: make(map[string]int64),
+		storageType: constants.Memory,
+		Gauges:      make(map[string]float64),
+		Counters:    make(map[string]int64),
 	}
 }
 
-func (m *MemStorage) SetGauge(name string, value float64) {
+func (m *MemStorage) SetGauge(name string, value float64) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	m.Gauges[name] = value
 
+	return nil
 }
 
 func (m *MemStorage) GetGauge(name string) (float64, error) {
@@ -39,12 +43,13 @@ func (m *MemStorage) GetGauge(name string) (float64, error) {
 
 }
 
-func (m *MemStorage) SetCounter(name string, value int64) {
+func (m *MemStorage) SetCounter(name string, value int64) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	m.Counters[name] = value
 
+	return nil
 }
 
 func (m *MemStorage) GetCounter(name string) (int64, error) {
@@ -59,11 +64,11 @@ func (m *MemStorage) GetCounter(name string) (int64, error) {
 }
 
 // возврат карт gauge и counters
-func (m *MemStorage) GetAll() (map[string]float64, map[string]int64) {
+func (m *MemStorage) GetAll() (map[string]float64, map[string]int64, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	return m.Gauges, m.Counters
+	return m.Gauges, m.Counters, nil
 }
 
 // получение json дампа
@@ -92,4 +97,12 @@ func (m *MemStorage) RestoreFromDump(dump string) error {
 	}
 
 	return nil
+}
+
+func (m *MemStorage) Type() string {
+	return m.storageType
+}
+
+func (m *MemStorage) Health() bool {
+	return true
 }

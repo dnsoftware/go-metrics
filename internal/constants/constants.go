@@ -62,3 +62,9 @@ const (
 const (
 	EncodingGzip string = "gzip"
 )
+
+// тип хранилища данных
+const (
+	Memory string = "memory"
+	DBMS   string = "DBMS"
+)
