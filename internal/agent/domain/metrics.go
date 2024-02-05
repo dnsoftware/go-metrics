@@ -16,10 +16,10 @@ import (
 
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name=AgentStorage
 type AgentStorage interface {
-	SetGauge(name string, value float64)
+	SetGauge(name string, value float64) error
 	GetGauge(name string) (float64, error)
 
-	SetCounter(name string, value int64)
+	SetCounter(name string, value int64) error
 	GetCounter(name string) (int64, error)
 }
 
