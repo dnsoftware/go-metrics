@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
 	"net/http"
 	"strconv"
 )
@@ -37,6 +38,7 @@ func NewWebSender(protocol string, flags Flags, contentType string) WebSender {
 	}
 }
 
+// SendData Отправка по одной метрике, через url или через json
 func (w *WebSender) SendData(mType string, name string, value string) error {
 
 	switch w.contentType {
@@ -47,6 +49,36 @@ func (w *WebSender) SendData(mType string, name string, value string) error {
 	}
 
 	return errors.New("bad send data content type")
+}
+
+// SendBatch отправка данных пакетом в json формате
+func (w *WebSender) SendDataBatch(data []byte) error {
+	url := w.protocol + "://" + w.domain + "/" + constants.UpdatesAction
+
+	// gzip сжатие
+	buf, err := w.getGzipReader(data)
+	if err != nil {
+		logger.Log().Error(err.Error())
+		return err
+	}
+
+	request, err := http.NewRequest(http.MethodPost, url, buf)
+	if err != nil {
+		logger.Log().Error(err.Error())
+		return err
+	}
+
+	request.Header.Set("Content-Type", w.contentType)
+	request.Header.Set("Content-Encoding", constants.EncodingGzip)
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
 }
 
 func (w *WebSender) sendPlain(mType string, name string, value string) error {

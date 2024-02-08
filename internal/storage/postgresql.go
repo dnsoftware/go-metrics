@@ -3,9 +3,9 @@ package storage
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/logger"
-	//"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -136,10 +136,56 @@ func (p *PgStorage) SetCounter(name string, value int64) error {
 	return nil
 }
 
+func (p *PgStorage) SetBatch(batch []byte) error {
+	var metrics []Metrics
+
+	err := json.Unmarshal(batch, &metrics)
+	if err != nil {
+		return err
+	}
+
+	// старт транзакции
+	tx, err := p.db.Begin()
+	if err != nil {
+		return err
+	}
+	for _, mt := range metrics {
+		err := errors.New("")
+		if mt.MType == constants.Gauge {
+			query := `INSERT INTO gauges (id, val, updated_at)
+			VALUES ($1, $2, now())
+			ON CONFLICT (id)
+			DO UPDATE
+			SET id = $1, val = $2`
+			_, err = p.db.Exec(query, mt.ID, mt.Value)
+		}
+
+		if mt.MType == constants.Counter {
+			query := `INSERT INTO counters (id, val, updated_at)
+			VALUES ($1, $2, now())
+			ON CONFLICT (id)
+			DO UPDATE
+			SET id = $1, val = $2`
+			_, err = p.db.Exec(query, mt.ID, mt.Delta)
+		}
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	// завершаем транзакцию
+	return tx.Commit()
+
+}
+
 func (p *PgStorage) GetCounter(name string) (int64, error) {
 
 	query := `SELECT val FROM counters WHERE id = $1`
 	row := p.db.QueryRow(query, name)
+	//if err := row.Err(); err != nil {
+	//	return 0, err
+	//}
 
 	var val int64
 	err := row.Scan(&val)

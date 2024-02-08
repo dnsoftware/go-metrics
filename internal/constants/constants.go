@@ -12,8 +12,9 @@ const (
 
 // действия
 const (
-	UpdateAction string = "update" // сохранить метрику
-	ValueAction  string = "value"  // получить метрику
+	UpdateAction  string = "update"  // сохранить метрику
+	ValueAction   string = "value"   // получить метрику
+	UpdatesAction string = "updates" // получить список метрик
 )
 
 // типы метрик

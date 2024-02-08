@@ -12,13 +12,14 @@ import (
 
 type ServerStorage interface {
 	SetGauge(name string, value float64) error
-	GetGauge(name string) (float64, error)
-
 	SetCounter(name string, value int64) error
-	GetCounter(name string) (int64, error)
+	SetBatch(batch []byte) error
 
+	GetGauge(name string) (float64, error)
+	GetCounter(name string) (int64, error)
 	GetAll() (map[string]float64, map[string]int64, error)
 	GetDump() (string, error)
+
 	RestoreFromDump(dump string) error
 
 	Type() string // тип хранилища, memory | dbms
@@ -127,6 +128,13 @@ func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error
 
 	return nil
 }
+
+func (c *Collector) SetBatchMetrics(batch []byte) error {
+
+	return c.storage.SetBatch(batch)
+
+}
+
 func (c *Collector) GetCounterMetric(metricName string) (int64, error) {
 
 	return c.storage.GetCounter(metricName)

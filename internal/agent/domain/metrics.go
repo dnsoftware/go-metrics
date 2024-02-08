@@ -2,8 +2,10 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -26,6 +28,7 @@ type AgentStorage interface {
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name=MetricsSender
 type MetricsSender interface {
 	SendData(mType string, name string, value string) error
+	SendDataBatch([]byte) error
 }
 
 type Flags interface {
@@ -39,6 +42,14 @@ type Metrics struct {
 	sender         MetricsSender
 	pollInterval   int64
 	reportInterval int64
+}
+
+// MetricsItem структура для отправки json данных на сервер
+type MetricsItem struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
 var gaugeMetricsList []string = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
@@ -88,7 +99,8 @@ func (m *Metrics) Start() {
 				return
 			default:
 				time.Sleep(time.Duration(m.reportInterval) * time.Second)
-				m.sendMetrics()
+				// в старом API было m.sendMetrics()
+				m.sendMetricsBatch()
 			}
 
 		}
@@ -170,6 +182,48 @@ func (m *Metrics) sendMetrics() {
 	}
 
 	m.storage.SetCounter(constants.PollCount, 0)
+
+}
+
+// отправка метрик пакетом
+func (m *Metrics) sendMetricsBatch() {
+
+	var batch []MetricsItem
+
+	// gauges
+	for _, metricName := range gaugeMetricsList {
+		val, err := m.storage.GetGauge(metricName)
+		if err != nil {
+			logger.Log().Error(err.Error())
+			continue
+		}
+
+		batch = append(batch, MetricsItem{
+			ID:    metricName,
+			MType: constants.Gauge,
+			Value: &val,
+		})
+	}
+
+	// counters
+	pollCount, err := m.storage.GetCounter(constants.PollCount)
+	if err != nil {
+		logger.Log().Error(err.Error())
+		pollCount = 0
+	}
+
+	batch = append(batch, MetricsItem{
+		ID:    constants.PollCount,
+		MType: constants.Counter,
+		Delta: &pollCount,
+	})
+
+	jsonData, err := json.Marshal(batch)
+
+	err = m.sender.SendDataBatch(jsonData)
+	if err != nil {
+		logger.Log().Error(err.Error())
+	}
 
 }
 

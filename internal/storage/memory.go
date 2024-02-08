@@ -52,6 +52,30 @@ func (m *MemStorage) SetCounter(name string, value int64) error {
 	return nil
 }
 
+func (m *MemStorage) SetBatch(batch []byte) error {
+	var metrics []Metrics
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	err := json.Unmarshal(batch, &metrics)
+	if err != nil {
+		return err
+	}
+
+	for _, mt := range metrics {
+		if mt.MType == constants.Gauge {
+			m.Gauges[mt.ID] = *mt.Value
+		}
+
+		if mt.MType == constants.Counter {
+			m.Counters[mt.ID] = *mt.Delta
+		}
+	}
+
+	return nil
+}
+
 func (m *MemStorage) GetCounter(name string) (int64, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()

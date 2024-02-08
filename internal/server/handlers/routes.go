@@ -173,6 +173,27 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 	}
 }
 
+// обновление метрик пакетом, json формат
+func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Request) {
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.collector.SetBatchMetrics(buf.Bytes())
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", constants.ApplicationJSON)
+	res.WriteHeader(http.StatusOK)
+
+}
+
 func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) {
 
 	metricType := chi.URLParam(req, constants.MetricType)
