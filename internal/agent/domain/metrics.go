@@ -219,6 +219,10 @@ func (m *Metrics) sendMetricsBatch() {
 	})
 
 	jsonData, err := json.Marshal(batch)
+	if err != nil {
+		logger.Log().Error(err.Error())
+		return
+	}
 
 	err = m.sender.SendDataBatch(jsonData)
 	if err != nil {

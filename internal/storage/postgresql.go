@@ -156,7 +156,7 @@ func (p *PgStorage) SetBatch(batch []byte) error {
 			VALUES ($1, $2, now())
 			ON CONFLICT (id)
 			DO UPDATE
-			SET id = $1, val = $2`
+			SET id = $1, val = $2, updated_at = now()`
 			_, err = p.db.Exec(query, mt.ID, mt.Value)
 		}
 
@@ -165,7 +165,7 @@ func (p *PgStorage) SetBatch(batch []byte) error {
 			VALUES ($1, $2, now())
 			ON CONFLICT (id)
 			DO UPDATE
-			SET id = $1, val = $2`
+			SET val = counters.val + $2, updated_at = now()`
 			_, err = p.db.Exec(query, mt.ID, mt.Delta)
 		}
 
