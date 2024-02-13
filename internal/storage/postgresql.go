@@ -343,6 +343,9 @@ func (p *PgStorage) RestoreFromDump(dump string) error {
 
 	// старт транзакции
 	tx, err := p.db.Begin()
+	if err != nil {
+		return fmt.Errorf("PgStorage | RestoreFromDump | Tx begin: %w", err)
+	}
 
 	queryDel := `TRUNCATE gauges, counters`
 	err = p.retryExec(queryDel)
@@ -353,11 +356,12 @@ func (p *PgStorage) RestoreFromDump(dump string) error {
 
 	stmt, err := p.db.Prepare(`INSERT INTO gauges (id, val, updated_at)
 			VALUES ($1, $2, now())`)
-	defer stmt.Close()
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("PgStorage | RestoreFromDump | Prepare gauges: %w", err)
 	}
+	defer stmt.Close()
+
 	for name, val := range data.Gauges {
 		_, err = stmt.Exec(name, val)
 		if err != nil {
@@ -368,11 +372,12 @@ func (p *PgStorage) RestoreFromDump(dump string) error {
 
 	stmt, err = p.db.Prepare(`INSERT INTO counters (id, val, updated_at)
 			VALUES ($1, $2, now())`)
-	defer stmt.Close()
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("PgStorage | RestoreFromDump | Prepare counters: %w", err)
 	}
+	defer stmt.Close()
+
 	for name, val := range data.Counters {
 		_, err = stmt.Exec(name, val)
 		if err != nil {

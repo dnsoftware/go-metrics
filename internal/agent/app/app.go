@@ -4,7 +4,7 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/agent/domain"
 	"github.com/dnsoftware/go-metrics/internal/agent/infrastructure"
 	"github.com/dnsoftware/go-metrics/internal/constants"
-	storage "github.com/dnsoftware/go-metrics/internal/storage"
+	"github.com/dnsoftware/go-metrics/internal/storage"
 )
 
 func AgentRun() {
