@@ -2,9 +2,10 @@ package app
 
 import (
 	"flag"
+	"log"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/dnsoftware/go-metrics/internal/constants"
-	"log"
 )
 
 type AgentFlags struct {

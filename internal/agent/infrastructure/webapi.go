@@ -5,11 +5,11 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/dnsoftware/go-metrics/internal/logger"
 	"net/http"
 	"strconv"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
 )
 
 type Flags interface {
@@ -83,7 +83,7 @@ func (w *WebSender) sendPlain(mType string, name string, value string) error {
 	request, err := http.NewRequest(http.MethodPost, url, http.NoBody)
 	if err != nil {
 		// обрабатываем ошибку
-		fmt.Println(err)
+		logger.Log().Error(err.Error())
 		return err
 	}
 
@@ -126,14 +126,14 @@ func (w *WebSender) sendJSON(mType string, name string, value string) error {
 	// gzip сжатие
 	buf, err := w.getGzipReader(body)
 	if err != nil {
-		fmt.Println(err)
+		logger.Log().Error(err.Error())
 		return err
 	}
 
 	request, err := http.NewRequest(http.MethodPost, url, buf)
 	if err != nil {
 		// обрабатываем ошибку
-		fmt.Println(err)
+		logger.Log().Error(err.Error())
 		return err
 	}
 

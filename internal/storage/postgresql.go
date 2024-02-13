@@ -103,8 +103,7 @@ func (p *PgStorage) retryExec(query string, args ...any) error {
 	_, err := p.db.Exec(query, args...)
 
 	var pgErr *pgconn.PgError
-	//if errors.As(err, &pgErr) && pgerrcode.IsConnectionException(pgErr.Code) {
-	if errors.As(err, &pgErr) && pgerrcode.IsSyntaxErrororAccessRuleViolation(pgErr.Code) {
+	if errors.As(err, &pgErr) && pgerrcode.IsConnectionException(pgErr.Code) {
 		for _, duration := range durations {
 			d, _ := time.ParseDuration(duration)
 			time.Sleep(d)
@@ -184,14 +183,14 @@ func (p *PgStorage) SetBatch(batch []byte) error {
 		return fmt.Errorf("PgStorage | SetBatch | p.db.Begin(): %w", err)
 	}
 	for _, mt := range metrics {
-		err := errors.New("")
+		errR := errors.New("")
 		if mt.MType == constants.Gauge {
 			query := `INSERT INTO gauges (id, val, updated_at)
 			VALUES ($1, $2, now())
 			ON CONFLICT (id)
 			DO UPDATE
 			SET id = $1, val = $2, updated_at = now()`
-			err = p.retryExec(query, mt.ID, mt.Value)
+			errR = p.retryExec(query, mt.ID, mt.Value)
 		}
 
 		if mt.MType == constants.Counter {
@@ -200,10 +199,10 @@ func (p *PgStorage) SetBatch(batch []byte) error {
 			ON CONFLICT (id)
 			DO UPDATE
 			SET val = counters.val + $2, updated_at = now()`
-			err = p.retryExec(query, mt.ID, mt.Delta)
+			errR = p.retryExec(query, mt.ID, mt.Delta)
 		}
 
-		if err != nil {
+		if errR != nil {
 			tx.Rollback()
 			return fmt.Errorf("PgStorage | SetBatch | Upsert metric: %w", err)
 		}
@@ -290,7 +289,7 @@ func (p *PgStorage) GetDump() (string, error) {
 
 	dump := DumpData{}
 
-	err := *new(error)
+	err := error(nil)
 	dump.Gauges, dump.Counters, err = p.GetAll()
 	if err != nil {
 		return "", fmt.Errorf("PgStorage | GetDump | GetAll: %w", err)

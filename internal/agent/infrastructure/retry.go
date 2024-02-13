@@ -1,10 +1,11 @@
 package infrastructure
 
 import (
-	"github.com/dnsoftware/go-metrics/internal/constants"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 // retryRequest retriable error HTTP запрос
@@ -18,17 +19,14 @@ func retryRequest(r *http.Request) error {
 		for _, duration := range durations {
 			d, _ := time.ParseDuration(duration)
 			time.Sleep(d)
-			respRetry, err := client.Do(r)
-			if err == nil {
-				break
+			respRetry, errRetry := client.Do(r)
+			if errRetry == nil {
+				respRetry.Body.Close()
+				return nil
 			}
-			respRetry.Body.Close()
 		}
-		if err != nil {
-			return err
-		}
+		return err
 	}
 	resp.Body.Close()
-
 	return nil
 }

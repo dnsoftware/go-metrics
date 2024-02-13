@@ -31,10 +31,6 @@ type BackupStorage interface {
 	Load() (string, error)
 }
 
-//type Database interface {
-//	Ping() bool
-//}
-
 type Collector struct {
 	cfg           *config.ServerConfig
 	storage       ServerStorage
@@ -53,7 +49,7 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
 
 	// Если в базой данных не работаем, значит запускаем механизм загрузки дампа базы в память и сохранения дампа базы на диск
 	if !(storage.Type() == constants.DBMS && storage.Health()) {
-		//Загружаем сохраненную базу, если нужно
+		// Загружаем сохраненную базу, если нужно
 		if cfg.RestoreSaved {
 			err := collector.loadFromDump()
 			if err != nil {

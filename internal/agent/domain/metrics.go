@@ -158,13 +158,13 @@ func (m *Metrics) sendMetrics() {
 	for _, metricName := range gaugeMetricsList {
 		val, err := m.storage.GetGauge(metricName)
 		if err != nil {
-			// обработка ошибки
+			logger.Log().Error(err.Error())
 			continue
 		}
 
 		err = m.SendGauge(metricName, val)
 		if err != nil {
-			// обработка ошибки
+			logger.Log().Error(err.Error())
 			continue
 		}
 	}
