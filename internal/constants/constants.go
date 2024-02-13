@@ -69,3 +69,9 @@ const (
 	Memory string = "memory"
 	DBMS   string = "DBMS"
 )
+
+// Периоды повтора для Retriable ошибок
+const (
+	HTTPAttemtPeriods string = "1s,2s,5s"
+	DBAttemtPeriods   string = "1s,2s,5s"
+)

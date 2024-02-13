@@ -71,14 +71,9 @@ func (w *WebSender) SendDataBatch(data []byte) error {
 	request.Header.Set("Content-Type", w.contentType)
 	request.Header.Set("Content-Encoding", constants.EncodingGzip)
 
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	err = retryRequest(request)
 
-	return nil
+	return err
 }
 
 func (w *WebSender) sendPlain(mType string, name string, value string) error {

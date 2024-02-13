@@ -18,8 +18,8 @@ type ServerStorage interface {
 	GetGauge(name string) (float64, error)
 	GetCounter(name string) (int64, error)
 	GetAll() (map[string]float64, map[string]int64, error)
-	GetDump() (string, error)
 
+	GetDump() (string, error)
 	RestoreFromDump(dump string) error
 
 	Type() string // тип хранилища, memory | dbms
