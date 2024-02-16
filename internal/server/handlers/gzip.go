@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"compress/gzip"
-	"github.com/dnsoftware/go-metrics/internal/constants"
 	"io"
 	"net/http"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 // compressWriter реализует интерфейс http.ResponseWriter и позволяет прозрачно для сервера
@@ -66,5 +67,6 @@ func (c *compressReader) Close() error {
 	if err := c.r.Close(); err != nil {
 		return err
 	}
+
 	return c.zr.Close()
 }

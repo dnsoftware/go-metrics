@@ -2,20 +2,20 @@ package handlers
 
 import (
 	"bytes"
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/dnsoftware/go-metrics/internal/logger"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
+	"go.uber.org/zap"
 )
 
 type Middleware func(http.Handler) http.Handler
 
 func trimEnd(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		// очистка от конечных пробелов
 		r.URL.Path = strings.TrimSpace(r.URL.Path)
 		// очистка от конечных слешей
@@ -28,9 +28,7 @@ func trimEnd(next http.Handler) http.Handler {
 // WithLogging добавляет дополнительный код для регистрации сведений о запросе
 // и возвращает новый http.Handler.
 func WithLogging(h http.Handler) http.Handler {
-
 	logFn := func(w http.ResponseWriter, r *http.Request) {
-
 		start := time.Now()
 
 		rd := &responseData{
@@ -71,7 +69,6 @@ func WithLogging(h http.Handler) http.Handler {
 }
 
 func GzipMiddleware(h http.Handler) http.Handler {
-
 	gzipFn := func(w http.ResponseWriter, r *http.Request) {
 		// по умолчанию устанавливаем оригинальный http.ResponseWriter как тот,
 		// который будем передавать следующей функции
@@ -79,6 +76,7 @@ func GzipMiddleware(h http.Handler) http.Handler {
 
 		// проверяем, что клиент умеет получать от сервера сжатые данные в формате gzip
 		acceptEncoding := r.Header.Get("Accept-Encoding")
+
 		supportsGzip := strings.Contains(acceptEncoding, constants.EncodingGzip)
 		if supportsGzip {
 			// оборачиваем оригинальный http.ResponseWriter новым с поддержкой сжатия
@@ -91,6 +89,7 @@ func GzipMiddleware(h http.Handler) http.Handler {
 
 		// проверяем, что клиент отправил серверу сжатые данные в формате gzip
 		contentEncoding := r.Header.Get("Content-Encoding")
+
 		sendsGzip := strings.Contains(contentEncoding, constants.EncodingGzip)
 		if sendsGzip {
 			// оборачиваем тело запроса в io.Reader с поддержкой декомпрессии

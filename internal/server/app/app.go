@@ -1,16 +1,16 @@
 package app
 
 import (
+	"net/http"
+
 	"github.com/dnsoftware/go-metrics/internal/logger"
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
 	"github.com/dnsoftware/go-metrics/internal/server/config"
 	"github.com/dnsoftware/go-metrics/internal/server/handlers"
 	"github.com/dnsoftware/go-metrics/internal/storage"
-	"net/http"
 )
 
 func ServerRun() {
-
 	srvLogger := logger.Log()
 	defer srvLogger.Sync()
 
@@ -21,25 +21,23 @@ func ServerRun() {
 		panic(err)
 	}
 
+	var repo collector.ServerStorage
 	var collect *collector.Collector
-	repoPostgresql, err := storage.NewPostgresqlStorage(cfg.DatabaseDSN)
-	if err == nil { // значит база рабочая - используем Postgresql
-		collect, err = collector.NewCollector(cfg, repoPostgresql, backupStorage)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		repoMemory := storage.NewMemStorage()
-		collect, err = collector.NewCollector(cfg, repoMemory, backupStorage)
-		if err != nil {
-			panic(err)
-		}
+
+	repo, err = storage.NewPostgresqlStorage(cfg.DatabaseDSN)
+	if err != nil { // значит база НЕ рабочая - используем Memory
+		repo = storage.NewMemStorage()
 	}
 
-	server := handlers.NewHTTPServer(collect)
-	err = http.ListenAndServe(cfg.ServerAddress, server.Router)
+	collect, err = collector.NewCollector(cfg, repo, backupStorage)
 	if err != nil {
 		panic(err)
 	}
 
+	server := handlers.NewHTTPServer(collect)
+
+	err = http.ListenAndServe(cfg.ServerAddress, server.Router)
+	if err != nil {
+		panic(err)
+	}
 }

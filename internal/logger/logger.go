@@ -22,17 +22,18 @@ var once sync.Once
 func Log() *logger {
 	once.Do(func() {
 		var err error
+
 		projectLogger, err = createLogger(constants.LogFile, constants.LogLevel)
 		if err != nil {
 			log.Fatal(err)
 		}
 	})
+
 	return projectLogger
 }
 
 // логирование в файл и в консоль
 func createLogger(filename string, logLevel zapcore.Level) (*logger, error) {
-
 	// формат времени "2006-01-02T15:04:05.000Z0700"
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.ISO8601TimeEncoder

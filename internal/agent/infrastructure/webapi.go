@@ -40,7 +40,6 @@ func NewWebSender(protocol string, flags Flags, contentType string) WebSender {
 
 // SendData Отправка по одной метрике, через url или через json
 func (w *WebSender) SendData(mType string, name string, value string) error {
-
 	switch w.contentType {
 	case constants.TextPlain, constants.TextHTML:
 		return w.sendPlain(mType, name, value)
@@ -77,7 +76,6 @@ func (w *WebSender) SendDataBatch(data []byte) error {
 }
 
 func (w *WebSender) sendPlain(mType string, name string, value string) error {
-
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction + "/" + mType + "/" + name + "/" + value
 
 	request, err := http.NewRequest(http.MethodPost, url, http.NoBody)
@@ -90,18 +88,18 @@ func (w *WebSender) sendPlain(mType string, name string, value string) error {
 	request.Header.Set("Content-Type", w.contentType)
 
 	client := &http.Client{}
+
 	resp, err := client.Do(request)
 	if err != nil {
 		return err
 	}
+
 	defer resp.Body.Close()
 
 	return nil
-
 }
 
 func (w *WebSender) sendJSON(mType string, name string, value string) error {
-
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction
 
 	data := Metrics{
@@ -141,6 +139,7 @@ func (w *WebSender) sendJSON(mType string, name string, value string) error {
 	request.Header.Set("Content-Encoding", constants.EncodingGzip)
 
 	client := &http.Client{}
+
 	resp, err := client.Do(request)
 	if err != nil {
 		return err
@@ -153,13 +152,15 @@ func (w *WebSender) sendJSON(mType string, name string, value string) error {
 // gzip компрессор входяшего потока байтов
 // возврат *bytes.Buffer, реализующего интерфейс io.Reader
 func (w *WebSender) getGzipReader(data []byte) (*bytes.Buffer, error) {
-
 	buf := bytes.NewBuffer(nil)
+
 	zb := gzip.NewWriter(buf)
+
 	_, err := zb.Write(data)
 	if err != nil {
 		return nil, err
 	}
+
 	zb.Close()
 
 	return buf, nil

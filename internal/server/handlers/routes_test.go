@@ -1,20 +1,20 @@
 package handlers
 
 import (
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
 	"github.com/dnsoftware/go-metrics/internal/server/config"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestHTTPServer_rootHandler(t *testing.T) {
-
 	const (
 		ctTextPlain string = "text/plain"
 	)
@@ -133,7 +133,6 @@ func TestHTTPServer_rootHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			cfg := config.ServerConfig{
 				ServerAddress:   "localhost:8080",
 				StoreInterval:   constants.BackupPeriod,
@@ -156,10 +155,8 @@ func TestHTTPServer_rootHandler(t *testing.T) {
 			defer result.Body.Close()
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
-
 		})
 	}
-
 }
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
@@ -177,7 +174,6 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 }
 
 func TestRouter(t *testing.T) {
-
 	cfg := config.ServerConfig{
 		ServerAddress:   "localhost:8080",
 		StoreInterval:   constants.BackupPeriod,
@@ -192,6 +188,7 @@ func TestRouter(t *testing.T) {
 	ts := httptest.NewServer(server.Router)
 
 	postData := "982"
+
 	respPost, _ := testRequest(t, ts, "POST", "/update/counter/testSetGet33/"+postData)
 	defer respPost.Body.Close()
 
@@ -203,5 +200,4 @@ func TestRouter(t *testing.T) {
 	assert.Equal(t, http.StatusOK, respGet.StatusCode)
 
 	assert.Equal(t, postData, get)
-
 }

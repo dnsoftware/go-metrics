@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/go-chi/chi/v5"
-	"net/http"
 )
 
 type Collector interface {
@@ -47,7 +48,6 @@ type (
 )
 
 func NewHTTPServer(collector Collector) HTTPServer {
-
 	h := HTTPServer{
 		collector: collector,
 		Router:    NewRouter(),
@@ -78,6 +78,7 @@ func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	// записываем ответ, используя оригинальный http.ResponseWriter
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size // захватываем размер
+
 	return size, err
 }
 

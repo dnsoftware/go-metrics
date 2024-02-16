@@ -19,14 +19,18 @@ func retryRequest(r *http.Request) error {
 		for _, duration := range durations {
 			d, _ := time.ParseDuration(duration)
 			time.Sleep(d)
+
 			respRetry, errRetry := client.Do(r)
 			if errRetry == nil {
 				respRetry.Body.Close()
 				return nil
 			}
 		}
+
 		return err
 	}
+
 	resp.Body.Close()
+
 	return nil
 }

@@ -18,15 +18,16 @@ type AgentFlags struct {
 // возвращает соответствующую структуру
 // а также проверяет переменные окружения и задействует их при наличии
 func NewAgentFlags() AgentFlags {
-
 	type Config struct {
 		RunAddr        string `env:"ADDRESS"`
 		ReportInterval int64  `env:"REPORT_INTERVAL"`
 		PollInterval   int64  `env:"POLL_INTERVAL"`
 	}
 
-	var cfg Config
-	var flags AgentFlags
+	var (
+		cfg   Config
+		flags AgentFlags
+	)
 
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -43,9 +44,11 @@ func NewAgentFlags() AgentFlags {
 	if cfg.RunAddr != "" {
 		flags.flagRunAddr = cfg.RunAddr
 	}
+
 	if cfg.ReportInterval != 0 {
 		flags.flagReportInterval = cfg.ReportInterval
 	}
+
 	if cfg.PollInterval != 0 {
 		flags.flagPollInterval = cfg.PollInterval
 	}

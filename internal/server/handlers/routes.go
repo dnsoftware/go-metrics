@@ -3,11 +3,12 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/go-chi/chi/v5"
 )
 
 func NewRouter() chi.Router {
@@ -21,10 +22,10 @@ func (h *HTTPServer) getAllMetrics(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusNotFound)
 	}
+
 	res.Header().Set("Content-Type", constants.TextHTML)
 	res.WriteHeader(http.StatusOK)
 	res.Write([]byte(val))
-
 }
 
 func (h *HTTPServer) noMetricType(res http.ResponseWriter, req *http.Request) {
@@ -40,7 +41,6 @@ func (h *HTTPServer) noMetricValue(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
-
 	metricType := chi.URLParam(req, constants.MetricType)
 	metricName := chi.URLParam(req, constants.MetricName)
 	metricValue := chi.URLParam(req, constants.MetricValue)
@@ -83,12 +83,12 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 
 		res.WriteHeader(http.StatusOK)
 	}
-
 }
 
 // обновление метрики json формат
 func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request) {
 	var buf bytes.Buffer
+
 	var metrics Metrics
 
 	_, err := buf.ReadFrom(req.Body)
@@ -108,16 +108,15 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 	}
 
 	if metrics.MType == constants.Gauge {
-
-		err = h.collector.SetGaugeMetric(metrics.ID, *metrics.Value)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
+		errG := h.collector.SetGaugeMetric(metrics.ID, *metrics.Value)
+		if errG != nil {
+			http.Error(res, errG.Error(), http.StatusBadRequest)
 			return
 		}
 
-		newMetric, err := h.collector.GetGaugeMetric(metrics.ID)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
+		newMetric, errG := h.collector.GetGaugeMetric(metrics.ID)
+		if errG != nil {
+			http.Error(res, errG.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -126,9 +125,10 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 			MType: metrics.MType,
 			Value: &newMetric,
 		}
-		resp, err := json.Marshal(respMetric)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
+
+		resp, errG := json.Marshal(respMetric)
+		if errG != nil {
+			http.Error(res, errG.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -138,21 +138,15 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 	}
 
 	if metrics.MType == constants.Counter {
-
-		if err != nil {
-			http.Error(res, "Incorrect metric value!", http.StatusBadRequest)
+		errC := h.collector.SetCounterMetric(metrics.ID, *metrics.Delta)
+		if errC != nil {
+			http.Error(res, errC.Error(), http.StatusBadRequest)
 			return
 		}
 
-		err = h.collector.SetCounterMetric(metrics.ID, *metrics.Delta)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		newMetric, err := h.collector.GetCounterMetric(metrics.ID)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
+		newMetric, errC := h.collector.GetCounterMetric(metrics.ID)
+		if errC != nil {
+			http.Error(res, errC.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -161,9 +155,10 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 			MType: metrics.MType,
 			Delta: &newMetric,
 		}
-		resp, err := json.Marshal(respMetric)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
+
+		resp, errC := json.Marshal(respMetric)
+		if errC != nil {
+			http.Error(res, errC.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -191,11 +186,9 @@ func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Reques
 
 	res.Header().Set("Content-Type", constants.ApplicationJSON)
 	res.WriteHeader(http.StatusOK)
-
 }
 
 func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) {
-
 	metricType := chi.URLParam(req, constants.MetricType)
 	metricName := chi.URLParam(req, constants.MetricName)
 
@@ -214,8 +207,8 @@ func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) 
 }
 
 func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Request) {
-
 	var buf bytes.Buffer
+
 	var metrics Metrics
 
 	_, err := buf.ReadFrom(req.Body)
@@ -236,16 +229,18 @@ func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Reque
 
 	switch metrics.MType {
 	case constants.Gauge:
-		val, err := h.collector.GetGaugeMetric(metrics.ID)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusNotFound)
+		val, errG := h.collector.GetGaugeMetric(metrics.ID)
+		if errG != nil {
+			http.Error(res, errG.Error(), http.StatusNotFound)
 		}
+
 		metrics.Value = &val
 	case constants.Counter:
-		val, err := h.collector.GetCounterMetric(metrics.ID)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusNotFound)
+		val, errC := h.collector.GetCounterMetric(metrics.ID)
+		if errC != nil {
+			http.Error(res, errC.Error(), http.StatusNotFound)
 		}
+
 		metrics.Delta = &val
 	}
 
@@ -313,9 +308,9 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 
 	switch parts[1] {
 	case constants.UpdateAction:
-
 		metricType := parts[2]
 		metricName := parts[3]
+
 		if metricType == constants.Gauge {
 			gaugeVal, err := strconv.ParseFloat(parts[4], 64)
 
@@ -355,7 +350,6 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 	default:
 		h.unrecognized(res, req)
 	}
-
 }
 
 func (h *HTTPServer) unrecognized(res http.ResponseWriter, req *http.Request) {
@@ -363,7 +357,6 @@ func (h *HTTPServer) unrecognized(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *HTTPServer) databasePing(res http.ResponseWriter, req *http.Request) {
-
 	isConnected := h.collector.DatabasePing()
 
 	if isConnected {
@@ -371,5 +364,4 @@ func (h *HTTPServer) databasePing(res http.ResponseWriter, req *http.Request) {
 	} else {
 		res.WriteHeader(http.StatusInternalServerError)
 	}
-
 }

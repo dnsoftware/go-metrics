@@ -40,7 +40,6 @@ func (m *MemStorage) GetGauge(name string) (float64, error) {
 	} else {
 		return 0, errors.New("no such metric")
 	}
-
 }
 
 func (m *MemStorage) SetCounter(name string, value int64) error {
@@ -82,9 +81,9 @@ func (m *MemStorage) GetCounter(name string) (int64, error) {
 
 	if value, ok := m.Counters[name]; ok {
 		return value, nil
-	} else {
-		return 0, errors.New("no such metric")
 	}
+
+	return 0, errors.New("no such metric")
 }
 
 // возврат карт gauge и counters
@@ -97,7 +96,6 @@ func (m *MemStorage) GetAll() (map[string]float64, map[string]int64, error) {
 
 // получение json дампа
 func (m *MemStorage) GetDump() (string, error) {
-
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -111,7 +109,6 @@ func (m *MemStorage) GetDump() (string, error) {
 
 // восстановление из json дампа
 func (m *MemStorage) RestoreFromDump(dump string) error {
-
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 

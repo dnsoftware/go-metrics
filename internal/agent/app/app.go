@@ -8,7 +8,6 @@ import (
 )
 
 func AgentRun() {
-
 	flags := NewAgentFlags()
 
 	repository := storage.NewMemStorage()
@@ -18,5 +17,4 @@ func AgentRun() {
 
 	metrics := domain.NewMetrics(repository, &sender, &flags)
 	metrics.Start()
-
 }

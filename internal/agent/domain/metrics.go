@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"reflect"
 	"runtime"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -71,6 +72,7 @@ func (m *Metrics) Start() {
 
 	// обновление метрик
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 
@@ -84,11 +86,11 @@ func (m *Metrics) Start() {
 				time.Sleep(time.Duration(m.pollInterval) * time.Second)
 			}
 		}
-
 	}()
 
 	// отправка метрик
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 
@@ -102,7 +104,6 @@ func (m *Metrics) Start() {
 				// в старом API было m.sendMetrics()
 				m.sendMetricsBatch()
 			}
-
 		}
 	}()
 
@@ -111,7 +112,6 @@ func (m *Metrics) Start() {
 }
 
 func (m *Metrics) updateMetrics() {
-
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	mCounter, err := m.storage.GetCounter(constants.PollCount)
@@ -120,6 +120,7 @@ func (m *Metrics) updateMetrics() {
 	}
 
 	runtime.ReadMemStats(&m.metrics)
+
 	for _, metricName := range gaugeMetricsList {
 		mType, ok := reflect.TypeOf(&m.metrics).Elem().FieldByName(metricName)
 		if ok { // если поле найдено
@@ -135,21 +136,20 @@ func (m *Metrics) updateMetrics() {
 				m.storage.SetGauge(metricName, metricValue.Float())
 			default:
 				// действия при неучтенном типе
+				logger.Log().Error("неучтенный тип метрики: " + tp)
 			}
 
 			mCounter++
-
 		} else if metricName == constants.RandomValue {
 			m.storage.SetGauge(metricName, rng.Float64())
+
 			mCounter++
 		} else {
 			// ... логируем ошибку, или еще что-то
 			continue
 		}
 	}
-
 	m.storage.SetCounter(constants.PollCount, mCounter)
-
 }
 
 func (m *Metrics) sendMetrics() {
@@ -181,13 +181,11 @@ func (m *Metrics) sendMetrics() {
 		fmt.Println("Set PollCounter error: " + err.Error())
 	}
 
-	m.storage.SetCounter(constants.PollCount, 0)
-
+	_ = m.storage.SetCounter(constants.PollCount, 0)
 }
 
 // отправка метрик пакетом
 func (m *Metrics) sendMetricsBatch() {
-
 	var batch []MetricsItem
 
 	// gauges
@@ -209,6 +207,7 @@ func (m *Metrics) sendMetricsBatch() {
 	pollCount, err := m.storage.GetCounter(constants.PollCount)
 	if err != nil {
 		logger.Log().Error(err.Error())
+
 		pollCount = 0
 	}
 
@@ -228,11 +227,9 @@ func (m *Metrics) sendMetricsBatch() {
 	if err != nil {
 		logger.Log().Error(err.Error())
 	}
-
 }
 
 func (m *Metrics) SendGauge(name string, value float64) error {
-
 	err := m.sender.SendData(constants.Gauge, name, fmt.Sprintf("%f", value))
 	if err != nil {
 		return err
@@ -242,8 +239,8 @@ func (m *Metrics) SendGauge(name string, value float64) error {
 }
 
 func (m *Metrics) SendCounter(name string, value int64) error {
+	v := strconv.FormatInt(value, 10)
 
-	v := fmt.Sprintf("%d", value)
 	err := m.sender.SendData(constants.Counter, name, v)
 	if err != nil {
 		return err

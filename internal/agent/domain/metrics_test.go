@@ -4,11 +4,11 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestMetrics_repo(t *testing.T) {
-
 	// работа с репозиторием
 	repo := storage.NewMemStorage()
 
@@ -25,13 +25,12 @@ func TestMetrics_repo(t *testing.T) {
 	testVal := float64(123456)
 	repo.SetGauge("Alloc", testVal)
 	checkVal, err = repo.GetGauge("Alloc")
-	assert.Equal(t, testVal, checkVal, "Добавленное в репозиторий должно быть равно извлеченному из репозитория")
-	assert.NoError(t, err, "Добавление/обновление в репозиторий должно быть без ошибок")
+	assert.InEpsilon(t, testVal, checkVal, 0.0001, "Добавленное в репозиторий должно быть равно извлеченному из репозитория")
+	require.NoError(t, err, "Добавление/обновление в репозиторий должно быть без ошибок")
 
 	testValCnt := int64(23456)
 	repo.SetCounter(constants.PollCount, testValCnt)
 	checkValCnt, err = repo.GetCounter(constants.PollCount)
 	assert.Equal(t, testValCnt, checkValCnt, "Добавленное в репозиторий counter должно быть равно извлеченному из репозитория")
-	assert.NoError(t, err, "Добавление/обновление в репозиторий counter должно быть без ошибок")
-
+	require.NoError(t, err, "Добавление/обновление в репозиторий counter должно быть без ошибок")
 }

@@ -40,7 +40,6 @@ type Collector struct {
 var gaugeMetricsList = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
 func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage BackupStorage) (*Collector, error) {
-
 	collector := &Collector{
 		cfg:           cfg,
 		storage:       storage,
@@ -56,6 +55,7 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
 				return nil, err
 			}
 		}
+
 		collector.startBackup()
 	}
 
@@ -83,7 +83,6 @@ func (c *Collector) isMetric(mType string, name string) bool {
 }
 
 func (c *Collector) SetGaugeMetric(metricName string, metricValue float64) error {
-
 	err := c.storage.SetGauge(metricName, metricValue)
 	if err != nil {
 		return err
@@ -100,15 +99,14 @@ func (c *Collector) SetGaugeMetric(metricName string, metricValue float64) error
 	return nil
 }
 func (c *Collector) GetGaugeMetric(metricName string) (float64, error) {
-
 	return c.storage.GetGauge(metricName)
 }
 
 // Прибавляем к уже существующему значению
 func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error {
-
 	oldVal, _ := c.storage.GetCounter(metricName)
 	newVal := oldVal + metricValue
+
 	err := c.storage.SetCounter(metricName, newVal)
 	if err != nil {
 		return err
@@ -116,9 +114,9 @@ func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error
 
 	// если бэкап синхронный и указан файл
 	if c.cfg.StoreInterval == constants.BackupPeriodSync && c.cfg.FileStoragePath != "" {
-		err := c.generateDump()
-		if err != nil {
-			return err
+		errB := c.generateDump()
+		if errB != nil {
+			return errB
 		}
 	}
 
@@ -126,19 +124,15 @@ func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error
 }
 
 func (c *Collector) SetBatchMetrics(batch []byte) error {
-
 	return c.storage.SetBatch(batch)
-
 }
 
 func (c *Collector) GetCounterMetric(metricName string) (int64, error) {
-
 	return c.storage.GetCounter(metricName)
 }
 
 // получение метрики в текстовом виде
 func (c *Collector) GetMetric(metricType string, metricName string) (string, error) {
-
 	var valStr string
 
 	switch metricType {
@@ -155,16 +149,16 @@ func (c *Collector) GetMetric(metricType string, metricName string) (string, err
 		if err != nil {
 			return "", err
 		}
-		valStr = fmt.Sprintf("%v", val)
+
+		valStr = strconv.FormatInt(val, 10)
 	default:
 		return "", errors.New("bad metric type")
 	}
 
 	return valStr, nil
-
 }
 
-// все метрики списком
+// GetAll все метрики списком
 func (c *Collector) GetAll() (string, error) {
 	gauges, counters, err := c.storage.GetAll()
 	if err != nil {
@@ -177,7 +171,7 @@ func (c *Collector) GetAll() (string, error) {
 	}
 
 	for key, val := range counters {
-		mList = mList + key + ": " + fmt.Sprintf("%v", val) + "\n"
+		mList = mList + key + ": " + strconv.FormatInt(val, 10) + "\n"
 	}
 
 	return mList, nil
@@ -185,7 +179,6 @@ func (c *Collector) GetAll() (string, error) {
 
 // сохранение дампа в файл
 func (c *Collector) generateDump() error {
-
 	dump, err := c.storage.GetDump()
 	if err != nil {
 		logger.Log().Error(err.Error())
@@ -203,7 +196,6 @@ func (c *Collector) generateDump() error {
 
 // загрузка данных из дампа
 func (c *Collector) loadFromDump() error {
-
 	dump, err := c.backupStorage.Load()
 	if err != nil {
 		logger.Log().Error(err.Error())
@@ -226,7 +218,6 @@ func (c *Collector) loadFromDump() error {
 
 // периодическое сохранение метрик
 func (c *Collector) startBackup() {
-
 	// если обновление синхронное - не запускаем периодическое обновление
 	if c.cfg.StoreInterval == constants.BackupPeriodSync {
 		return
@@ -238,21 +229,21 @@ func (c *Collector) startBackup() {
 	}
 
 	backupPeriod := time.Duration(c.cfg.StoreInterval) * time.Second
+
 	go func() {
 		for {
 			time.Sleep(backupPeriod)
+
 			err := c.generateDump()
 			if err != nil {
 				logger.Log().Error(err.Error())
 			}
 		}
 	}()
-
 }
 
 // DatabasePing проверка работоспособности СУБД
 func (c *Collector) DatabasePing() bool {
-
 	t := c.storage.Type()
 	h := c.storage.Health()
 	fmt.Println(t, h)

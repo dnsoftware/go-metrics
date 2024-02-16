@@ -16,7 +16,6 @@ type BackupStorage struct {
 }
 
 func NewBackupStorage(filename string) (*BackupStorage, error) {
-
 	// открываем
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
@@ -31,7 +30,6 @@ func NewBackupStorage(filename string) (*BackupStorage, error) {
 
 // сохранение в файл
 func (b *BackupStorage) Save(dump string) error {
-
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -55,7 +53,6 @@ func (b *BackupStorage) Save(dump string) error {
 
 // получение данных из файла
 func (b *BackupStorage) Load() (string, error) {
-
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 

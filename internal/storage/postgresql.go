@@ -35,7 +35,6 @@ type DumpData struct {
 }
 
 func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
-
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		logger.Log().Error(err.Error())
@@ -58,7 +57,6 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
 
 // формирование структуры БД
 func (p *PgStorage) createDatabaseTables() error {
-
 	var query string
 
 	// gauges
@@ -68,6 +66,7 @@ func (p *PgStorage) createDatabaseTables() error {
 			    val double precision NOT NULL,
 			    updated_at timestamp with time zone NOT NULL
 			)`
+
 	err := p.retryExec(query)
 	if err != nil {
 		return err
@@ -80,6 +79,7 @@ func (p *PgStorage) createDatabaseTables() error {
 			    val bigint NOT NULL,
 			    updated_at timestamp with time zone NOT NULL
 			)`
+
 	err = p.retryExec(query)
 	if err != nil {
 		return err
@@ -107,11 +107,13 @@ func (p *PgStorage) retryExec(query string, args ...any) error {
 		for _, duration := range durations {
 			d, _ := time.ParseDuration(duration)
 			time.Sleep(d)
+
 			_, err = p.db.Exec(query, args...)
 			if err == nil {
 				break
 			}
 		}
+
 		if err != nil {
 			return fmt.Errorf("retryExec | ConnectionException: %w", err)
 		}
@@ -125,7 +127,6 @@ func (p *PgStorage) retryExec(query string, args ...any) error {
 }
 
 func (p *PgStorage) SetGauge(name string, value float64) error {
-
 	query := `INSERT INTO gauges (id, val, updated_at)
 			VALUES ($1, $2, now())
 			ON CONFLICT (id)
@@ -141,11 +142,11 @@ func (p *PgStorage) SetGauge(name string, value float64) error {
 }
 
 func (p *PgStorage) GetGauge(name string) (float64, error) {
-
 	query := `SELECT val FROM gauges WHERE id = $1`
 	row := p.db.QueryRow(query, name)
 
 	var val float64
+
 	err := row.Scan(&val)
 	if err != nil {
 		return 0, fmt.Errorf("PgStorage | GetGauge: %w", err)
@@ -155,12 +156,12 @@ func (p *PgStorage) GetGauge(name string) (float64, error) {
 }
 
 func (p *PgStorage) SetCounter(name string, value int64) error {
-
 	query := `INSERT INTO counters (id, val, updated_at)
 			VALUES ($1, $2, now())
 			ON CONFLICT (id)
 			DO UPDATE
 			SET id = $1, val = $2`
+
 	err := p.retryExec(query, name, value)
 	if err != nil {
 		return fmt.Errorf("PgStorage | SetCounter: %w", err)
@@ -182,8 +183,10 @@ func (p *PgStorage) SetBatch(batch []byte) error {
 	if err != nil {
 		return fmt.Errorf("PgStorage | SetBatch | p.db.Begin(): %w", err)
 	}
+
 	for _, mt := range metrics {
 		errR := errors.New("")
+
 		if mt.MType == constants.Gauge {
 			query := `INSERT INTO gauges (id, val, updated_at)
 			VALUES ($1, $2, now())
@@ -217,11 +220,11 @@ func (p *PgStorage) SetBatch(batch []byte) error {
 }
 
 func (p *PgStorage) GetCounter(name string) (int64, error) {
-
 	query := `SELECT val FROM counters WHERE id = $1`
 	row := p.db.QueryRow(query, name)
 
 	var val int64
+
 	err := row.Scan(&val)
 	if err != nil {
 		return 0, fmt.Errorf("PgStorage | GetCounter: %w", err)
@@ -232,7 +235,6 @@ func (p *PgStorage) GetCounter(name string) (int64, error) {
 
 // возврат карт gauge и counters
 func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
-
 	// gauges
 	gRows, err := p.db.Query(`SELECT id, val FROM gauges`)
 	if err != nil {
@@ -244,6 +246,7 @@ func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
 		Gauges:   make(map[string]float64),
 		Counters: make(map[string]int64),
 	}
+
 	for gRows.Next() {
 		v := Gauge{}
 
@@ -251,6 +254,7 @@ func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
 		if err != nil {
 			return nil, nil, fmt.Errorf("PgStorage | GetAll | gauges Next: %w", err)
 		}
+
 		dump.Gauges[v.name] = v.value
 	}
 
@@ -273,6 +277,7 @@ func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
 		if err != nil {
 			return nil, nil, fmt.Errorf("PgStorage | GetAll | counters Next: %w", err)
 		}
+
 		dump.Counters[v.name] = v.value
 	}
 
@@ -286,10 +291,10 @@ func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
 
 // получение json дампа
 func (p *PgStorage) GetDump() (string, error) {
-
 	dump := DumpData{}
 
-	err := error(nil)
+	var err error
+
 	dump.Gauges, dump.Counters, err = p.GetAll()
 	if err != nil {
 		return "", fmt.Errorf("PgStorage | GetDump | GetAll: %w", err)
@@ -305,7 +310,6 @@ func (p *PgStorage) GetDump() (string, error) {
 
 // восстановление из json дампа old version
 func (p *PgStorage) OldRestoreFromDump(dump string) error {
-
 	data := DumpData{}
 
 	err := json.Unmarshal([]byte(dump), &data)
@@ -332,7 +336,6 @@ func (p *PgStorage) OldRestoreFromDump(dump string) error {
 
 // восстановление из json дампа
 func (p *PgStorage) RestoreFromDump(dump string) error {
-
 	data := DumpData{}
 
 	err := json.Unmarshal([]byte(dump), &data)
@@ -347,6 +350,7 @@ func (p *PgStorage) RestoreFromDump(dump string) error {
 	}
 
 	queryDel := `TRUNCATE gauges, counters`
+
 	err = p.retryExec(queryDel)
 	if err != nil {
 		tx.Rollback()

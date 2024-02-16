@@ -25,7 +25,6 @@ type serverFlags struct {
 }
 
 func NewServerConfig() *ServerConfig {
-
 	cfg := &ServerConfig{}
 	sf := serverFlags{}
 
@@ -45,15 +44,19 @@ func NewServerConfig() *ServerConfig {
 	if cfg.ServerAddress == "" {
 		cfg.ServerAddress = sf.serverAddress
 	}
+
 	if cfg.StoreInterval == -1 {
 		cfg.StoreInterval = sf.storeInterval
 	}
+
 	if cfg.FileStoragePath == "none" {
 		cfg.FileStoragePath = sf.fileStoragePath
 	}
+
 	if _, ok := os.LookupEnv(constants.RestoreSavedEnv); !ok {
 		cfg.RestoreSaved = sf.restoreSaved
 	}
+
 	if cfg.DatabaseDSN == "" {
 		cfg.DatabaseDSN = sf.databaseDSN
 	}
