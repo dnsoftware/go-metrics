@@ -8,17 +8,15 @@ import (
 )
 
 type MemStorage struct {
-	storageType string
-	mutex       sync.Mutex
-	Gauges      map[string]float64 `json:"gauges"`
-	Counters    map[string]int64   `json:"counters"`
+	mutex    sync.Mutex
+	Gauges   map[string]float64 `json:"gauges"`
+	Counters map[string]int64   `json:"counters"`
 }
 
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
-		storageType: constants.Memory,
-		Gauges:      make(map[string]float64),
-		Counters:    make(map[string]int64),
+		Gauges:   make(map[string]float64),
+		Counters: make(map[string]int64),
 	}
 }
 
@@ -120,10 +118,6 @@ func (m *MemStorage) RestoreFromDump(dump string) error {
 	return nil
 }
 
-func (m *MemStorage) Type() string {
-	return m.storageType
-}
-
-func (m *MemStorage) Health() bool {
-	return true
+func (m *MemStorage) DatabasePing() bool {
+	return false
 }

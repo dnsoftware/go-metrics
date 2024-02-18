@@ -22,8 +22,7 @@ type ServerStorage interface {
 	GetDump() (string, error)
 	RestoreFromDump(dump string) error
 
-	Type() string // тип хранилища, memory | dbms
-	Health() bool // проверка работоспособности
+	DatabasePing() bool
 }
 
 type BackupStorage interface {
@@ -46,18 +45,15 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
 		backupStorage: backupStorage,
 	}
 
-	// Если в базой данных не работаем, значит запускаем механизм загрузки дампа базы в память и сохранения дампа базы на диск
-	if !(storage.Type() == constants.DBMS && storage.Health()) {
-		// Загружаем сохраненную базу, если нужно
-		if cfg.RestoreSaved {
-			err := collector.loadFromDump()
-			if err != nil {
-				return nil, err
-			}
+	// Загружаем сохраненную базу, если нужно
+	if cfg.RestoreSaved {
+		err := collector.loadFromDump()
+		if err != nil {
+			return nil, err
 		}
-
-		collector.startBackup()
 	}
+
+	collector.startBackup()
 
 	return collector, nil
 }
@@ -244,13 +240,5 @@ func (c *Collector) startBackup() {
 
 // DatabasePing проверка работоспособности СУБД
 func (c *Collector) DatabasePing() bool {
-	t := c.storage.Type()
-	h := c.storage.Health()
-	fmt.Println(t, h)
-
-	if c.storage.Type() == constants.DBMS && c.storage.Health() {
-		return true
-	}
-
-	return false
+	return c.storage.DatabasePing()
 }

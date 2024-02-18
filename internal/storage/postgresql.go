@@ -15,8 +15,7 @@ import (
 )
 
 type PgStorage struct {
-	storageType string
-	db          *sql.DB
+	db *sql.DB
 }
 
 type Gauge struct {
@@ -42,8 +41,7 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
 	}
 
 	ps := &PgStorage{
-		storageType: constants.DBMS,
-		db:          db,
+		db: db,
 	}
 
 	// создание таблиц, если не существуют
@@ -86,15 +84,6 @@ func (p *PgStorage) createDatabaseTables() error {
 	}
 
 	return nil
-}
-
-func (p *PgStorage) Type() string {
-	return p.storageType
-}
-
-// Health проверка работоспособности соединения с БД
-func (p *PgStorage) Health() bool {
-	return p.db.Ping() == nil
 }
 
 func (p *PgStorage) retryExec(query string, args ...any) error {
@@ -396,4 +385,9 @@ func (p *PgStorage) RestoreFromDump(dump string) error {
 	}
 
 	return nil
+}
+
+// DatabasePing проверка работоспособности соединения с БД
+func (p *PgStorage) DatabasePing() bool {
+	return p.db.Ping() == nil
 }

@@ -116,7 +116,7 @@ func (m *Metrics) updateMetrics() {
 
 	mCounter, err := m.storage.GetCounter(constants.PollCount)
 	if err != nil {
-		fmt.Println(err)
+		logger.Log().Error(err.Error())
 	}
 
 	runtime.ReadMemStats(&m.metrics)
@@ -177,8 +177,7 @@ func (m *Metrics) sendMetrics() {
 
 	err = m.SendCounter(constants.PollCount, cValue)
 	if err != nil {
-		// обработка
-		fmt.Println("Set PollCounter error: " + err.Error())
+		logger.Log().Error("Set PollCounter error: " + err.Error())
 	}
 
 	_ = m.storage.SetCounter(constants.PollCount, 0)
