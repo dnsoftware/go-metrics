@@ -171,22 +171,79 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 		return fmt.Errorf("PgStorage | SetBatch | json.Unmarshal: %w", err)
 	}
 
-	// старт транзакции
-	tx, err := p.db.Begin()
-	if err != nil {
-		return fmt.Errorf("PgStorage | SetBatch | p.db.Begin(): %w", err)
+	/* Логика нижеследующего кода (реализация одного запроса INSERT со множеством значений сразу):
+
+	Используется SQL запрос вида:
+		INSERT INTO gauges (id, val, updated_at)
+		VALUES ($1, $2, now()), ($3, $4, now()),...
+		ON CONFLICT (id)
+		DO UPDATE
+		SET val = EXCLUDED.val, updated_at = now()
+
+	параметры для подстановки имеют нумерацию по принципу:
+		$1, $2 - название метрики, значение метрики для первой записи
+		$3, $4 - название метрики, значение метрики для второй записи
+		...
+
+	поэтому формируем срезы таких данных:
+		gaugesKeyVal - для gauges
+		countersKeyVal - для counters
+	для дальнейшей генерации SQL запроса:
+		p.db.ExecContext(ctx, query, gaugesKeyVal...)
+		p.db.ExecContext(ctx, query, countersKeyVal...)
+
+	далее вылез еще один момент:
+		при обновлении в одном пакете одной и той же записи в базе, код
+			ON CONFLICT (id)
+			DO UPDATE
+			SET val = EXCLUDED.val, updated_at = now()
+		дает ошибку
+			ERROR: ON CONFLICT DO UPDATE command cannot affect row a second time (SQLSTATE 21000)
+		то есть второй раз не может повлиять на запись
+		из-за этого не проходит автотест, с данными вида:
+			[{"id":"CounterBatchZip146","type":"counter","delta":35154714},
+			 {"id":"GaugeBatchZip188","type":"gauge","value":18032.255593532198},
+			 {"id":"CounterBatchZip146","type":"counter","delta":1872525169},
+			 {"id":"GaugeBatchZip188","type":"gauge","value":37453.22976261069}]
+
+	поэтому предварительно формируется карты метрик (data), куда записываются:
+		- последнее значение gauge метрики, так как она перезаписывает текущую
+		- сумма значений counter метрик, так как они прибавляются к текущему
+		что дает нам однократное обновление уникальных записей в запросе
+
+	может быть есть более изящное решение, но я его не придумал))
+	доклад закончил!)))
+	*/
+
+	// карта предварительно подготовленных метрик
+	data := make(map[string]Metrics)
+	for _, mt := range metrics {
+		if mt.MType == constants.Gauge {
+			data[mt.ID] = mt
+		}
+		if mt.MType == constants.Counter {
+			if v, ok := data[mt.ID]; ok {
+				vd := *v.Delta + *mt.Delta
+				v.Delta = &vd
+				data[mt.ID] = v
+				continue
+			}
+
+			data[mt.ID] = mt
+		}
 	}
 
 	var (
-		gaugesKeyVal     []any
-		countersKeyVal   []any
-		gaugeTemplates   []string
-		counterTemplates []string
-		g                int64 = 0
-		c                int64 = 0
+		gaugesKeyVal     []any        // срез пар значений для подстановки в SQL запрос вставки/обновления gauges
+		countersKeyVal   []any        // срез пар значений для подстановки в SQL запрос вставки/обновления counters
+		gaugeTemplates   []string     // срез для формирования фрагмента множественной вставки gauges
+		counterTemplates []string     // срез для формирования фрагмента множественной вставки counters
+		g                int64    = 0 // счетчик цикла gauges
+		c                int64    = 0 // счетчик цикла counters
 	)
 
-	for _, mt := range metrics {
+	// формирование данных для генерации запроса множественной вставки
+	for _, mt := range data {
 		if mt.MType == constants.Gauge {
 			g++
 			val1 := g
@@ -206,6 +263,12 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 		}
 	}
 
+	// старт транзакции
+	tx, err := p.db.Begin()
+	if err != nil {
+		return fmt.Errorf("PgStorage | SetBatch | p.db.Begin(): %w", err)
+	}
+
 	if len(gaugeTemplates) > 0 {
 		query := `INSERT INTO gauges (id, val, updated_at)
 			VALUES ` + strings.Join(gaugeTemplates, ",") + `
@@ -214,8 +277,8 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 			SET val = EXCLUDED.val, updated_at = now()`
 		errR := p.retryExec(ctx, query, gaugesKeyVal...)
 		if errR != nil {
-			//tx.Rollback()
-			//return fmt.Errorf("PgStorage | SetBatch | Upsert gauge: %w", err)
+			tx.Rollback()
+			return fmt.Errorf("PgStorage | SetBatch | Upsert gauge: %w", err)
 		}
 	}
 
