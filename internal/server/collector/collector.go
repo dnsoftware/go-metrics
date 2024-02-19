@@ -1,6 +1,7 @@
 package collector
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/dnsoftware/go-metrics/internal/constants"
@@ -11,18 +12,18 @@ import (
 )
 
 type ServerStorage interface {
-	SetGauge(name string, value float64) error
-	SetCounter(name string, value int64) error
-	SetBatch(batch []byte) error
+	SetGauge(ctx context.Context, name string, value float64) error
+	SetCounter(ctx context.Context, name string, value int64) error
+	SetBatch(ctx context.Context, batch []byte) error
 
-	GetGauge(name string) (float64, error)
-	GetCounter(name string) (int64, error)
-	GetAll() (map[string]float64, map[string]int64, error)
+	GetGauge(ctx context.Context, name string) (float64, error)
+	GetCounter(ctx context.Context, name string) (int64, error)
+	GetAll(ctx context.Context) (map[string]float64, map[string]int64, error)
 
-	GetDump() (string, error)
-	RestoreFromDump(dump string) error
+	GetDump(ctx context.Context) (string, error)
+	RestoreFromDump(ctx context.Context, dump string) error
 
-	DatabasePing() bool
+	DatabasePing(ctx context.Context) bool
 }
 
 type BackupStorage interface {
@@ -78,8 +79,8 @@ func (c *Collector) isMetric(mType string, name string) bool {
 	return false
 }
 
-func (c *Collector) SetGaugeMetric(metricName string, metricValue float64) error {
-	err := c.storage.SetGauge(metricName, metricValue)
+func (c *Collector) SetGaugeMetric(ctx context.Context, metricName string, metricValue float64) error {
+	err := c.storage.SetGauge(ctx, metricName, metricValue)
 	if err != nil {
 		return err
 	}
@@ -94,16 +95,16 @@ func (c *Collector) SetGaugeMetric(metricName string, metricValue float64) error
 
 	return nil
 }
-func (c *Collector) GetGaugeMetric(metricName string) (float64, error) {
-	return c.storage.GetGauge(metricName)
+func (c *Collector) GetGaugeMetric(ctx context.Context, metricName string) (float64, error) {
+	return c.storage.GetGauge(ctx, metricName)
 }
 
 // Прибавляем к уже существующему значению
-func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error {
-	oldVal, _ := c.storage.GetCounter(metricName)
+func (c *Collector) SetCounterMetric(ctx context.Context, metricName string, metricValue int64) error {
+	oldVal, _ := c.storage.GetCounter(ctx, metricName)
 	newVal := oldVal + metricValue
 
-	err := c.storage.SetCounter(metricName, newVal)
+	err := c.storage.SetCounter(ctx, metricName, newVal)
 	if err != nil {
 		return err
 	}
@@ -119,21 +120,21 @@ func (c *Collector) SetCounterMetric(metricName string, metricValue int64) error
 	return nil
 }
 
-func (c *Collector) SetBatchMetrics(batch []byte) error {
-	return c.storage.SetBatch(batch)
+func (c *Collector) SetBatchMetrics(ctx context.Context, batch []byte) error {
+	return c.storage.SetBatch(ctx, batch)
 }
 
-func (c *Collector) GetCounterMetric(metricName string) (int64, error) {
-	return c.storage.GetCounter(metricName)
+func (c *Collector) GetCounterMetric(ctx context.Context, metricName string) (int64, error) {
+	return c.storage.GetCounter(ctx, metricName)
 }
 
 // получение метрики в текстовом виде
-func (c *Collector) GetMetric(metricType string, metricName string) (string, error) {
+func (c *Collector) GetMetric(ctx context.Context, metricType string, metricName string) (string, error) {
 	var valStr string
 
 	switch metricType {
 	case constants.Gauge:
-		val, err := c.GetGaugeMetric(metricName)
+		val, err := c.GetGaugeMetric(ctx, metricName)
 		if err != nil {
 			return "", err
 		}
@@ -141,7 +142,7 @@ func (c *Collector) GetMetric(metricType string, metricName string) (string, err
 		valStr = strconv.FormatFloat(val, 'f', -1, 64)
 
 	case constants.Counter:
-		val, err := c.GetCounterMetric(metricName)
+		val, err := c.GetCounterMetric(ctx, metricName)
 		if err != nil {
 			return "", err
 		}
@@ -155,8 +156,8 @@ func (c *Collector) GetMetric(metricType string, metricName string) (string, err
 }
 
 // GetAll все метрики списком
-func (c *Collector) GetAll() (string, error) {
-	gauges, counters, err := c.storage.GetAll()
+func (c *Collector) GetAll(ctx context.Context) (string, error) {
+	gauges, counters, err := c.storage.GetAll(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -175,7 +176,10 @@ func (c *Collector) GetAll() (string, error) {
 
 // сохранение дампа в файл
 func (c *Collector) generateDump() error {
-	dump, err := c.storage.GetDump()
+	ctx, cancel := context.WithTimeout(context.Background(), constants.DbContextTimeout)
+	defer cancel()
+
+	dump, err := c.storage.GetDump(ctx)
 	if err != nil {
 		logger.Log().Error(err.Error())
 		return err
@@ -192,6 +196,9 @@ func (c *Collector) generateDump() error {
 
 // загрузка данных из дампа
 func (c *Collector) loadFromDump() error {
+	ctx, cancel := context.WithTimeout(context.Background(), constants.DbContextTimeout)
+	defer cancel()
+
 	dump, err := c.backupStorage.Load()
 	if err != nil {
 		logger.Log().Error(err.Error())
@@ -203,7 +210,7 @@ func (c *Collector) loadFromDump() error {
 		return nil
 	}
 
-	err = c.storage.RestoreFromDump(dump)
+	err = c.storage.RestoreFromDump(ctx, dump)
 	if err != nil {
 		logger.Log().Error(err.Error())
 		return err
@@ -239,6 +246,6 @@ func (c *Collector) startBackup() {
 }
 
 // DatabasePing проверка работоспособности СУБД
-func (c *Collector) DatabasePing() bool {
-	return c.storage.DatabasePing()
+func (c *Collector) DatabasePing(ctx context.Context) bool {
+	return c.storage.DatabasePing(ctx)
 }

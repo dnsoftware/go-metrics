@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -34,6 +35,9 @@ type DumpData struct {
 }
 
 func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), constants.DbContextTimeout)
+	defer cancel()
+
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		logger.Log().Error(err.Error())
@@ -45,7 +49,7 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
 	}
 
 	// создание таблиц, если не существуют
-	err = ps.createDatabaseTables()
+	err = ps.createDatabaseTables(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +58,7 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
 }
 
 // формирование структуры БД
-func (p *PgStorage) createDatabaseTables() error {
+func (p *PgStorage) createDatabaseTables(ctx context.Context) error {
 	var query string
 
 	// gauges
@@ -65,7 +69,7 @@ func (p *PgStorage) createDatabaseTables() error {
 			    updated_at timestamp with time zone NOT NULL
 			)`
 
-	err := p.retryExec(query)
+	err := p.retryExec(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -78,7 +82,7 @@ func (p *PgStorage) createDatabaseTables() error {
 			    updated_at timestamp with time zone NOT NULL
 			)`
 
-	err = p.retryExec(query)
+	err = p.retryExec(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -86,10 +90,10 @@ func (p *PgStorage) createDatabaseTables() error {
 	return nil
 }
 
-func (p *PgStorage) retryExec(query string, args ...any) error {
+func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) error {
 	durations := strings.Split(constants.HTTPAttemtPeriods, ",")
 
-	_, err := p.db.Exec(query, args...)
+	_, err := p.db.ExecContext(ctx, query, args...)
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgerrcode.IsConnectionException(pgErr.Code) {
@@ -97,7 +101,7 @@ func (p *PgStorage) retryExec(query string, args ...any) error {
 			d, _ := time.ParseDuration(duration)
 			time.Sleep(d)
 
-			_, err = p.db.Exec(query, args...)
+			_, err = p.db.ExecContext(ctx, query, args...)
 			if err == nil {
 				break
 			}
@@ -115,14 +119,14 @@ func (p *PgStorage) retryExec(query string, args ...any) error {
 	return nil
 }
 
-func (p *PgStorage) SetGauge(name string, value float64) error {
+func (p *PgStorage) SetGauge(ctx context.Context, name string, value float64) error {
 	query := `INSERT INTO gauges (id, val, updated_at)
 			VALUES ($1, $2, now())
 			ON CONFLICT (id)
 			DO UPDATE
 			SET id = $1, val = $2`
 
-	err := p.retryExec(query, name, value)
+	err := p.retryExec(ctx, query, name, value)
 	if err != nil {
 		return fmt.Errorf("PgStorage | SetGauge: %w", err)
 	}
@@ -130,9 +134,9 @@ func (p *PgStorage) SetGauge(name string, value float64) error {
 	return nil
 }
 
-func (p *PgStorage) GetGauge(name string) (float64, error) {
+func (p *PgStorage) GetGauge(ctx context.Context, name string) (float64, error) {
 	query := `SELECT val FROM gauges WHERE id = $1`
-	row := p.db.QueryRow(query, name)
+	row := p.db.QueryRowContext(ctx, query, name)
 
 	var val float64
 
@@ -144,14 +148,14 @@ func (p *PgStorage) GetGauge(name string) (float64, error) {
 	return val, nil
 }
 
-func (p *PgStorage) SetCounter(name string, value int64) error {
+func (p *PgStorage) SetCounter(ctx context.Context, name string, value int64) error {
 	query := `INSERT INTO counters (id, val, updated_at)
 			VALUES ($1, $2, now())
 			ON CONFLICT (id)
 			DO UPDATE
 			SET id = $1, val = $2`
 
-	err := p.retryExec(query, name, value)
+	err := p.retryExec(ctx, query, name, value)
 	if err != nil {
 		return fmt.Errorf("PgStorage | SetCounter: %w", err)
 	}
@@ -159,7 +163,7 @@ func (p *PgStorage) SetCounter(name string, value int64) error {
 	return nil
 }
 
-func (p *PgStorage) SetBatch(batch []byte) error {
+func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 	var metrics []Metrics
 
 	err := json.Unmarshal(batch, &metrics)
@@ -173,32 +177,61 @@ func (p *PgStorage) SetBatch(batch []byte) error {
 		return fmt.Errorf("PgStorage | SetBatch | p.db.Begin(): %w", err)
 	}
 
-	for _, mt := range metrics {
-		errR := errors.New("")
+	var (
+		gaugesKeyVal     []any
+		countersKeyVal   []any
+		gaugeTemplates   []string
+		counterTemplates []string
+		g                int64 = 0
+		c                int64 = 0
+	)
 
+	for _, mt := range metrics {
 		if mt.MType == constants.Gauge {
-			query := `INSERT INTO gauges (id, val, updated_at)
-			VALUES ($1, $2, now())
-			ON CONFLICT (id)
-			DO UPDATE
-			SET id = $1, val = $2, updated_at = now()`
-			errR = p.retryExec(query, mt.ID, mt.Value)
+			g++
+			val1 := g
+			g++
+			val2 := g
+			gaugeTemplates = append(gaugeTemplates, fmt.Sprintf("($%d, $%d, now())", val1, val2))
+			gaugesKeyVal = append(gaugesKeyVal, mt.ID, mt.Value)
 		}
 
 		if mt.MType == constants.Counter {
-			query := `INSERT INTO counters (id, val, updated_at)
-			VALUES ($1, $2, now())
-			ON CONFLICT (id)
-			DO UPDATE
-			SET val = counters.val + $2, updated_at = now()`
-			errR = p.retryExec(query, mt.ID, mt.Delta)
-		}
-
-		if errR != nil {
-			tx.Rollback()
-			return fmt.Errorf("PgStorage | SetBatch | Upsert metric: %w", err)
+			c++
+			val1 := c
+			c++
+			val2 := c
+			counterTemplates = append(counterTemplates, fmt.Sprintf("($%d, $%d, now())", val1, val2))
+			countersKeyVal = append(countersKeyVal, mt.ID, mt.Delta)
 		}
 	}
+
+	if len(gaugeTemplates) > 0 {
+		query := `INSERT INTO gauges (id, val, updated_at)
+			VALUES ` + strings.Join(gaugeTemplates, ",") + `
+			ON CONFLICT (id)
+			DO UPDATE
+			SET val = EXCLUDED.val, updated_at = now()`
+		errR := p.retryExec(ctx, query, gaugesKeyVal...)
+		if errR != nil {
+			//tx.Rollback()
+			//return fmt.Errorf("PgStorage | SetBatch | Upsert gauge: %w", err)
+		}
+	}
+
+	if len(counterTemplates) > 0 {
+		query := `INSERT INTO counters (id, val, updated_at)
+			VALUES ` + strings.Join(counterTemplates, ",") + `
+			ON CONFLICT (id)
+			DO UPDATE
+			SET val = counters.val + EXCLUDED.val, updated_at = now()`
+		errR := p.retryExec(ctx, query, countersKeyVal...)
+		if errR != nil {
+			tx.Rollback()
+			return fmt.Errorf("PgStorage | SetBatch | Upsert counter: %w", err)
+		}
+	}
+
 	// завершаем транзакцию
 	err = tx.Commit()
 	if err != nil {
@@ -208,9 +241,9 @@ func (p *PgStorage) SetBatch(batch []byte) error {
 	return nil
 }
 
-func (p *PgStorage) GetCounter(name string) (int64, error) {
+func (p *PgStorage) GetCounter(ctx context.Context, name string) (int64, error) {
 	query := `SELECT val FROM counters WHERE id = $1`
-	row := p.db.QueryRow(query, name)
+	row := p.db.QueryRowContext(ctx, query, name)
 
 	var val int64
 
@@ -223,9 +256,9 @@ func (p *PgStorage) GetCounter(name string) (int64, error) {
 }
 
 // возврат карт gauge и counters
-func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
+func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]int64, error) {
 	// gauges
-	gRows, err := p.db.Query(`SELECT id, val FROM gauges`)
+	gRows, err := p.db.QueryContext(ctx, `SELECT id, val FROM gauges`)
 	if err != nil {
 		return nil, nil, fmt.Errorf("PgStorage | GetAll | gauges: %w", err)
 	}
@@ -253,7 +286,7 @@ func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
 	}
 
 	// counters
-	cRows, err := p.db.Query(`SELECT id, val FROM counters`)
+	cRows, err := p.db.QueryContext(ctx, `SELECT id, val FROM counters`)
 	if err != nil {
 		return nil, nil, fmt.Errorf("PgStorage | GetAll | counters: %w", err)
 	}
@@ -279,12 +312,12 @@ func (p *PgStorage) GetAll() (map[string]float64, map[string]int64, error) {
 }
 
 // получение json дампа
-func (p *PgStorage) GetDump() (string, error) {
+func (p *PgStorage) GetDump(ctx context.Context) (string, error) {
 	dump := DumpData{}
 
 	var err error
 
-	dump.Gauges, dump.Counters, err = p.GetAll()
+	dump.Gauges, dump.Counters, err = p.GetAll(ctx)
 	if err != nil {
 		return "", fmt.Errorf("PgStorage | GetDump | GetAll: %w", err)
 	}
@@ -297,34 +330,8 @@ func (p *PgStorage) GetDump() (string, error) {
 	return string(data), nil
 }
 
-// восстановление из json дампа old version
-func (p *PgStorage) OldRestoreFromDump(dump string) error {
-	data := DumpData{}
-
-	err := json.Unmarshal([]byte(dump), &data)
-	if err != nil {
-		return fmt.Errorf("PgStorage | RestoreFromDump | json.Unmarshal: %w", err)
-	}
-
-	for name, val := range data.Gauges {
-		err = p.SetGauge(name, val)
-		if err != nil {
-			logger.Log().Error(err.Error())
-		}
-	}
-
-	for name, val := range data.Counters {
-		err = p.SetCounter(name, val)
-		if err != nil {
-			logger.Log().Error(err.Error())
-		}
-	}
-
-	return nil
-}
-
 // восстановление из json дампа
-func (p *PgStorage) RestoreFromDump(dump string) error {
+func (p *PgStorage) RestoreFromDump(ctx context.Context, dump string) error {
 	data := DumpData{}
 
 	err := json.Unmarshal([]byte(dump), &data)
@@ -340,7 +347,7 @@ func (p *PgStorage) RestoreFromDump(dump string) error {
 
 	queryDel := `TRUNCATE gauges, counters`
 
-	err = p.retryExec(queryDel)
+	err = p.retryExec(ctx, queryDel)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("PgStorage | RestoreFromDump | Truncate: %w", err)
@@ -355,7 +362,7 @@ func (p *PgStorage) RestoreFromDump(dump string) error {
 	defer stmt.Close()
 
 	for name, val := range data.Gauges {
-		_, err = stmt.Exec(name, val)
+		_, err = stmt.ExecContext(ctx, name, val)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("PgStorage | RestoreFromDump | Insert gauge: %w", err)
@@ -371,7 +378,7 @@ func (p *PgStorage) RestoreFromDump(dump string) error {
 	defer stmt.Close()
 
 	for name, val := range data.Counters {
-		_, err = stmt.Exec(name, val)
+		_, err = stmt.ExecContext(ctx, name, val)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("PgStorage | RestoreFromDump | Insert counter: %w", err)
@@ -388,6 +395,6 @@ func (p *PgStorage) RestoreFromDump(dump string) error {
 }
 
 // DatabasePing проверка работоспособности соединения с БД
-func (p *PgStorage) DatabasePing() bool {
-	return p.db.Ping() == nil
+func (p *PgStorage) DatabasePing(ctx context.Context) bool {
+	return p.db.PingContext(ctx) == nil
 }

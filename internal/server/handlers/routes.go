@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/go-chi/chi/v5"
 )
 
 func NewRouter() chi.Router {
@@ -17,8 +17,10 @@ func NewRouter() chi.Router {
 }
 
 func (h *HTTPServer) getAllMetrics(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	defer cancel()
 
-	val, err := h.collector.GetAll()
+	val, err := h.collector.GetAll(ctx)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusNotFound)
 	}
@@ -41,6 +43,9 @@ func (h *HTTPServer) noMetricValue(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	defer cancel()
+
 	metricType := chi.URLParam(req, constants.MetricType)
 	metricName := chi.URLParam(req, constants.MetricName)
 	metricValue := chi.URLParam(req, constants.MetricValue)
@@ -58,7 +63,7 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		err = h.collector.SetGaugeMetric(metricName, gaugeVal)
+		err = h.collector.SetGaugeMetric(ctx, metricName, gaugeVal)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
@@ -75,7 +80,7 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		err = h.collector.SetCounterMetric(metricName, counterVal)
+		err = h.collector.SetCounterMetric(ctx, metricName, counterVal)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
@@ -87,6 +92,9 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 
 // обновление метрики json формат
 func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	defer cancel()
+
 	var buf bytes.Buffer
 
 	var metrics Metrics
@@ -108,13 +116,13 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 	}
 
 	if metrics.MType == constants.Gauge {
-		errG := h.collector.SetGaugeMetric(metrics.ID, *metrics.Value)
+		errG := h.collector.SetGaugeMetric(ctx, metrics.ID, *metrics.Value)
 		if errG != nil {
 			http.Error(res, errG.Error(), http.StatusBadRequest)
 			return
 		}
 
-		newMetric, errG := h.collector.GetGaugeMetric(metrics.ID)
+		newMetric, errG := h.collector.GetGaugeMetric(ctx, metrics.ID)
 		if errG != nil {
 			http.Error(res, errG.Error(), http.StatusBadRequest)
 			return
@@ -138,13 +146,13 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 	}
 
 	if metrics.MType == constants.Counter {
-		errC := h.collector.SetCounterMetric(metrics.ID, *metrics.Delta)
+		errC := h.collector.SetCounterMetric(ctx, metrics.ID, *metrics.Delta)
 		if errC != nil {
 			http.Error(res, errC.Error(), http.StatusBadRequest)
 			return
 		}
 
-		newMetric, errC := h.collector.GetCounterMetric(metrics.ID)
+		newMetric, errC := h.collector.GetCounterMetric(ctx, metrics.ID)
 		if errC != nil {
 			http.Error(res, errC.Error(), http.StatusBadRequest)
 			return
@@ -170,6 +178,9 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 
 // обновление метрик пакетом, json формат
 func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	defer cancel()
+
 	var buf bytes.Buffer
 
 	_, err := buf.ReadFrom(req.Body)
@@ -178,7 +189,7 @@ func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	err = h.collector.SetBatchMetrics(buf.Bytes())
+	err = h.collector.SetBatchMetrics(ctx, buf.Bytes())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
@@ -189,6 +200,9 @@ func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Reques
 }
 
 func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	defer cancel()
+
 	metricType := chi.URLParam(req, constants.MetricType)
 	metricName := chi.URLParam(req, constants.MetricName)
 
@@ -197,7 +211,7 @@ func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	val, err := h.collector.GetMetric(metricType, metricName)
+	val, err := h.collector.GetMetric(ctx, metricType, metricName)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusNotFound)
 	}
@@ -207,6 +221,9 @@ func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) 
 }
 
 func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	defer cancel()
+
 	var buf bytes.Buffer
 
 	var metrics Metrics
@@ -229,14 +246,14 @@ func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Reque
 
 	switch metrics.MType {
 	case constants.Gauge:
-		val, errG := h.collector.GetGaugeMetric(metrics.ID)
+		val, errG := h.collector.GetGaugeMetric(ctx, metrics.ID)
 		if errG != nil {
 			http.Error(res, errG.Error(), http.StatusNotFound)
 		}
 
 		metrics.Value = &val
 	case constants.Counter:
-		val, errC := h.collector.GetCounterMetric(metrics.ID)
+		val, errC := h.collector.GetCounterMetric(ctx, metrics.ID)
 		if errC != nil {
 			http.Error(res, errC.Error(), http.StatusNotFound)
 		}
@@ -258,6 +275,8 @@ func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Reque
 // deprecated
 // версия из первого инкремента
 func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	defer cancel()
 
 	// only POST
 	if req.Method != http.MethodPost {
@@ -319,7 +338,7 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			err = h.collector.SetGaugeMetric(metricName, gaugeVal)
+			err = h.collector.SetGaugeMetric(ctx, metricName, gaugeVal)
 			if err != nil {
 				http.Error(res, err.Error(), http.StatusBadRequest)
 				return
@@ -336,7 +355,7 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			err = h.collector.SetCounterMetric(metricName, counterVal)
+			err = h.collector.SetCounterMetric(ctx, metricName, counterVal)
 			if err != nil {
 				http.Error(res, err.Error(), http.StatusBadRequest)
 				return
@@ -357,7 +376,10 @@ func (h *HTTPServer) unrecognized(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *HTTPServer) databasePing(res http.ResponseWriter, req *http.Request) {
-	isConnected := h.collector.DatabasePing()
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	defer cancel()
+
+	isConnected := h.collector.DatabasePing(ctx)
 
 	if isConnected {
 		res.WriteHeader(http.StatusOK)

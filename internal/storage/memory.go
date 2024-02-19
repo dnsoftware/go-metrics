@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/dnsoftware/go-metrics/internal/constants"
@@ -20,7 +21,7 @@ func NewMemStorage() *MemStorage {
 	}
 }
 
-func (m *MemStorage) SetGauge(name string, value float64) error {
+func (m *MemStorage) SetGauge(ctx context.Context, name string, value float64) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -29,7 +30,7 @@ func (m *MemStorage) SetGauge(name string, value float64) error {
 	return nil
 }
 
-func (m *MemStorage) GetGauge(name string) (float64, error) {
+func (m *MemStorage) GetGauge(ctx context.Context, name string) (float64, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -40,7 +41,7 @@ func (m *MemStorage) GetGauge(name string) (float64, error) {
 	}
 }
 
-func (m *MemStorage) SetCounter(name string, value int64) error {
+func (m *MemStorage) SetCounter(ctx context.Context, name string, value int64) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -49,7 +50,7 @@ func (m *MemStorage) SetCounter(name string, value int64) error {
 	return nil
 }
 
-func (m *MemStorage) SetBatch(batch []byte) error {
+func (m *MemStorage) SetBatch(ctx context.Context, batch []byte) error {
 	var metrics []Metrics
 
 	m.mutex.Lock()
@@ -73,7 +74,7 @@ func (m *MemStorage) SetBatch(batch []byte) error {
 	return nil
 }
 
-func (m *MemStorage) GetCounter(name string) (int64, error) {
+func (m *MemStorage) GetCounter(ctx context.Context, name string) (int64, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -85,7 +86,7 @@ func (m *MemStorage) GetCounter(name string) (int64, error) {
 }
 
 // возврат карт gauge и counters
-func (m *MemStorage) GetAll() (map[string]float64, map[string]int64, error) {
+func (m *MemStorage) GetAll(ctx context.Context) (map[string]float64, map[string]int64, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -93,7 +94,7 @@ func (m *MemStorage) GetAll() (map[string]float64, map[string]int64, error) {
 }
 
 // получение json дампа
-func (m *MemStorage) GetDump() (string, error) {
+func (m *MemStorage) GetDump(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -106,7 +107,7 @@ func (m *MemStorage) GetDump() (string, error) {
 }
 
 // восстановление из json дампа
-func (m *MemStorage) RestoreFromDump(dump string) error {
+func (m *MemStorage) RestoreFromDump(ctx context.Context, dump string) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -118,6 +119,6 @@ func (m *MemStorage) RestoreFromDump(dump string) error {
 	return nil
 }
 
-func (m *MemStorage) DatabasePing() bool {
+func (m *MemStorage) DatabasePing(ctx context.Context) bool {
 	return false
 }

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
@@ -8,16 +9,16 @@ import (
 )
 
 type Collector interface {
-	SetGaugeMetric(name string, value float64) error
-	SetCounterMetric(name string, value int64) error
-	SetBatchMetrics(batch []byte) error
+	SetGaugeMetric(ctx context.Context, name string, value float64) error
+	SetCounterMetric(ctx context.Context, name string, value int64) error
+	SetBatchMetrics(ctx context.Context, batch []byte) error
 
-	GetGaugeMetric(name string) (float64, error)
-	GetCounterMetric(name string) (int64, error)
-	GetMetric(metricType string, metricName string) (string, error)
-	GetAll() (string, error)
+	GetGaugeMetric(ctx context.Context, name string) (float64, error)
+	GetCounterMetric(ctx context.Context, name string) (int64, error)
+	GetMetric(ctx context.Context, metricType string, metricName string) (string, error)
+	GetAll(ctx context.Context) (string, error)
 
-	DatabasePing() bool
+	DatabasePing(ctx context.Context) bool
 }
 
 type HTTPServer struct {

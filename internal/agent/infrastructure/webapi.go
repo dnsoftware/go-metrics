@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -39,7 +40,7 @@ func NewWebSender(protocol string, flags Flags, contentType string) WebSender {
 }
 
 // SendData Отправка по одной метрике, через url или через json
-func (w *WebSender) SendData(mType string, name string, value string) error {
+func (w *WebSender) SendData(ctx context.Context, mType string, name string, value string) error {
 	switch w.contentType {
 	case constants.TextPlain, constants.TextHTML:
 		return w.sendPlain(mType, name, value)
@@ -51,7 +52,7 @@ func (w *WebSender) SendData(mType string, name string, value string) error {
 }
 
 // SendBatch отправка данных пакетом в json формате
-func (w *WebSender) SendDataBatch(data []byte) error {
+func (w *WebSender) SendDataBatch(ctx context.Context, data []byte) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdatesAction
 
 	// gzip сжатие
@@ -61,7 +62,7 @@ func (w *WebSender) SendDataBatch(data []byte) error {
 		return err
 	}
 
-	request, err := http.NewRequest(http.MethodPost, url, buf)
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, buf)
 	if err != nil {
 		logger.Log().Error(err.Error())
 		return err

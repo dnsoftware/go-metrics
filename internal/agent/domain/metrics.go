@@ -19,17 +19,17 @@ import (
 
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name=AgentStorage
 type AgentStorage interface {
-	SetGauge(name string, value float64) error
-	GetGauge(name string) (float64, error)
+	SetGauge(ctx context.Context, name string, value float64) error
+	GetGauge(ctx context.Context, name string) (float64, error)
 
-	SetCounter(name string, value int64) error
-	GetCounter(name string) (int64, error)
+	SetCounter(ctx context.Context, name string, value int64) error
+	GetCounter(ctx context.Context, name string) (int64, error)
 }
 
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name=MetricsSender
 type MetricsSender interface {
-	SendData(mType string, name string, value string) error
-	SendDataBatch([]byte) error
+	SendData(ctx context.Context, mType string, name string, value string) error
+	SendDataBatch(ctx context.Context, jsonData []byte) error
 }
 
 type Flags interface {
@@ -112,9 +112,11 @@ func (m *Metrics) Start() {
 }
 
 func (m *Metrics) updateMetrics() {
+	ctx := context.Background()
+
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	mCounter, err := m.storage.GetCounter(constants.PollCount)
+	mCounter, err := m.storage.GetCounter(ctx, constants.PollCount)
 	if err != nil {
 		logger.Log().Error(err.Error())
 	}
@@ -129,11 +131,11 @@ func (m *Metrics) updateMetrics() {
 
 			switch tp {
 			case "uint64":
-				m.storage.SetGauge(metricName, float64(metricValue.Uint()))
+				m.storage.SetGauge(ctx, metricName, float64(metricValue.Uint()))
 			case "uint32":
-				m.storage.SetGauge(metricName, float64(metricValue.Uint()))
+				m.storage.SetGauge(ctx, metricName, float64(metricValue.Uint()))
 			case "float64":
-				m.storage.SetGauge(metricName, metricValue.Float())
+				m.storage.SetGauge(ctx, metricName, metricValue.Float())
 			default:
 				// действия при неучтенном типе
 				logger.Log().Error("неучтенный тип метрики: " + tp)
@@ -141,7 +143,7 @@ func (m *Metrics) updateMetrics() {
 
 			mCounter++
 		} else if metricName == constants.RandomValue {
-			m.storage.SetGauge(metricName, rng.Float64())
+			m.storage.SetGauge(ctx, metricName, rng.Float64())
 
 			mCounter++
 		} else {
@@ -149,20 +151,22 @@ func (m *Metrics) updateMetrics() {
 			continue
 		}
 	}
-	m.storage.SetCounter(constants.PollCount, mCounter)
+	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
 }
 
 func (m *Metrics) sendMetrics() {
+	ctx, cancel := context.WithTimeout(context.Background(), constants.HTTPContextTimeout)
+	defer cancel()
 
 	// gauge
 	for _, metricName := range gaugeMetricsList {
-		val, err := m.storage.GetGauge(metricName)
+		val, err := m.storage.GetGauge(ctx, metricName)
 		if err != nil {
 			logger.Log().Error(err.Error())
 			continue
 		}
 
-		err = m.SendGauge(metricName, val)
+		err = m.SendGauge(ctx, metricName, val)
 		if err != nil {
 			logger.Log().Error(err.Error())
 			continue
@@ -170,26 +174,29 @@ func (m *Metrics) sendMetrics() {
 	}
 
 	// counter
-	cValue, err := m.storage.GetCounter(constants.PollCount)
+	cValue, err := m.storage.GetCounter(ctx, constants.PollCount)
 	if err != nil {
 		cValue = 0
 	}
 
-	err = m.SendCounter(constants.PollCount, cValue)
+	err = m.SendCounter(ctx, constants.PollCount, cValue)
 	if err != nil {
 		logger.Log().Error("Set PollCounter error: " + err.Error())
 	}
 
-	_ = m.storage.SetCounter(constants.PollCount, 0)
+	_ = m.storage.SetCounter(ctx, constants.PollCount, 0)
 }
 
 // отправка метрик пакетом
 func (m *Metrics) sendMetricsBatch() {
+	ctx, cancel := context.WithTimeout(context.Background(), constants.HTTPContextTimeout)
+	defer cancel()
+
 	var batch []MetricsItem
 
 	// gauges
 	for _, metricName := range gaugeMetricsList {
-		val, err := m.storage.GetGauge(metricName)
+		val, err := m.storage.GetGauge(ctx, metricName)
 		if err != nil {
 			logger.Log().Error(err.Error())
 			continue
@@ -203,7 +210,7 @@ func (m *Metrics) sendMetricsBatch() {
 	}
 
 	// counters
-	pollCount, err := m.storage.GetCounter(constants.PollCount)
+	pollCount, err := m.storage.GetCounter(ctx, constants.PollCount)
 	if err != nil {
 		logger.Log().Error(err.Error())
 
@@ -222,14 +229,14 @@ func (m *Metrics) sendMetricsBatch() {
 		return
 	}
 
-	err = m.sender.SendDataBatch(jsonData)
+	err = m.sender.SendDataBatch(ctx, jsonData)
 	if err != nil {
 		logger.Log().Error(err.Error())
 	}
 }
 
-func (m *Metrics) SendGauge(name string, value float64) error {
-	err := m.sender.SendData(constants.Gauge, name, fmt.Sprintf("%f", value))
+func (m *Metrics) SendGauge(ctx context.Context, name string, value float64) error {
+	err := m.sender.SendData(ctx, constants.Gauge, name, fmt.Sprintf("%f", value))
 	if err != nil {
 		return err
 	}
@@ -237,10 +244,10 @@ func (m *Metrics) SendGauge(name string, value float64) error {
 	return nil
 }
 
-func (m *Metrics) SendCounter(name string, value int64) error {
+func (m *Metrics) SendCounter(ctx context.Context, name string, value int64) error {
 	v := strconv.FormatInt(value, 10)
 
-	err := m.sender.SendData(constants.Counter, name, v)
+	err := m.sender.SendData(ctx, constants.Counter, name, v)
 	if err != nil {
 		return err
 	}
