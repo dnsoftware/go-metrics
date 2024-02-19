@@ -11,7 +11,7 @@ const (
 	ReportInterval     int64         = 10                              // интервал отправки метрик на сервер
 	BackupPeriod       int64         = 300                             // период в секундах, при указании которого происходит сохранение метрик в файл
 	BackupPeriodSync   int64         = 0                               // период в секундах, при указании которого происходит синхронное с получением данных сохранение в файл
-	DbContextTimeout   time.Duration = time.Duration(5) * time.Second  // длительность запроса в контексте работы с БД
+	DBContextTimeout   time.Duration = time.Duration(5) * time.Second  // длительность запроса в контексте работы с БД
 	HTTPContextTimeout time.Duration = time.Duration(10) * time.Second // длительность запроса в контексте работы с сетью
 )
 

@@ -176,7 +176,7 @@ func (c *Collector) GetAll(ctx context.Context) (string, error) {
 
 // сохранение дампа в файл
 func (c *Collector) generateDump() error {
-	ctx, cancel := context.WithTimeout(context.Background(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
 	defer cancel()
 
 	dump, err := c.storage.GetDump(ctx)
@@ -196,7 +196,7 @@ func (c *Collector) generateDump() error {
 
 // загрузка данных из дампа
 func (c *Collector) loadFromDump() error {
-	ctx, cancel := context.WithTimeout(context.Background(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
 	defer cancel()
 
 	dump, err := c.backupStorage.Load()

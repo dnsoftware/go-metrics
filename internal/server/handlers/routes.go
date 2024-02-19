@@ -17,7 +17,7 @@ func NewRouter() chi.Router {
 }
 
 func (h *HTTPServer) getAllMetrics(res http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
 	val, err := h.collector.GetAll(ctx)
@@ -43,7 +43,7 @@ func (h *HTTPServer) noMetricValue(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
 	metricType := chi.URLParam(req, constants.MetricType)
@@ -92,7 +92,7 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 
 // обновление метрики json формат
 func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
 	var buf bytes.Buffer
@@ -178,7 +178,7 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 
 // обновление метрик пакетом, json формат
 func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
 	var buf bytes.Buffer
@@ -200,7 +200,7 @@ func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Reques
 }
 
 func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
 	metricType := chi.URLParam(req, constants.MetricType)
@@ -221,7 +221,7 @@ func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) 
 }
 
 func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
 	var buf bytes.Buffer
@@ -275,7 +275,7 @@ func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Reque
 // deprecated
 // версия из первого инкремента
 func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
 	// only POST
@@ -376,7 +376,7 @@ func (h *HTTPServer) unrecognized(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *HTTPServer) databasePing(res http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
 	isConnected := h.collector.DatabasePing(ctx)

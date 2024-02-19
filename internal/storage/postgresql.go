@@ -35,7 +35,7 @@ type DumpData struct {
 }
 
 func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), constants.DbContextTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
 	defer cancel()
 
 	db, err := sql.Open("pgx", dsn)
