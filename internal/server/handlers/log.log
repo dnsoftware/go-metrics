@@ -1,2 +1,4 @@
 {"level":"info","ts":"2024-02-19T12:16:05.418+0300","caller":"handlers/middlewares.go:57","msg":"request","uri":"/update/counter/testSetGet33/982","method":"POST","duration":0.000037233,"status":200,"size":0,"body":""}
 {"level":"info","ts":"2024-02-19T12:16:05.418+0300","caller":"handlers/middlewares.go:57","msg":"request","uri":"/value/counter/testSetGet33","method":"GET","duration":0.00006749,"status":200,"size":3,"body":""}
+{"level":"info","ts":"2024-02-23T12:10:18.457+0300","caller":"handlers/middlewares.go:81","msg":"request","uri":"/update/counter/testSetGet33/982","method":"POST","duration":0.000020184,"status":200,"size":0,"body":""}
+{"level":"info","ts":"2024-02-23T12:10:18.458+0300","caller":"handlers/middlewares.go:81","msg":"request","uri":"/value/counter/testSetGet33","method":"GET","duration":0.000080979,"status":200,"size":3,"body":""}
