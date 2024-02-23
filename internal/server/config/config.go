@@ -14,6 +14,7 @@ type ServerConfig struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"none"`
 	RestoreSaved    bool   `env:"RESTORE" envDefault:"true"`
 	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:""`
+	CryptoKey       string `env:"KEY" envDefault:""`
 }
 
 type serverFlags struct {
@@ -22,6 +23,7 @@ type serverFlags struct {
 	fileStoragePath string
 	restoreSaved    bool
 	databaseDSN     string
+	cryptoKey       string
 }
 
 func NewServerConfig() *ServerConfig {
@@ -38,6 +40,7 @@ func NewServerConfig() *ServerConfig {
 	flag.StringVar(&sf.fileStoragePath, "f", constants.FileStoragePath, "file store path")
 	flag.BoolVar(&sf.restoreSaved, "r", constants.RestoreSaved, "to restore?")
 	flag.StringVar(&sf.databaseDSN, "d", "", "data source name")
+	flag.StringVar(&sf.cryptoKey, "k", "", "crypto key")
 	flag.Parse()
 
 	// если какого-то параметра нет в переменных окружения - берем значение флага, а если и флага нет - берем по умолчанию
@@ -59,6 +62,10 @@ func NewServerConfig() *ServerConfig {
 
 	if cfg.DatabaseDSN == "" {
 		cfg.DatabaseDSN = sf.databaseDSN
+	}
+
+	if cfg.CryptoKey == "" {
+		cfg.CryptoKey = sf.cryptoKey
 	}
 
 	return cfg

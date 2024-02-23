@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"net/http"
 	"strings"
@@ -13,6 +15,28 @@ import (
 )
 
 type Middleware func(http.Handler) http.Handler
+
+func CheckSignMiddleware(cryptoKey string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if h := r.Header.Get(constants.HashHeaderName); h != "" {
+				// вычитываем тело запроса для проверки подписи, а потом записываем обратно
+				var buf bytes.Buffer
+				buf.ReadFrom(r.Body)
+				r.Body = io.NopCloser(bytes.NewBuffer(buf.Bytes()))
+
+				hs := hash(buf.Bytes(), cryptoKey)
+
+				if h != hs {
+					http.Error(w, "Bad sign", http.StatusBadRequest)
+					return
+				}
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
 
 func trimEnd(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -108,4 +132,11 @@ func GzipMiddleware(h http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(gzipFn)
+}
+
+func hash(value []byte, key string) string {
+	data := append(value, []byte(key)...)
+	h := sha256.Sum256(data)
+
+	return hex.EncodeToString(h[:])
 }

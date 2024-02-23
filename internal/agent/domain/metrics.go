@@ -151,6 +151,7 @@ func (m *Metrics) updateMetrics() {
 			continue
 		}
 	}
+
 	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
 }
 

@@ -10,7 +10,6 @@ import (
 )
 
 func TestMetrics_repo(t *testing.T) {
-
 	ctx := context.Background()
 
 	// работа с репозиторием

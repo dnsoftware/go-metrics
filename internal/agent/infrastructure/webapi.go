@@ -4,23 +4,26 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"net/http"
-	"strconv"
-
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/logger"
+	"net/http"
+	"strconv"
 )
 
 type Flags interface {
 	RunAddr() string
+	CryptoKey() string
 }
 
 type WebSender struct {
 	protocol    string
 	domain      string
 	contentType string
+	cryptoKey   string
 }
 
 // структура для отправки json данных на сервер
@@ -36,6 +39,7 @@ func NewWebSender(protocol string, flags Flags, contentType string) WebSender {
 		protocol:    protocol,
 		domain:      flags.RunAddr(),
 		contentType: contentType,
+		cryptoKey:   flags.CryptoKey(),
 	}
 }
 
@@ -43,9 +47,9 @@ func NewWebSender(protocol string, flags Flags, contentType string) WebSender {
 func (w *WebSender) SendData(ctx context.Context, mType string, name string, value string) error {
 	switch w.contentType {
 	case constants.TextPlain, constants.TextHTML:
-		return w.sendPlain(mType, name, value)
+		return w.sendPlain(ctx, mType, name, value)
 	case constants.ApplicationJSON:
-		return w.sendJSON(mType, name, value)
+		return w.sendJSON(ctx, mType, name, value)
 	}
 
 	return errors.New("bad send data content type")
@@ -55,14 +59,7 @@ func (w *WebSender) SendData(ctx context.Context, mType string, name string, val
 func (w *WebSender) SendDataBatch(ctx context.Context, data []byte) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdatesAction
 
-	// gzip сжатие
-	buf, err := w.getGzipReader(data)
-	if err != nil {
-		logger.Log().Error(err.Error())
-		return err
-	}
-
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, buf)
+	request, err := NewAgentRequest(ctx, http.MethodPost, url, data, w.cryptoKey)
 	if err != nil {
 		logger.Log().Error(err.Error())
 		return err
@@ -76,10 +73,10 @@ func (w *WebSender) SendDataBatch(ctx context.Context, data []byte) error {
 	return err
 }
 
-func (w *WebSender) sendPlain(mType string, name string, value string) error {
+func (w *WebSender) sendPlain(ctx context.Context, mType string, name string, value string) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction + "/" + mType + "/" + name + "/" + value
 
-	request, err := http.NewRequest(http.MethodPost, url, http.NoBody)
+	request, err := NewAgentRequest(ctx, http.MethodPost, url, nil, w.cryptoKey)
 	if err != nil {
 		// обрабатываем ошибку
 		logger.Log().Error(err.Error())
@@ -100,7 +97,7 @@ func (w *WebSender) sendPlain(mType string, name string, value string) error {
 	return nil
 }
 
-func (w *WebSender) sendJSON(mType string, name string, value string) error {
+func (w *WebSender) sendJSON(ctx context.Context, mType string, name string, value string) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction
 
 	data := Metrics{
@@ -122,14 +119,7 @@ func (w *WebSender) sendJSON(mType string, name string, value string) error {
 		return err
 	}
 
-	// gzip сжатие
-	buf, err := w.getGzipReader(body)
-	if err != nil {
-		logger.Log().Error(err.Error())
-		return err
-	}
-
-	request, err := http.NewRequest(http.MethodPost, url, buf)
+	request, err := NewAgentRequest(ctx, http.MethodPost, url, body, w.cryptoKey)
 	if err != nil {
 		// обрабатываем ошибку
 		logger.Log().Error(err.Error())
@@ -152,7 +142,7 @@ func (w *WebSender) sendJSON(mType string, name string, value string) error {
 
 // gzip компрессор входяшего потока байтов
 // возврат *bytes.Buffer, реализующего интерфейс io.Reader
-func (w *WebSender) getGzipReader(data []byte) (*bytes.Buffer, error) {
+func getGzipReader(data []byte) (*bytes.Buffer, error) {
 	buf := bytes.NewBuffer(nil)
 
 	zb := gzip.NewWriter(buf)
@@ -165,4 +155,37 @@ func (w *WebSender) getGzipReader(data []byte) (*bytes.Buffer, error) {
 	zb.Close()
 
 	return buf, nil
+}
+
+func hash(value []byte, key string) string {
+	data := append(value, []byte(key)...)
+	h := sha256.Sum256(data)
+
+	return hex.EncodeToString(h[:])
+}
+
+func NewAgentRequest(ctx context.Context, method, url string, data []byte, cryptoKey string) (*http.Request, error) {
+	buf := &bytes.Buffer{}
+
+	var err error
+	// gzip сжатие
+	if data != nil {
+		buf, err = getGzipReader(data)
+		if err != nil {
+			logger.Log().Error(err.Error())
+			return nil, err
+		}
+	}
+
+	request, err := http.NewRequestWithContext(ctx, method, url, buf)
+	if err != nil {
+		return nil, err
+	}
+
+	h := hash(buf.Bytes(), cryptoKey)
+	if cryptoKey != "" {
+		request.Header.Set(constants.HashHeaderName, h)
+	}
+
+	return request, nil
 }

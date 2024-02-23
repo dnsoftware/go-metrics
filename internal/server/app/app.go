@@ -21,8 +21,10 @@ func ServerRun() {
 		panic(err)
 	}
 
-	var repo collector.ServerStorage
-	var collect *collector.Collector
+	var (
+		repo    collector.ServerStorage
+		collect *collector.Collector
+	)
 
 	repo, err = storage.NewPostgresqlStorage(cfg.DatabaseDSN)
 	if err != nil { // значит база НЕ рабочая - используем Memory
@@ -34,7 +36,7 @@ func ServerRun() {
 		panic(err)
 	}
 
-	server := handlers.NewHTTPServer(collect)
+	server := handlers.NewHTTPServer(collect, cfg.CryptoKey)
 
 	err = http.ListenAndServe(cfg.ServerAddress, server.Router)
 	if err != nil {

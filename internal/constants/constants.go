@@ -80,3 +80,6 @@ const (
 	HTTPAttemtPeriods string = "1s,2s,5s"
 	DBAttemtPeriods   string = "1s,2s,5s"
 )
+
+// Имена заголовков
+const HashHeaderName string = "HashSHA256"

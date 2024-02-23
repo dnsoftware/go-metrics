@@ -48,12 +48,13 @@ type (
 	}
 )
 
-func NewHTTPServer(collector Collector) HTTPServer {
+func NewHTTPServer(collector Collector, cryptoKey string) HTTPServer {
 	h := HTTPServer{
 		collector: collector,
 		Router:    NewRouter(),
 	}
 	h.Router.Use(trimEnd)
+	h.Router.Use(CheckSignMiddleware(cryptoKey))
 	h.Router.Use(GzipMiddleware)
 	h.Router.Use(WithLogging)
 

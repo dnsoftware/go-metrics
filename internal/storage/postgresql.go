@@ -217,15 +217,18 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 
 	// карта предварительно подготовленных метрик
 	data := make(map[string]Metrics)
+
 	for _, mt := range metrics {
 		if mt.MType == constants.Gauge {
 			data[mt.ID] = mt
 		}
+
 		if mt.MType == constants.Counter {
 			if v, ok := data[mt.ID]; ok {
 				vd := *v.Delta + *mt.Delta
 				v.Delta = &vd
 				data[mt.ID] = v
+
 				continue
 			}
 
@@ -275,6 +278,7 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 			ON CONFLICT (id)
 			DO UPDATE
 			SET val = EXCLUDED.val, updated_at = now()`
+
 		errR := p.retryExec(ctx, query, gaugesKeyVal...)
 		if errR != nil {
 			tx.Rollback()
@@ -288,6 +292,7 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 			ON CONFLICT (id)
 			DO UPDATE
 			SET val = counters.val + EXCLUDED.val, updated_at = now()`
+
 		errR := p.retryExec(ctx, query, countersKeyVal...)
 		if errR != nil {
 			tx.Rollback()
