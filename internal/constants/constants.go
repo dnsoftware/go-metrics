@@ -94,7 +94,7 @@ const (
 
 // for workerpool
 const (
-	WorkersCount   int = 3 // кол-во воркеров
+	RateLimit      int = 3 // количество одновременно исходящих запросов на сервер по умолчанию (кол-во воркеров)
 	BatchItemCount int = 5 // кол-во метрик в пакете
 	ChannelCap     int = 5 // емкость канала
 )

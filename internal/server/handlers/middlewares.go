@@ -22,6 +22,7 @@ func CheckSignMiddleware(cryptoKey string) func(http.Handler) http.Handler {
 			if h := r.Header.Get(constants.HashHeaderName); h != "" {
 				// вычитываем тело запроса для проверки подписи, а потом записываем обратно
 				var buf bytes.Buffer
+
 				buf.ReadFrom(r.Body)
 				r.Body = io.NopCloser(bytes.NewBuffer(buf.Bytes()))
 
@@ -69,6 +70,7 @@ func WithLogging(h http.Handler) http.Handler {
 
 		// вычитываем тело запроса для логирования, а потом записываем обратно
 		var buf bytes.Buffer
+
 		buf.ReadFrom(r.Body)
 		r.Body = io.NopCloser(bytes.NewBuffer(buf.Bytes()))
 

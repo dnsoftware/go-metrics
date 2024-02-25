@@ -237,12 +237,12 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 	}
 
 	var (
-		gaugesKeyVal     []any        // срез пар значений для подстановки в SQL запрос вставки/обновления gauges
-		countersKeyVal   []any        // срез пар значений для подстановки в SQL запрос вставки/обновления counters
-		gaugeTemplates   []string     // срез для формирования фрагмента множественной вставки gauges
-		counterTemplates []string     // срез для формирования фрагмента множественной вставки counters
-		g                int64    = 0 // счетчик цикла gauges
-		c                int64    = 0 // счетчик цикла counters
+		gaugesKeyVal     []any    // срез пар значений для подстановки в SQL запрос вставки/обновления gauges
+		countersKeyVal   []any    // срез пар значений для подстановки в SQL запрос вставки/обновления counters
+		gaugeTemplates   []string // срез для формирования фрагмента множественной вставки gauges
+		counterTemplates []string // срез для формирования фрагмента множественной вставки counters
+		g                int64    // счетчик цикла gauges
+		c                int64    // счетчик цикла counters
 	)
 
 	// формирование данных для генерации запроса множественной вставки

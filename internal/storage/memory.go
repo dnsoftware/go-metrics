@@ -36,9 +36,9 @@ func (m *MemStorage) GetGauge(ctx context.Context, name string) (float64, error)
 
 	if value, ok := m.Gauges[name]; ok {
 		return value, nil
-	} else {
-		return 0, errors.New("no such metric")
 	}
+
+	return 0, errors.New("no such metric")
 }
 
 func (m *MemStorage) SetCounter(ctx context.Context, name string, value int64) error {

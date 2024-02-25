@@ -37,14 +37,17 @@ type MetricsSender interface {
 type Flags interface {
 	ReportInterval() int64
 	PollInterval() int64
+	RateLimit() int
 }
 
 type Metrics struct {
-	metrics        runtime.MemStats
-	storage        AgentStorage
-	sender         MetricsSender
-	pollInterval   int64
-	reportInterval int64
+	metrics         runtime.MemStats
+	storage         AgentStorage
+	sender          MetricsSender
+	pollInterval    int64
+	reportInterval  int64
+	gopcMetricsList []string
+	rateLimit       int
 }
 
 // MetricsItem структура для отправки json данных на сервер
@@ -57,14 +60,22 @@ type MetricsItem struct {
 
 var gaugeMetricsList = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
-var gopcMetricsList = []string{constants.TotalMemory, constants.FreeMemory, constants.CPUutilization}
-
 func NewMetrics(storage AgentStorage, sender MetricsSender, flags Flags) Metrics {
+
+	gopcMetricsList := []string{constants.TotalMemory, constants.FreeMemory}
+
+	cpuCount, _ := cpu.Counts(false)
+	for i := 1; i <= cpuCount; i++ {
+		gopcMetricsList = append(gopcMetricsList, constants.CPUutilization+strconv.Itoa(i))
+	}
+
 	return Metrics{
-		storage:        storage,
-		sender:         sender,
-		pollInterval:   flags.PollInterval(),
-		reportInterval: flags.ReportInterval(),
+		storage:         storage,
+		sender:          sender,
+		pollInterval:    flags.PollInterval(),
+		reportInterval:  flags.ReportInterval(),
+		rateLimit:       flags.RateLimit(),
+		gopcMetricsList: gopcMetricsList,
 	}
 }
 
@@ -76,6 +87,7 @@ func (m *Metrics) Start() {
 
 	// обновление метрик
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 
@@ -93,6 +105,7 @@ func (m *Metrics) Start() {
 
 	// для gopcutils
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 
@@ -185,13 +198,16 @@ func (m *Metrics) updateGopcMetrics() {
 	}
 
 	vm, _ := mem.VirtualMemory()
-	cc, _ := cpu.Percent(time.Second*time.Duration(constants.CPUIntervalUtilization), false)
-	//cpuCount, _ := cpu.Counts(false)
 
 	m.storage.SetGauge(ctx, constants.TotalMemory, float64(vm.Total))
 	m.storage.SetGauge(ctx, constants.FreeMemory, float64(vm.Free))
-	m.storage.SetGauge(ctx, constants.CPUutilization, cc[0])
-	mCounter += 3
+	mCounter += 2
+
+	cc, _ := cpu.Percent(time.Second*time.Duration(constants.CPUIntervalUtilization), true)
+	for key, val := range cc {
+		m.storage.SetGauge(ctx, constants.CPUutilization+strconv.Itoa(key+1), val)
+		mCounter++
+	}
 
 	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
 }
@@ -201,7 +217,7 @@ func (m *Metrics) sendMetrics() {
 	defer cancel()
 
 	// gauge
-	allGaugeMetrics := append(gaugeMetricsList, gopcMetricsList...)
+	allGaugeMetrics := append(gaugeMetricsList, m.gopcMetricsList...)
 	for _, metricName := range allGaugeMetrics {
 		val, err := m.storage.GetGauge(ctx, metricName)
 		if err != nil {
@@ -250,7 +266,7 @@ func (m *Metrics) sendMetricsBatch() {
 	var batch []MetricsItem
 
 	// gauges
-	allGaugeMetrics := append(gaugeMetricsList, gopcMetricsList...)
+	allGaugeMetrics := append(gaugeMetricsList, m.gopcMetricsList...)
 	for _, metricName := range allGaugeMetrics {
 		val, err := m.storage.GetGauge(ctx, metricName)
 		if err != nil {
@@ -281,8 +297,8 @@ func (m *Metrics) sendMetricsBatch() {
 
 	// создаем буферизованный канал для принятия задач в воркер
 	jobsCh := make(chan []byte, constants.ChannelCap)
-	// создаем и запускаем пул из constants.WorkersCount воркеров
-	for w := 1; w <= constants.WorkersCount; w++ {
+	// создаем и запускаем пул из RATE_LIMIT воркеров
+	for w := 1; w <= m.rateLimit; w++ {
 		go m.batchWorker(jobsCh)
 	}
 
@@ -291,10 +307,13 @@ func (m *Metrics) sendMetricsBatch() {
 		miniBatch []MetricsItem
 		batchData []byte
 	)
+
 	i := 0
+
 	for _, mi := range batch {
 		miniBatch = append(miniBatch, mi)
 		i++
+
 		if i == constants.BatchItemCount {
 			batchData, err = json.Marshal(miniBatch)
 			if err != nil {
@@ -303,15 +322,22 @@ func (m *Metrics) sendMetricsBatch() {
 			}
 
 			jobsCh <- batchData
+
 			i = 0
 			miniBatch = nil
 		}
 	}
 
 	if len(miniBatch) > 0 {
+		batchData, err = json.Marshal(miniBatch)
+		if err != nil {
+			logger.Log().Error(err.Error())
+			return
+		}
 		jobsCh <- batchData
 	}
 
+	close(jobsCh)
 }
 
 func (m *Metrics) SendGauge(ctx context.Context, name string, value float64) error {

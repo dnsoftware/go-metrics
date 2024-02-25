@@ -45,7 +45,7 @@ func createLogger(filename string, logLevel zapcore.Level) (*logger, error) {
 	// Открываем лог файл
 	logFile, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open log file: %v", err)
+		return nil, fmt.Errorf("failed to open log file: %w", err)
 	}
 
 	// Create writers for file and console

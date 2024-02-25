@@ -13,6 +13,7 @@ type AgentFlags struct {
 	flagReportInterval int64
 	flagPollInterval   int64
 	flagCryptoKey      string
+	flagRateLimit      int
 }
 
 // обрабатывает аргументы командной строки
@@ -24,6 +25,7 @@ func NewAgentFlags() AgentFlags {
 		ReportInterval int64  `env:"REPORT_INTERVAL"`
 		PollInterval   int64  `env:"POLL_INTERVAL"`
 		CryptoKey      string `env:"KEY"`
+		RateLimit      int    `env:"RATE_LIMIT"`
 	}
 
 	var (
@@ -40,6 +42,7 @@ func NewAgentFlags() AgentFlags {
 	flag.Int64Var(&flags.flagReportInterval, "r", constants.ReportInterval, "report interval")
 	flag.Int64Var(&flags.flagPollInterval, "p", constants.PollInterval, "poll interval")
 	flag.StringVar(&flags.flagCryptoKey, "k", "", "crypto key")
+	flag.IntVar(&flags.flagRateLimit, "l", constants.RateLimit, "poll interval")
 
 	flag.Parse()
 
@@ -60,6 +63,10 @@ func NewAgentFlags() AgentFlags {
 		flags.flagCryptoKey = cfg.CryptoKey
 	}
 
+	if cfg.RateLimit != 0 {
+		flags.flagRateLimit = cfg.RateLimit
+	}
+
 	return flags
 }
 
@@ -77,4 +84,8 @@ func (f *AgentFlags) PollInterval() int64 {
 
 func (f *AgentFlags) CryptoKey() string {
 	return f.flagCryptoKey
+}
+
+func (f *AgentFlags) RateLimit() int {
+	return f.flagRateLimit
 }
