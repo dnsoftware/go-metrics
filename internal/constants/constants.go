@@ -83,3 +83,18 @@ const (
 
 // Имена заголовков
 const HashHeaderName string = "HashSHA256"
+
+// для gopcutils
+const (
+	TotalMemory            string = "TotalMemory"
+	FreeMemory             string = "FreeMemory"
+	CPUutilization         string = "CPUutilization"
+	CPUIntervalUtilization int64  = 5 // в секундах
+)
+
+// for workerpool
+const (
+	WorkersCount   int = 3 // кол-во воркеров
+	BatchItemCount int = 5 // кол-во метрик в пакете
+	ChannelCap     int = 5 // емкость канала
+)

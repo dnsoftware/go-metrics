@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/logger"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -55,6 +57,8 @@ type MetricsItem struct {
 
 var gaugeMetricsList = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
+var gopcMetricsList = []string{constants.TotalMemory, constants.FreeMemory, constants.CPUutilization}
+
 func NewMetrics(storage AgentStorage, sender MetricsSender, flags Flags) Metrics {
 	return Metrics{
 		storage:        storage,
@@ -72,7 +76,6 @@ func (m *Metrics) Start() {
 
 	// обновление метрик
 	wg.Add(1)
-
 	go func() {
 		defer wg.Done()
 
@@ -83,6 +86,23 @@ func (m *Metrics) Start() {
 				return
 			default:
 				m.updateMetrics()
+				time.Sleep(time.Duration(m.pollInterval) * time.Second)
+			}
+		}
+	}()
+
+	// для gopcutils
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("\nОбновление метрик gopcutils завершено...")
+				return
+			default:
+				m.updateGopcMetrics()
 				time.Sleep(time.Duration(m.pollInterval) * time.Second)
 			}
 		}
@@ -114,7 +134,7 @@ func (m *Metrics) Start() {
 func (m *Metrics) updateMetrics() {
 	ctx := context.Background()
 
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	mCounter, err := m.storage.GetCounter(ctx, constants.PollCount)
 	if err != nil {
@@ -143,14 +163,35 @@ func (m *Metrics) updateMetrics() {
 
 			mCounter++
 		} else if metricName == constants.RandomValue {
-			m.storage.SetGauge(ctx, metricName, rng.Float64())
+			m.storage.SetGauge(ctx, metricName, rnd.Float64())
 
 			mCounter++
 		} else {
-			// ... логируем ошибку, или еще что-то
+			logger.Log().Warn("Metric not found: " + metricName)
+
 			continue
 		}
 	}
+
+	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
+}
+
+func (m *Metrics) updateGopcMetrics() {
+	ctx := context.Background()
+
+	mCounter, err := m.storage.GetCounter(ctx, constants.PollCount)
+	if err != nil {
+		logger.Log().Error(err.Error())
+	}
+
+	vm, _ := mem.VirtualMemory()
+	cc, _ := cpu.Percent(time.Second*time.Duration(constants.CPUIntervalUtilization), false)
+	//cpuCount, _ := cpu.Counts(false)
+
+	m.storage.SetGauge(ctx, constants.TotalMemory, float64(vm.Total))
+	m.storage.SetGauge(ctx, constants.FreeMemory, float64(vm.Free))
+	m.storage.SetGauge(ctx, constants.CPUutilization, cc[0])
+	mCounter += 3
 
 	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
 }
@@ -160,7 +201,8 @@ func (m *Metrics) sendMetrics() {
 	defer cancel()
 
 	// gauge
-	for _, metricName := range gaugeMetricsList {
+	allGaugeMetrics := append(gaugeMetricsList, gopcMetricsList...)
+	for _, metricName := range allGaugeMetrics {
 		val, err := m.storage.GetGauge(ctx, metricName)
 		if err != nil {
 			logger.Log().Error(err.Error())
@@ -188,6 +230,18 @@ func (m *Metrics) sendMetrics() {
 	_ = m.storage.SetCounter(ctx, constants.PollCount, 0)
 }
 
+func (m *Metrics) batchWorker(jobs <-chan []byte) {
+	ctx, cancel := context.WithTimeout(context.Background(), constants.HTTPContextTimeout)
+	defer cancel()
+
+	for j := range jobs {
+		err := m.sender.SendDataBatch(ctx, j)
+		if err != nil {
+			logger.Log().Error("Send job error: " + err.Error())
+		}
+	}
+}
+
 // отправка метрик пакетом
 func (m *Metrics) sendMetricsBatch() {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.HTTPContextTimeout)
@@ -196,7 +250,8 @@ func (m *Metrics) sendMetricsBatch() {
 	var batch []MetricsItem
 
 	// gauges
-	for _, metricName := range gaugeMetricsList {
+	allGaugeMetrics := append(gaugeMetricsList, gopcMetricsList...)
+	for _, metricName := range allGaugeMetrics {
 		val, err := m.storage.GetGauge(ctx, metricName)
 		if err != nil {
 			logger.Log().Error(err.Error())
@@ -224,16 +279,39 @@ func (m *Metrics) sendMetricsBatch() {
 		Delta: &pollCount,
 	})
 
-	jsonData, err := json.Marshal(batch)
-	if err != nil {
-		logger.Log().Error(err.Error())
-		return
+	// создаем буферизованный канал для принятия задач в воркер
+	jobsCh := make(chan []byte, constants.ChannelCap)
+	// создаем и запускаем пул из constants.WorkersCount воркеров
+	for w := 1; w <= constants.WorkersCount; w++ {
+		go m.batchWorker(jobsCh)
 	}
 
-	err = m.sender.SendDataBatch(ctx, jsonData)
-	if err != nil {
-		logger.Log().Error(err.Error())
+	// отправляем задачи, упакованные в мелкие пакеты, воркерам
+	var (
+		miniBatch []MetricsItem
+		batchData []byte
+	)
+	i := 0
+	for _, mi := range batch {
+		miniBatch = append(miniBatch, mi)
+		i++
+		if i == constants.BatchItemCount {
+			batchData, err = json.Marshal(miniBatch)
+			if err != nil {
+				logger.Log().Error(err.Error())
+				return
+			}
+
+			jobsCh <- batchData
+			i = 0
+			miniBatch = nil
+		}
 	}
+
+	if len(miniBatch) > 0 {
+		jobsCh <- batchData
+	}
+
 }
 
 func (m *Metrics) SendGauge(ctx context.Context, name string, value float64) error {
