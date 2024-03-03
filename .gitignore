@@ -25,3 +25,5 @@ vendor/
 .vscode
 /logs/
 /log.log
+cmd/agent/log.log
+cmd/server/log.log

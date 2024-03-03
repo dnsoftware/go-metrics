@@ -122,26 +122,49 @@ func (m *Metrics) Start() {
 	}()
 
 	// отправка метрик
-	wg.Add(1)
 
+	// создаем буферизованный канал для принятия задач в воркер
+	jobsCh := make(chan []byte, constants.ChannelCap)
+
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("\nОтправка метрик завершена...")
+				fmt.Println("\nПодготовка пакетов на отправку завершена...")
 				return
 			default:
 				time.Sleep(time.Duration(m.reportInterval) * time.Second)
 				// в старом API было m.sendMetrics()
-				m.sendMetricsBatch()
+				m.sendMetricsBatch(ctx, jobsCh)
+			}
+		}
+	}()
+
+	// отправка пакетов, поступающих в очередь
+	rateLimitChan := make(chan struct{}, constants.RateLimit)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(rateLimitChan)
+
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("\nОтправка метрик завершена...") ///
+				return
+			case job := <-jobsCh:
+				rateLimitChan <- struct{}{}
+				go m.worker(job, rateLimitChan)
 			}
 		}
 	}()
 
 	wg.Wait()
-	fmt.Println("Программа завершена!")
+
+	fmt.Println("\nПрограмма завершена!")
 }
 
 func (m *Metrics) updateMetrics() {
@@ -246,22 +269,29 @@ func (m *Metrics) sendMetrics() {
 	_ = m.storage.SetCounter(ctx, constants.PollCount, 0)
 }
 
-func (m *Metrics) batchWorker(jobs <-chan []byte) {
+func (m *Metrics) worker(job []byte, rateLimitChan chan struct{}) {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.HTTPContextTimeout)
 	defer cancel()
 
-	for j := range jobs {
-		err := m.sender.SendDataBatch(ctx, j)
-		if err != nil {
-			logger.Log().Error("Send job error: " + err.Error())
-		}
+	err := m.sender.SendDataBatch(ctx, job)
+	if err != nil {
+		logger.Log().Error("Send job error: " + err.Error())
 	}
+
+	<-rateLimitChan
 }
 
-// отправка метрик пакетом
-func (m *Metrics) sendMetricsBatch() {
-	ctx, cancel := context.WithTimeout(context.Background(), constants.HTTPContextTimeout)
+// отправка метрик мини-пакетами
+func (m *Metrics) sendMetricsBatch(ctx context.Context, jobsCh chan []byte) {
+	ctx, cancel := context.WithTimeout(ctx, constants.HTTPContextTimeout)
 	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		fmt.Println("\nОтправка пакетов завершена...") ///
+		return
+	default:
+	}
 
 	var batch []MetricsItem
 
@@ -294,13 +324,6 @@ func (m *Metrics) sendMetricsBatch() {
 		MType: constants.Counter,
 		Delta: &pollCount,
 	})
-
-	// создаем буферизованный канал для принятия задач в воркер
-	jobsCh := make(chan []byte, constants.ChannelCap)
-	// создаем и запускаем пул из RATE_LIMIT воркеров
-	for w := 1; w <= m.rateLimit; w++ {
-		go m.batchWorker(jobsCh)
-	}
 
 	// отправляем задачи, упакованные в мелкие пакеты, воркерам
 	var (
@@ -337,7 +360,6 @@ func (m *Metrics) sendMetricsBatch() {
 		jobsCh <- batchData
 	}
 
-	close(jobsCh)
 }
 
 func (m *Metrics) SendGauge(ctx context.Context, name string, value float64) error {
