@@ -20,6 +20,7 @@ const (
 	UpdateAction  string = "update"  // сохранить метрику
 	ValueAction   string = "value"   // получить метрику
 	UpdatesAction string = "updates" // получить список метрик
+	PprofAction   string = "/debug/pprof/"
 )
 
 // типы метрик

@@ -41,6 +41,11 @@ func CheckSignMiddleware(cryptoKey string) func(http.Handler) http.Handler {
 
 func trimEnd(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if r.URL.Path == constants.PprofAction {
+			next.ServeHTTP(w, r)
+		}
+
 		// очистка от конечных пробелов
 		r.URL.Path = strings.TrimSpace(r.URL.Path)
 		// очистка от конечных слешей
@@ -95,23 +100,11 @@ func WithLogging(h http.Handler) http.Handler {
 }
 
 func GzipMiddleware(h http.Handler) http.Handler {
+
 	gzipFn := func(w http.ResponseWriter, r *http.Request) {
 		// по умолчанию устанавливаем оригинальный http.ResponseWriter как тот,
 		// который будем передавать следующей функции
 		outWriter := w
-
-		// проверяем, что клиент умеет получать от сервера сжатые данные в формате gzip
-		acceptEncoding := r.Header.Get("Accept-Encoding")
-
-		supportsGzip := strings.Contains(acceptEncoding, constants.EncodingGzip)
-		if supportsGzip {
-			// оборачиваем оригинальный http.ResponseWriter новым с поддержкой сжатия
-			changedWriter := newCompressWriter(w)
-			// меняем оригинальный http.ResponseWriter на новый
-			outWriter = changedWriter
-			// не забываем отправить клиенту все сжатые данные после завершения middleware
-			defer changedWriter.Close()
-		}
 
 		// проверяем, что клиент отправил серверу сжатые данные в формате gzip
 		contentEncoding := r.Header.Get("Content-Encoding")

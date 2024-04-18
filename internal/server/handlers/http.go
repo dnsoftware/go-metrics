@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"context"
+	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/go-chi/chi/v5"
 )
+
+import _ "net/http/pprof"
 
 type Collector interface {
 	SetGaugeMetric(ctx context.Context, name string, value float64) error
@@ -53,10 +56,14 @@ func NewHTTPServer(collector Collector, cryptoKey string) HTTPServer {
 		collector: collector,
 		Router:    NewRouter(),
 	}
+
 	h.Router.Use(trimEnd)
 	h.Router.Use(CheckSignMiddleware(cryptoKey))
 	h.Router.Use(GzipMiddleware)
+	h.Router.Use(middleware.Compress(5))
 	h.Router.Use(WithLogging)
+
+	h.Router.Mount("/debug", middleware.Profiler())
 
 	h.Router.Post("/", h.getAllMetrics)
 	h.Router.Post("/"+constants.UpdateAction, h.updateMetricJSON)
