@@ -4,10 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/dnsoftware/go-metrics/internal/logger"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
 	_ "net/http/pprof"
 	"os"
@@ -18,6 +14,11 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name=AgentStorage

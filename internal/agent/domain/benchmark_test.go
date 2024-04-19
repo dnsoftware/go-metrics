@@ -3,12 +3,13 @@ package domain
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"testing"
+
 	"github.com/dnsoftware/go-metrics/internal/agent/infrastructure"
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"github.com/shirou/gopsutil/v3/cpu"
-	"strconv"
-	"testing"
 )
 
 func BenchmarkSetBatch(b *testing.B) {

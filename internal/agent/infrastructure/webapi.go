@@ -8,10 +8,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/dnsoftware/go-metrics/internal/logger"
 	"net/http"
 	"strconv"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
 )
 
 type Flags interface {

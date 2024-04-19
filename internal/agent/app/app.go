@@ -1,12 +1,13 @@
 package app
 
 import (
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/dnsoftware/go-metrics/internal/agent/domain"
 	"github.com/dnsoftware/go-metrics/internal/agent/infrastructure"
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/storage"
-	"net/http"
-	_ "net/http/pprof"
 )
 
 func AgentRun() {

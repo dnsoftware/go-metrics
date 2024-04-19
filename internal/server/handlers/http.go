@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"context"
-	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
+
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/go-chi/chi/v5"
-)
 
-import _ "net/http/pprof"
+	_ "net/http/pprof"
+)
 
 type Collector interface {
 	SetGaugeMetric(ctx context.Context, name string, value float64) error

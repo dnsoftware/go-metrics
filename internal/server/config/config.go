@@ -2,10 +2,11 @@ package config
 
 import (
 	"flag"
-	"github.com/caarlos0/env/v6"
-	"github.com/dnsoftware/go-metrics/internal/constants"
 	"log"
 	"os"
+
+	"github.com/caarlos0/env/v6"
+	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 type ServerConfig struct {

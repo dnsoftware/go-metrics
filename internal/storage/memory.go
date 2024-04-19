@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/dnsoftware/go-metrics/internal/constants"
 	"sync"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 type MemStorage struct {

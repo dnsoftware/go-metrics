@@ -2,11 +2,12 @@ package collector
 
 import (
 	"context"
+	"testing"
+
 	mock_collector "github.com/dnsoftware/go-metrics/internal/server/collector/mocks"
 	"github.com/dnsoftware/go-metrics/internal/server/config"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"github.com/golang/mock/gomock"
-	"testing"
 )
 
 func BenchmarkGetAll(b *testing.B) {

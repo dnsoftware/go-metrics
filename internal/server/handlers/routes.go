@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/go-chi/chi/v5"
 )
 
 func NewRouter() chi.Router {

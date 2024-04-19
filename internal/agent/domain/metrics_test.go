@@ -2,11 +2,12 @@ package domain
 
 import (
 	"context"
+	"testing"
+
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestMetrics_repo(t *testing.T) {

@@ -2,12 +2,13 @@ package logger
 
 import (
 	"fmt"
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type logger struct {

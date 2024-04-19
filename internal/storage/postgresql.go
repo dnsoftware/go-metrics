@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/logger"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"strings"
-	"time"
 )
 
 type PgStorage struct {
