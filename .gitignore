@@ -27,3 +27,5 @@ vendor/
 /log.log
 cmd/agent/log.log
 cmd/server/log.log
+
+.run

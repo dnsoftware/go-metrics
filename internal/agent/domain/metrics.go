@@ -9,6 +9,7 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"reflect"
@@ -97,7 +98,7 @@ func (m *Metrics) Start() {
 				fmt.Println("\nОбновление метрик завершено...")
 				return
 			default:
-				m.updateMetrics()
+				m.UpdateMetrics()
 				time.Sleep(time.Duration(m.pollInterval) * time.Second)
 			}
 		}
@@ -167,7 +168,7 @@ func (m *Metrics) Start() {
 	fmt.Println("\nПрограмма завершена!")
 }
 
-func (m *Metrics) updateMetrics() {
+func (m *Metrics) UpdateMetricsReflect() {
 	ctx := context.Background()
 
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -208,6 +209,51 @@ func (m *Metrics) updateMetrics() {
 			continue
 		}
 	}
+
+	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
+}
+
+func (m *Metrics) UpdateMetrics() {
+	ctx := context.Background()
+
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	mCounter, err := m.storage.GetCounter(ctx, constants.PollCount)
+	if err != nil {
+		logger.Log().Error(err.Error())
+	}
+
+	runtime.ReadMemStats(&m.metrics)
+
+	m.storage.SetGauge(ctx, "Alloc", float64(m.metrics.Alloc))
+	m.storage.SetGauge(ctx, "TotalAlloc", float64(m.metrics.TotalAlloc))
+	m.storage.SetGauge(ctx, "Sys", float64(m.metrics.Sys))
+	m.storage.SetGauge(ctx, "Lookups", float64(m.metrics.Lookups))
+	m.storage.SetGauge(ctx, "Mallocs", float64(m.metrics.Mallocs))
+	m.storage.SetGauge(ctx, "Frees", float64(m.metrics.Frees))
+	m.storage.SetGauge(ctx, "HeapAlloc", float64(m.metrics.HeapAlloc))
+	m.storage.SetGauge(ctx, "HeapSys", float64(m.metrics.HeapSys))
+	m.storage.SetGauge(ctx, "HeapIdle", float64(m.metrics.HeapIdle))
+	m.storage.SetGauge(ctx, "HeapInuse", float64(m.metrics.HeapInuse))
+	m.storage.SetGauge(ctx, "HeapReleased", float64(m.metrics.HeapReleased))
+	m.storage.SetGauge(ctx, "HeapObjects", float64(m.metrics.HeapObjects))
+	m.storage.SetGauge(ctx, "StackInuse", float64(m.metrics.StackInuse))
+	m.storage.SetGauge(ctx, "StackSys", float64(m.metrics.StackSys))
+	m.storage.SetGauge(ctx, "MSpanInuse", float64(m.metrics.MSpanInuse))
+	m.storage.SetGauge(ctx, "MSpanSys", float64(m.metrics.MSpanSys))
+	m.storage.SetGauge(ctx, "MCacheInuse", float64(m.metrics.MCacheInuse))
+	m.storage.SetGauge(ctx, "MCacheSys", float64(m.metrics.MCacheSys))
+	m.storage.SetGauge(ctx, "BuckHashSys", float64(m.metrics.BuckHashSys))
+	m.storage.SetGauge(ctx, "GCSys", float64(m.metrics.GCSys))
+	m.storage.SetGauge(ctx, "OtherSys", float64(m.metrics.OtherSys))
+	m.storage.SetGauge(ctx, "NextGC", float64(m.metrics.NextGC))
+	m.storage.SetGauge(ctx, "LastGC", float64(m.metrics.LastGC))
+	m.storage.SetGauge(ctx, "PauseTotalNs", float64(m.metrics.PauseTotalNs))
+	m.storage.SetGauge(ctx, "NumGC", float64(m.metrics.NumGC))
+	m.storage.SetGauge(ctx, "NumForcedGC", float64(m.metrics.NumForcedGC))
+	m.storage.SetGauge(ctx, "GCCPUFraction", m.metrics.GCCPUFraction)
+	m.storage.SetGauge(ctx, constants.RandomValue, rnd.Float64())
+	mCounter += 28
 
 	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
 }

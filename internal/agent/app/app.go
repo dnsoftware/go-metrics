@@ -5,6 +5,8 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/agent/infrastructure"
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/storage"
+	"net/http"
+	_ "net/http/pprof"
 )
 
 func AgentRun() {
@@ -16,5 +18,10 @@ func AgentRun() {
 	sender := infrastructure.NewWebSender("http", &flags, constants.ApplicationJSON)
 
 	metrics := domain.NewMetrics(repository, &sender, &flags)
+
+	go func() {
+		http.ListenAndServe(constants.AgentPprofAddr, nil) // запускаем сервер для pprof
+	}()
+
 	metrics.Start()
 }

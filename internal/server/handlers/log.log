@@ -6,3 +6,7 @@
 {"level":"info","ts":"2024-02-25T19:07:07.888+0300","caller":"handlers/middlewares.go:83","msg":"request","uri":"/value/counter/testSetGet33","method":"GET","duration":0.000129947,"status":200,"size":3,"body":""}
 {"level":"info","ts":"2024-04-12T14:45:00.970+0300","caller":"handlers/middlewares.go:83","msg":"request","uri":"/update/counter/testSetGet33/982","method":"POST","duration":0.000024114,"status":200,"size":0,"body":""}
 {"level":"info","ts":"2024-04-12T14:45:00.971+0300","caller":"handlers/middlewares.go:83","msg":"request","uri":"/value/counter/testSetGet33","method":"GET","duration":0.000097814,"status":200,"size":3,"body":""}
+{"level":"info","ts":"2024-04-18T18:23:09.142+0300","caller":"handlers/middlewares.go:88","msg":"request","uri":"/update/counter/testSetGet33/982","method":"POST","duration":0.000038292,"status":200,"size":0,"body":""}
+{"level":"info","ts":"2024-04-18T18:23:09.143+0300","caller":"handlers/middlewares.go:88","msg":"request","uri":"/value/counter/testSetGet33","method":"GET","duration":0.00001576,"status":200,"size":3,"body":""}
+{"level":"info","ts":"2024-04-19T10:04:17.839+0300","caller":"handlers/middlewares.go:88","msg":"request","uri":"/update/counter/testSetGet33/982","method":"POST","duration":0.000021655,"status":200,"size":0,"body":""}
+{"level":"info","ts":"2024-04-19T10:04:17.839+0300","caller":"handlers/middlewares.go:88","msg":"request","uri":"/value/counter/testSetGet33","method":"GET","duration":0.00000608,"status":200,"size":3,"body":""}

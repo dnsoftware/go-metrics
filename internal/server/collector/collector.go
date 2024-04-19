@@ -7,6 +7,7 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/logger"
 	"github.com/dnsoftware/go-metrics/internal/server/config"
+	_ "github.com/golang/mock/mockgen/model"
 	"strconv"
 	"time"
 )
