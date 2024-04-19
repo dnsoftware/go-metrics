@@ -19,7 +19,7 @@ func BenchmarkSetBatch(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		err := m.SetBatch(ctx, []byte(batch))
 		if err != nil {
-			fmt.Errorf("Ошибка сохранения")
+			fmt.Println("Ошибка сохранения")
 		}
 	}
 }
