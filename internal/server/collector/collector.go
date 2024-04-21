@@ -16,31 +16,52 @@ import (
 // ServerStorage сохраняет метрики в хранилище, получает метрики из хранилища.
 // Получает дамп данных хранилища, восстанавливает базу данных из дампа.
 type ServerStorage interface {
+	// SetGauge сохранение метрики типа gauge в хранилище.
+	// Параметры: name - название метрики, value - ее значение.
 	SetGauge(ctx context.Context, name string, value float64) error
+
+	// SetCounter сохранение метрики типа counter в хранилище.
+	// Параметры: name - название метрики, value - ее значение.
 	SetCounter(ctx context.Context, name string, value int64) error
+
+	// SetBatch сохраняет метрики в базу пакетом из нескольких штук
 	SetBatch(ctx context.Context, batch []byte) error
 
+	// GetGauge получение значения метрики типа gauge из хранилища.
+	// Параметры: name - название метрики.
 	GetGauge(ctx context.Context, name string) (float64, error)
+
+	// GetCounter получение значения метрики типа counter из хранилища.
+	// Параметры: name - название метрики.
 	GetCounter(ctx context.Context, name string) (int64, error)
+
+	// GetAll получение всех метрик. Возвращает карты gauge и counters
 	GetAll(ctx context.Context) (map[string]float64, map[string]int64, error)
 
+	// GetDump получение дампа базы данных
 	GetDump(ctx context.Context) (string, error)
+
+	// RestoreFromDump восстановление в базу данных из дампа
 	RestoreFromDump(ctx context.Context, dump string) error
 
+	// DatabasePing проверяет работоспособность БД
 	DatabasePing(ctx context.Context) bool
 }
 
+// BackupStorage работает с резервной копией БД. Сохранение дампа в базу и получение дампа базы.
 type BackupStorage interface {
 	Save(dump string) error
 	Load() (string, error)
 }
 
+// Collector работает с метриками. Сохраняет их в базу и получает их из базы.
 type Collector struct {
 	cfg           *config.ServerConfig
 	storage       ServerStorage
 	backupStorage BackupStorage
 }
 
+// gaugeMetricsList список доступных gauge метрик
 var gaugeMetricsList = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
 func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage BackupStorage) (*Collector, error) {
@@ -63,7 +84,7 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
 	return collector, nil
 }
 
-// проверка на допустимую метрику
+// isMetric проверка на допустимую метрику
 func (c *Collector) isMetric(mType string, name string) bool {
 
 	if mType == constants.Gauge {
@@ -83,6 +104,8 @@ func (c *Collector) isMetric(mType string, name string) bool {
 	return false
 }
 
+// SetGaugeMetric сохранение метрики типа gauge.
+// Параметры: metricName - название метрики, metricValue - ее значение.
 func (c *Collector) SetGaugeMetric(ctx context.Context, metricName string, metricValue float64) error {
 	err := c.storage.SetGauge(ctx, metricName, metricValue)
 	if err != nil {
@@ -99,10 +122,15 @@ func (c *Collector) SetGaugeMetric(ctx context.Context, metricName string, metri
 
 	return nil
 }
+
+// GetGaugeMetric получение значения метрики типа gauge.
+// Параметры: metricName - название метрики.
 func (c *Collector) GetGaugeMetric(ctx context.Context, metricName string) (float64, error) {
 	return c.storage.GetGauge(ctx, metricName)
 }
 
+// SetCounterMetric сохранение метрики типа counter.
+// Параметры: metricName - название метрики, metricValue - ее значение.
 // Прибавляем к уже существующему значению
 func (c *Collector) SetCounterMetric(ctx context.Context, metricName string, metricValue int64) error {
 	oldVal, _ := c.storage.GetCounter(ctx, metricName)
@@ -124,15 +152,18 @@ func (c *Collector) SetCounterMetric(ctx context.Context, metricName string, met
 	return nil
 }
 
+// SetBatchMetrics сохраняет метрики в базу пакетом из нескольких штук
 func (c *Collector) SetBatchMetrics(ctx context.Context, batch []byte) error {
 	return c.storage.SetBatch(ctx, batch)
 }
 
+// GetCounterMetric получение значения метрики типа counter.
+// Параметры: metricName - название метрики.
 func (c *Collector) GetCounterMetric(ctx context.Context, metricName string) (int64, error) {
 	return c.storage.GetCounter(ctx, metricName)
 }
 
-// получение метрики в текстовом виде
+// GetMetric получение метрики в текстовом виде
 func (c *Collector) GetMetric(ctx context.Context, metricType string, metricName string) (string, error) {
 	var valStr string
 
@@ -178,7 +209,7 @@ func (c *Collector) GetAll(ctx context.Context) (string, error) {
 	return mList, nil
 }
 
-// сохранение дампа в файл
+// generateDump сохранение дампа в файл
 func (c *Collector) generateDump() error {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
 	defer cancel()
@@ -198,7 +229,7 @@ func (c *Collector) generateDump() error {
 	return nil
 }
 
-// загрузка данных из дампа
+// loadFromDump загрузка данных из дампа
 func (c *Collector) loadFromDump() error {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
 	defer cancel()
@@ -223,7 +254,7 @@ func (c *Collector) loadFromDump() error {
 	return nil
 }
 
-// периодическое сохранение метрик
+// startBackup периодическое сохранение метрик
 func (c *Collector) startBackup() {
 	// если обновление синхронное - не запускаем периодическое обновление
 	if c.cfg.StoreInterval == constants.BackupPeriodSync {

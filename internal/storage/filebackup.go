@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// BackupStorage работает с файловым хранилищем резервной копии базы данных
 type BackupStorage struct {
 	mutex      sync.Mutex
 	Gauges     map[string]float64 `json:"gauges"`
@@ -28,7 +29,7 @@ func NewBackupStorage(filename string) (*BackupStorage, error) {
 	}, nil
 }
 
-// сохранение в файл
+// Save сохранение в файл
 func (b *BackupStorage) Save(dump string) error {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -51,7 +52,7 @@ func (b *BackupStorage) Save(dump string) error {
 	return nil
 }
 
-// получение данных из файла
+// Load получение данных из файла
 func (b *BackupStorage) Load() (string, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()

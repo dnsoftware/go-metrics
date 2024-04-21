@@ -17,6 +17,7 @@ func NewRouter() chi.Router {
 	return r
 }
 
+// getAllMetrics получение всех метрик простым списком
 func (h *HTTPServer) getAllMetrics(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
@@ -31,18 +32,23 @@ func (h *HTTPServer) getAllMetrics(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(val))
 }
 
+// noMetricType ошибочный endpoint - не указан тип метрики.
 func (h *HTTPServer) noMetricType(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Metric type required!", http.StatusBadRequest)
 }
 
+// noMetricName ошибочный endpoint - не указано название метрики.
 func (h *HTTPServer) noMetricName(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Metric name required!", http.StatusNotFound)
 }
 
+// noMetricValue ошибочный endpoint - не указано значение метрики.
 func (h *HTTPServer) noMetricValue(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Metric value required!", http.StatusBadRequest)
 }
 
+// updateMetric обновление одной метрики.
+// Данные берутся из URL формата "/update/{metricType}/{metricName}/{metricValue}
 func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
@@ -91,7 +97,7 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// обновление метрики json формат
+// updateMetricJSON обновление одной метрики. Данные передаются в json формате
 func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
@@ -177,7 +183,7 @@ func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request
 	}
 }
 
-// обновление метрик пакетом, json формат
+// updatesMetricJSON обновление метрик пакетом, json формат
 func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
@@ -200,6 +206,8 @@ func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Reques
 	res.WriteHeader(http.StatusOK)
 }
 
+// getMetricValue получение одной метрики
+// Данные берутся из URL формата "/value/{metricType}/{metricName}
 func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
@@ -221,6 +229,7 @@ func (h *HTTPServer) getMetricValue(res http.ResponseWriter, req *http.Request) 
 	res.Write([]byte(val))
 }
 
+// getMetricValueJSON получение значения одной метрики в формате json
 func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
@@ -273,8 +282,7 @@ func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Reque
 	res.Write(resp)
 }
 
-// deprecated
-// версия из первого инкремента
+// Deprecated: версия из первого инкремента
 func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
@@ -376,6 +384,7 @@ func (h *HTTPServer) unrecognized(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Not found!", http.StatusNotFound)
 }
 
+// databasePing пинг базы данных для проверки работоспособности
 func (h *HTTPServer) databasePing(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()

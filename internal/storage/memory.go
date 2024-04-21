@@ -9,6 +9,7 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
+// MemStorage работает с хранилищем в оперативной памяти
 type MemStorage struct {
 	mutex    sync.Mutex
 	Gauges   map[string]float64 `json:"gauges"`
@@ -22,6 +23,8 @@ func NewMemStorage() *MemStorage {
 	}
 }
 
+// SetGauge сохранение метрики типа gauge в хранилище.
+// Параметры: name - название метрики, value - ее значение.
 func (m *MemStorage) SetGauge(ctx context.Context, name string, value float64) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -31,6 +34,8 @@ func (m *MemStorage) SetGauge(ctx context.Context, name string, value float64) e
 	return nil
 }
 
+// GetGauge получение значения метрики типа gauge из хранилища.
+// Параметры: name - название метрики.
 func (m *MemStorage) GetGauge(ctx context.Context, name string) (float64, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -42,6 +47,8 @@ func (m *MemStorage) GetGauge(ctx context.Context, name string) (float64, error)
 	return 0, errors.New("no such metric")
 }
 
+// SetCounter сохранение метрики типа counter в хранилище.
+// Параметры: name - название метрики, value - ее значение.
 func (m *MemStorage) SetCounter(ctx context.Context, name string, value int64) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -51,6 +58,7 @@ func (m *MemStorage) SetCounter(ctx context.Context, name string, value int64) e
 	return nil
 }
 
+// SetBatch сохраняет метрики в базу пакетом из нескольких штук
 func (m *MemStorage) SetBatch(ctx context.Context, batch []byte) error {
 	var metrics []Metrics
 
@@ -75,6 +83,8 @@ func (m *MemStorage) SetBatch(ctx context.Context, batch []byte) error {
 	return nil
 }
 
+// GetCounter получение значения метрики типа counter из хранилища.
+// Параметры: name - название метрики.
 func (m *MemStorage) GetCounter(ctx context.Context, name string) (int64, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -86,7 +96,7 @@ func (m *MemStorage) GetCounter(ctx context.Context, name string) (int64, error)
 	return 0, errors.New("no such metric")
 }
 
-// возврат карт gauge и counters
+// GetAll возврат карт gauge и counters
 func (m *MemStorage) GetAll(ctx context.Context) (map[string]float64, map[string]int64, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -94,7 +104,7 @@ func (m *MemStorage) GetAll(ctx context.Context) (map[string]float64, map[string
 	return m.Gauges, m.Counters, nil
 }
 
-// получение json дампа
+// GetDump получение json дампа
 func (m *MemStorage) GetDump(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -107,7 +117,7 @@ func (m *MemStorage) GetDump(ctx context.Context) (string, error) {
 	return string(data), nil
 }
 
-// восстановление из json дампа
+// RestoreFromDump восстановление из json дампа
 func (m *MemStorage) RestoreFromDump(ctx context.Context, dump string) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -120,6 +130,7 @@ func (m *MemStorage) RestoreFromDump(ctx context.Context, dump string) error {
 	return nil
 }
 
+// DatabasePing проверяет работоспособность БД
 func (m *MemStorage) DatabasePing(ctx context.Context) bool {
 	return false
 }

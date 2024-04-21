@@ -16,20 +16,24 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+// PgStorage работает с Postgresql базой данных
 type PgStorage struct {
 	db *sql.DB
 }
 
+// Gauge для получения метрики counter из БД
 type Gauge struct {
 	name  string
 	value float64
 }
 
+// Counter для получения метрики counter из БД
 type Counter struct {
 	name  string
 	value int64
 }
 
+// DumpData карты gauges и counters для получения дампа БД
 type DumpData struct {
 	Gauges   map[string]float64 `json:"gauges"`
 	Counters map[string]int64   `json:"counters"`
@@ -58,7 +62,7 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
 	return ps, nil
 }
 
-// формирование структуры БД
+// createDatabaseTables формирование структуры БД
 func (p *PgStorage) createDatabaseTables(ctx context.Context) error {
 	var query string
 
@@ -91,6 +95,7 @@ func (p *PgStorage) createDatabaseTables(ctx context.Context) error {
 	return nil
 }
 
+// retryExec выполнение операции вставки/обновления несколькими попытками, если необходимо
 func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) error {
 	durations := strings.Split(constants.HTTPAttemtPeriods, ",")
 
@@ -120,6 +125,8 @@ func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) er
 	return nil
 }
 
+// SetGauge сохранение метрики типа gauge в хранилище.
+// Параметры: name - название метрики, value - ее значение.
 func (p *PgStorage) SetGauge(ctx context.Context, name string, value float64) error {
 	query := `INSERT INTO gauges (id, val, updated_at)
 			VALUES ($1, $2, now())
@@ -135,6 +142,8 @@ func (p *PgStorage) SetGauge(ctx context.Context, name string, value float64) er
 	return nil
 }
 
+// GetGauge получение значения метрики типа gauge из хранилища.
+// Параметры: name - название метрики.
 func (p *PgStorage) GetGauge(ctx context.Context, name string) (float64, error) {
 	query := `SELECT val FROM gauges WHERE id = $1`
 	row := p.db.QueryRowContext(ctx, query, name)
@@ -149,6 +158,8 @@ func (p *PgStorage) GetGauge(ctx context.Context, name string) (float64, error) 
 	return val, nil
 }
 
+// SetCounter сохранение метрики типа counter в хранилище.
+// Параметры: name - название метрики, value - ее значение.
 func (p *PgStorage) SetCounter(ctx context.Context, name string, value int64) error {
 	query := `INSERT INTO counters (id, val, updated_at)
 			VALUES ($1, $2, now())
@@ -164,6 +175,7 @@ func (p *PgStorage) SetCounter(ctx context.Context, name string, value int64) er
 	return nil
 }
 
+// SetBatch сохраняет метрики в базу пакетом из нескольких штук
 func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 	var metrics []Metrics
 
@@ -310,6 +322,8 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 	return nil
 }
 
+// GetCounter получение значения метрики типа counter из хранилища.
+// Параметры: name - название метрики.
 func (p *PgStorage) GetCounter(ctx context.Context, name string) (int64, error) {
 	query := `SELECT val FROM counters WHERE id = $1`
 	row := p.db.QueryRowContext(ctx, query, name)
@@ -324,7 +338,7 @@ func (p *PgStorage) GetCounter(ctx context.Context, name string) (int64, error) 
 	return val, nil
 }
 
-// возврат карт gauge и counters
+// GetAll возврат всех метрик (карт gauge и counters)
 func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]int64, error) {
 	// gauges
 	gRows, err := p.db.QueryContext(ctx, `SELECT id, val FROM gauges`)
@@ -380,7 +394,7 @@ func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]
 	return dump.Gauges, dump.Counters, nil
 }
 
-// получение json дампа
+// GetDump получение json дампа БД
 func (p *PgStorage) GetDump(ctx context.Context) (string, error) {
 	dump := DumpData{}
 
@@ -399,7 +413,7 @@ func (p *PgStorage) GetDump(ctx context.Context) (string, error) {
 	return string(data), nil
 }
 
-// восстановление из json дампа
+// RestoreFromDump восстановление БД из json дампа
 func (p *PgStorage) RestoreFromDump(ctx context.Context, dump string) error {
 	data := DumpData{}
 
