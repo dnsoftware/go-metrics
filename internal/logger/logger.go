@@ -33,7 +33,7 @@ func Log() *logger {
 	return projectLogger
 }
 
-// логирование в файл и в консоль
+// createLogger логирование в файл и в консоль
 func createLogger(filename string, logLevel zapcore.Level) (*logger, error) {
 	// формат времени "2006-01-02T15:04:05.000Z0700"
 	config := zap.NewProductionEncoderConfig()

@@ -13,6 +13,8 @@ import (
 	_ "github.com/golang/mock/mockgen/model"
 )
 
+// ServerStorage сохраняет метрики в хранилище, получает метрики из хранилища.
+// Получает дамп данных хранилища, восстанавливает базу данных из дампа.
 type ServerStorage interface {
 	SetGauge(ctx context.Context, name string, value float64) error
 	SetCounter(ctx context.Context, name string, value int64) error

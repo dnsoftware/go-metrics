@@ -31,15 +31,15 @@ func (h *HTTPServer) getAllMetrics(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(val))
 }
 
-func (h *HTTPServer) noMetricType(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) noMetricType(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Metric type required!", http.StatusBadRequest)
 }
 
-func (h *HTTPServer) noMetricName(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) noMetricName(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Metric name required!", http.StatusNotFound)
 }
 
-func (h *HTTPServer) noMetricValue(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) noMetricValue(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Metric value required!", http.StatusBadRequest)
 }
 
@@ -372,7 +372,7 @@ func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (h *HTTPServer) unrecognized(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) unrecognized(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Not found!", http.StatusNotFound)
 }
 

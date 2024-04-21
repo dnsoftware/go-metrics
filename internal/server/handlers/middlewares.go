@@ -16,6 +16,7 @@ import (
 
 type Middleware func(http.Handler) http.Handler
 
+// CheckSignMiddleware проверяет подпись переданных данныхпо алгоритму SHA256 (если это необходимо)
 func CheckSignMiddleware(cryptoKey string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -99,6 +100,7 @@ func WithLogging(h http.Handler) http.Handler {
 	return http.HandlerFunc(logFn)
 }
 
+// GzipMiddleware распаковывает данные сжатые gzip, если это необходимо
 func GzipMiddleware(h http.Handler) http.Handler {
 
 	gzipFn := func(w http.ResponseWriter, r *http.Request) {

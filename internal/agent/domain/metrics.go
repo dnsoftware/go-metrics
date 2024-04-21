@@ -1,3 +1,4 @@
+// Package domain включает в себя бизнес логика агента. Получение метрик и отправка их на сервер
 package domain
 
 import (
@@ -21,27 +22,43 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-//go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name=AgentStorage
+// AgentStorage интерфейс хранилаща для агента.
 type AgentStorage interface {
+	// SetGauge сохранение метрики типа gauge в хранилище.
+	// Параметры: name - название метрики, value - ее значение.
 	SetGauge(ctx context.Context, name string, value float64) error
+
+	// GetGauge получение значения метрики типа gauge из хранилища.
+	// Параметры: name - название метрики.
 	GetGauge(ctx context.Context, name string) (float64, error)
 
+	// SetCounter сохранение метрики типа counter в хранилище.
+	// Параметры: name - название метрики, value - ее значение.
 	SetCounter(ctx context.Context, name string, value int64) error
+
+	// GetCounter получение значения метрики типа counter из хранилища.
+	// Параметры: name - название метрики.
 	GetCounter(ctx context.Context, name string) (int64, error)
 }
 
-//go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name=MetricsSender
+// MetricsSender отправка метрик на сервер.
 type MetricsSender interface {
+	// SendData отправка одной метрики на сервер.
 	SendData(ctx context.Context, mType string, name string, value string) error
+
+	// SendDataBatch отправка метрик на сервер пакетом. Параметр jsonData - данные по
+	// метрикам в формате json в виде среза байт
 	SendDataBatch(ctx context.Context, jsonData []byte) error
 }
 
+// Flags получение значения флагов командной строки запуска агента
 type Flags interface {
 	ReportInterval() int64
 	PollInterval() int64
 	RateLimit() int
 }
 
+// Metrics основная структура агента. Получение, промежуточное сохранение, отправка данных на сервер.
 type Metrics struct {
 	metrics         runtime.MemStats
 	storage         AgentStorage
@@ -60,6 +77,7 @@ type MetricsItem struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
+// gaugeMetricsList названия всех доступных gauge метрик
 var gaugeMetricsList = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue"}
 
 func NewMetrics(storage AgentStorage, sender MetricsSender, flags Flags) Metrics {
@@ -81,6 +99,7 @@ func NewMetrics(storage AgentStorage, sender MetricsSender, flags Flags) Metrics
 	}
 }
 
+// Start старт работы агента - запуск горутин по получению и отправке метрик.
 func (m *Metrics) Start() {
 	var wg sync.WaitGroup
 
@@ -169,6 +188,7 @@ func (m *Metrics) Start() {
 	fmt.Println("\nПрограмма завершена!")
 }
 
+// UpdateMetricsReflect сохранение метрик в базу с использованием рефлексии.
 func (m *Metrics) UpdateMetricsReflect() {
 	ctx := context.Background()
 
@@ -214,6 +234,8 @@ func (m *Metrics) UpdateMetricsReflect() {
 	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
 }
 
+// UpdateMetrics сохранение метрик в базу явным образом.
+// работает быстрее
 func (m *Metrics) UpdateMetrics() {
 	ctx := context.Background()
 
@@ -259,6 +281,7 @@ func (m *Metrics) UpdateMetrics() {
 	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
 }
 
+// updateGopcMetrics получение системных и аппаратных метрик и сохранение их в базу.
 func (m *Metrics) updateGopcMetrics() {
 	ctx := context.Background()
 
@@ -282,6 +305,7 @@ func (m *Metrics) updateGopcMetrics() {
 	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
 }
 
+// sendMetrics отправка метрик на сервер
 func (m *Metrics) sendMetrics() {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.HTTPContextTimeout)
 	defer cancel()
@@ -316,6 +340,7 @@ func (m *Metrics) sendMetrics() {
 	_ = m.storage.SetCounter(ctx, constants.PollCount, 0)
 }
 
+// worker воркер по пакетной отправке метрик на сервер.
 func (m *Metrics) worker(job []byte, rateLimitChan chan struct{}) {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.HTTPContextTimeout)
 	defer cancel()
@@ -409,6 +434,7 @@ func (m *Metrics) sendMetricsBatch(ctx context.Context, jobsCh chan []byte) {
 
 }
 
+// SendGauge отправляет одну метрику типа gauge на сервер
 func (m *Metrics) SendGauge(ctx context.Context, name string, value float64) error {
 	err := m.sender.SendData(ctx, constants.Gauge, name, fmt.Sprintf("%f", value))
 	if err != nil {
@@ -418,6 +444,7 @@ func (m *Metrics) SendGauge(ctx context.Context, name string, value float64) err
 	return nil
 }
 
+// SendCounter отправляет одну метрику типа counter на сервер
 func (m *Metrics) SendCounter(ctx context.Context, name string, value int64) error {
 	v := strconv.FormatInt(value, 10)
 

@@ -9,6 +9,7 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
+// ServerConfig конфигурационные параметры сервера
 type ServerConfig struct {
 	ServerAddress   string `env:"ADDRESS"`
 	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1"`
@@ -18,6 +19,7 @@ type ServerConfig struct {
 	CryptoKey       string `env:"KEY" envDefault:""`
 }
 
+// serverFlags флаги конфигурации
 type serverFlags struct {
 	serverAddress   string
 	storeInterval   int64

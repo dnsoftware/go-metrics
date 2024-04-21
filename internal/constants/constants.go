@@ -1,3 +1,4 @@
+// Модуль constants содержит все используемые в проекте константы
 package constants
 
 import (
@@ -6,7 +7,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// интервалы
+// Различные интервалы.
 const (
 	PollInterval       int64         = 2                               // интервал обновления метрик
 	ReportInterval     int64         = 10                              // интервал отправки метрик на сервер
@@ -16,7 +17,7 @@ const (
 	HTTPContextTimeout time.Duration = time.Duration(10) * time.Second // длительность запроса в контексте работы с сетью
 )
 
-// действия
+// Действия. Используются для построения url.
 const (
 	UpdateAction  string = "update"  // сохранить метрику
 	ValueAction   string = "value"   // получить метрику
@@ -24,13 +25,13 @@ const (
 	PprofAction   string = "/debug/pprof/"
 )
 
-// типы метрик
+// Типы метрик.
 const (
 	Gauge   string = "gauge"
 	Counter string = "counter"
 )
 
-// названия параметров
+// Названия параметров.
 const (
 	MetricType  string = "metricType"
 	MetricName  string = "metricName"
@@ -39,13 +40,13 @@ const (
 	RestoreSavedEnv string = "RESTORE"
 )
 
-// метрики
+// Метрики.
 const (
 	PollCount   string = "PollCount"   // имя метрики счетчика
 	RandomValue string = "RandomValue" // имя случайной метрики
 )
 
-// параметры работы сервера по умолчанию
+// Параметры работы сервера (по умолчанию).
 const (
 	ServerDefault   string = "localhost:8080"       // адрес:порт сервера по умолчанию
 	StoreInterval   int64  = 300                    // интервалс сохранения значений метрик в файл
@@ -54,13 +55,13 @@ const (
 	AgentPprofAddr  string = ":8082"                // адрес:порт агента для работы с профилировщиком
 )
 
-// логгер
+// Логгер.
 const (
 	LogFile  string = "./log.log"
 	LogLevel        = zapcore.InfoLevel
 )
 
-// тип контента
+// Типы контента.
 const (
 	TextPlain       string = "text/plain"
 	TextHTML        string = "text/html"
@@ -72,22 +73,22 @@ const (
 	EncodingGzip string = "gzip"
 )
 
-// тип хранилища данных
+// Тип хранилища данных.
 const (
 	Memory string = "memory"
 	DBMS   string = "DBMS"
 )
 
-// Периоды повтора для Retriable ошибок
+// Периоды повтора для Retriable ошибок.
 const (
 	HTTPAttemtPeriods string = "1s,2s,5s"
 	DBAttemtPeriods   string = "1s,2s,5s"
 )
 
-// Имена заголовков
+// Имена заголовков.
 const HashHeaderName string = "HashSHA256"
 
-// для gopcutils
+// Для gopcutils.
 const (
 	TotalMemory            string = "TotalMemory"
 	FreeMemory             string = "FreeMemory"
@@ -95,7 +96,7 @@ const (
 	CPUIntervalUtilization int64  = 5 // в секундах
 )
 
-// for workerpool
+// Для пула воркеров
 const (
 	RateLimit      int = 3 // количество одновременно исходящих запросов на сервер по умолчанию (кол-во воркеров)
 	BatchItemCount int = 5 // кол-во метрик в пакете

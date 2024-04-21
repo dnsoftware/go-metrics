@@ -15,11 +15,13 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/logger"
 )
 
+// Flags возвращает значения флагов запуска программы
 type Flags interface {
 	RunAddr() string
 	CryptoKey() string
 }
 
+// WebSender отправляет данные на сервер.
 type WebSender struct {
 	protocol    string
 	domain      string
@@ -27,7 +29,7 @@ type WebSender struct {
 	cryptoKey   string
 }
 
-// структура для отправки json данных на сервер
+// Metrics структура для отправки json данных на сервер
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
@@ -56,7 +58,7 @@ func (w *WebSender) SendData(ctx context.Context, mType string, name string, val
 	return errors.New("bad send data content type")
 }
 
-// SendBatch отправка данных пакетом в json формате
+// SendDataBatch отправка данных пакетом в json формате
 func (w *WebSender) SendDataBatch(ctx context.Context, data []byte) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdatesAction
 
@@ -74,6 +76,7 @@ func (w *WebSender) SendDataBatch(ctx context.Context, data []byte) error {
 	return err
 }
 
+// sendPlain отправка метрики на сервер простым текстом через url.
 func (w *WebSender) sendPlain(ctx context.Context, mType string, name string, value string) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction + "/" + mType + "/" + name + "/" + value
 
@@ -98,6 +101,7 @@ func (w *WebSender) sendPlain(ctx context.Context, mType string, name string, va
 	return nil
 }
 
+// sendJSON отпрвка данных на сервер в json формате.
 func (w *WebSender) sendJSON(ctx context.Context, mType string, name string, value string) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction
 
@@ -141,7 +145,7 @@ func (w *WebSender) sendJSON(ctx context.Context, mType string, name string, val
 	return nil
 }
 
-// gzip компрессор входяшего потока байтов
+// getGzipReader gzip компрессор входяшего потока байтов
 // возврат *bytes.Buffer, реализующего интерфейс io.Reader
 func getGzipReader(data []byte) (*bytes.Buffer, error) {
 	buf := bytes.NewBuffer(nil)

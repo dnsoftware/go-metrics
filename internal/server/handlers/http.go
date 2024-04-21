@@ -12,16 +12,34 @@ import (
 	_ "net/http/pprof"
 )
 
+// Collector сборщик метрик. Сохраняет метрики в хранилище. Получает метрики из  хранилища.
 type Collector interface {
+	// SetGaugeMetric сохранение метрики типа gauge.
+	// Параметры: name - название метрики, value - ее значение.
 	SetGaugeMetric(ctx context.Context, name string, value float64) error
+
+	// SetCounterMetric сохранение метрики типа counter.
+	// Параметры: name - название метрики, value - ее значение.
 	SetCounterMetric(ctx context.Context, name string, value int64) error
+
+	// SetBatchMetrics сохраняет метрики в базу пакетом из нескольких штук
 	SetBatchMetrics(ctx context.Context, batch []byte) error
 
+	// GetGaugeMetric получение значения метрики типа gauge.
+	// Параметры: name - название метрики.
 	GetGaugeMetric(ctx context.Context, name string) (float64, error)
+
+	// GetCounterMetric получение значения метрики типа counter из хранилища.
+	// Параметры: name - название метрики.
 	GetCounterMetric(ctx context.Context, name string) (int64, error)
+
+	// GetMetric получение метрики в текстовом виде
 	GetMetric(ctx context.Context, metricType string, metricName string) (string, error)
+
+	// GetAll получение всех метрик списком
 	GetAll(ctx context.Context) (string, error)
 
+	// DatabasePing проверка работоспособности СУБД
 	DatabasePing(ctx context.Context) bool
 }
 
