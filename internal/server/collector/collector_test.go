@@ -28,7 +28,7 @@ func TestSetGetGaugeMetric(t *testing.T) {
 	err = c.SetGaugeMetric(ctx, "Alloc", testVal)
 	assert.NoError(t, err)
 
-	m, err := c.GetGaugeMetric(ctx, "Alloc")
+	m, _ := c.GetGaugeMetric(ctx, "Alloc")
 	assert.Equal(t, testVal, m)
 }
 
@@ -42,7 +42,7 @@ func TestSetGetCounterMetric(t *testing.T) {
 	err = c.SetCounterMetric(ctx, constants.PollCount, testVal)
 	assert.NoError(t, err)
 
-	m, err := c.GetCounterMetric(ctx, constants.PollCount)
+	m, _ := c.GetCounterMetric(ctx, constants.PollCount)
 	assert.Equal(t, testVal, m)
 }
 
@@ -76,17 +76,17 @@ func TestCollector_GetMetric(t *testing.T) {
 	assert.Error(t, err)
 
 	testVal := 123.456
-	err = c.SetGaugeMetric(ctx, "Alloc", testVal)
-	m, err := c.GetMetric(ctx, "gauge", "Alloc")
+	c.SetGaugeMetric(ctx, "Alloc", testVal)
+	m, _ := c.GetMetric(ctx, "gauge", "Alloc")
 	assert.NoError(t, err)
 	assert.Equal(t, "123.456", m)
 
-	err = c.SetCounterMetric(ctx, constants.PollCount, 123)
-	m, err = c.GetMetric(ctx, "counter", constants.PollCount)
+	c.SetCounterMetric(ctx, constants.PollCount, 123)
+	m, _ = c.GetMetric(ctx, "counter", constants.PollCount)
 	assert.NoError(t, err)
 	assert.Equal(t, "123", m)
 
-	m, err = c.GetMetric(ctx, "counterBad", constants.PollCount)
+	m, _ = c.GetMetric(ctx, "counterBad", constants.PollCount)
 	assert.Error(t, err)
 }
 

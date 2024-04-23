@@ -62,6 +62,8 @@ func ExampleHTTPServer_UpdateMetric_counter_check() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer resp.Body.Close()
+
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
@@ -98,6 +100,8 @@ func ExampleHTTPServer_UpdateMetric_gauge_check() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer resp.Body.Close()
+
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
@@ -134,6 +138,7 @@ func ExampleHTTPServer_getAllMetrics() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -238,6 +243,8 @@ func ExampleHTTPServer_UpdateMetricJSON_gauge() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer resp.Body.Close()
+
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
@@ -289,6 +296,7 @@ func ExampleHTTPServer_UpdateMetricJSON_counter() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer resp.Body.Close()
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
@@ -343,6 +351,7 @@ func ExampleHTTPServer_UpdatesMetricJSON() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer resp.Body.Close()
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)

@@ -62,6 +62,8 @@ func TestRestoreFromDump(t *testing.T) {
 	ctx := context.Background()
 
 	err := m.RestoreFromDump(ctx, `{"gauges":{"Gauge":123.456},"counters":{"Counter":123}}`)
+	assert.NoError(t, err)
+
 	gauges, counters, err := m.GetAll(ctx)
 
 	assert.NoError(t, err)
