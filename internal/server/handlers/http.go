@@ -85,10 +85,10 @@ func NewHTTPServer(collector Collector, cryptoKey string) HTTPServer {
 	h.Router.Mount("/debug", middleware.Profiler())
 
 	h.Router.Post("/", h.getAllMetrics)
-	h.Router.Post("/"+constants.UpdateAction, h.updateMetricJSON)
+	h.Router.Post("/"+constants.UpdateAction, h.UpdateMetricJSON)
 	h.Router.Post("/"+constants.UpdateAction+"/{metricType}", h.noMetricName)
 	h.Router.Post("/"+constants.UpdateAction+"/{metricType}/{metricName}", h.noMetricValue)
-	h.Router.Post("/"+constants.UpdateAction+"/{metricType}/{metricName}/{metricValue}", h.updateMetric)
+	h.Router.Post("/"+constants.UpdateAction+"/{metricType}/{metricName}/{metricValue}", h.UpdateMetric)
 	h.Router.Post("/"+constants.UpdatesAction, h.updatesMetricJSON)
 
 	h.Router.Post("/"+constants.ValueAction, h.getMetricValueJSON)

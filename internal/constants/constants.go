@@ -58,7 +58,7 @@ const (
 // Логгер.
 const (
 	LogFile  string = "./log.log"
-	LogLevel        = zapcore.InfoLevel
+	LogLevel        = zapcore.ErrorLevel
 )
 
 // Типы контента.

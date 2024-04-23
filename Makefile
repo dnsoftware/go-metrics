@@ -8,10 +8,11 @@ test:
 
 .PHONY: default test cover
 cover:
-	go test -short -count=1 -race -coverprofile=coverage.out ./...
-	go tool cover -html=coverage.out -o coverage.html
-	rm coverage.out
+	go test -v -coverpkg=./... -coverprofile=coverage.out -covermode=count ./...
+	go tool cover -func coverage.out | grep total | awk '{print $3}'
 
 .PHONY: gen
 gen:
 	mockgen -source=internal/server/collector/collector.go -destination=internal/server/collector/mocks/mock_backup_storage.go
+
+

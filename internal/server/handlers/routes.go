@@ -47,9 +47,9 @@ func (h *HTTPServer) noMetricValue(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Metric value required!", http.StatusBadRequest)
 }
 
-// updateMetric обновление одной метрики.
+// UpdateMetric обновление одной метрики.
 // Данные берутся из URL формата "/update/{metricType}/{metricName}/{metricValue}
-func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) UpdateMetric(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
@@ -97,8 +97,8 @@ func (h *HTTPServer) updateMetric(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// updateMetricJSON обновление одной метрики. Данные передаются в json формате
-func (h *HTTPServer) updateMetricJSON(res http.ResponseWriter, req *http.Request) {
+// UpdateMetricJSON обновление одной метрики. Данные передаются в json формате
+func (h *HTTPServer) UpdateMetricJSON(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 

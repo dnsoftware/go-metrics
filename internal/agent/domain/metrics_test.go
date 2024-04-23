@@ -2,7 +2,11 @@ package domain
 
 import (
 	"context"
+	"strconv"
 	"testing"
+	"time"
+
+	"github.com/shirou/gopsutil/v3/cpu"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/storage"
@@ -37,4 +41,44 @@ func TestMetrics_repo(t *testing.T) {
 	checkValCnt, err = repo.GetCounter(ctx, constants.PollCount)
 	assert.Equal(t, testValCnt, checkValCnt, "Добавленное в репозиторий counter должно быть равно извлеченному из репозитория")
 	require.NoError(t, err, "Добавление/обновление в репозиторий counter должно быть без ошибок")
+}
+
+func TestUpdateMetricsReflect(t *testing.T) {
+	ctx := context.Background()
+	metrics := updateMetricsSetup()
+	metrics.UpdateMetricsReflect()
+
+	for _, val := range gaugeMetricsList {
+		_, err := metrics.storage.GetGauge(ctx, val)
+		assert.NoError(t, err)
+	}
+
+}
+
+func TestUpdateMetrics(t *testing.T) {
+	ctx := context.Background()
+	metrics := updateMetricsSetup()
+	metrics.UpdateMetrics()
+
+	for _, val := range gaugeMetricsList {
+		_, err := metrics.storage.GetGauge(ctx, val)
+		assert.NoError(t, err)
+	}
+
+}
+
+func TestUpdateGopcMetrics(t *testing.T) {
+	ctx := context.Background()
+	metrics := updateMetricsSetup()
+	metrics.UpdateGopcMetrics()
+
+	_, err := metrics.storage.GetGauge(ctx, constants.TotalMemory)
+	assert.NoError(t, err)
+	_, err = metrics.storage.GetGauge(ctx, constants.FreeMemory)
+	assert.NoError(t, err)
+	cc, _ := cpu.Percent(time.Second*time.Duration(constants.CPUIntervalUtilization), true)
+	for key, _ := range cc {
+		_, err := metrics.storage.GetGauge(ctx, constants.CPUutilization+strconv.Itoa(key+1))
+		assert.NoError(t, err)
+	}
 }

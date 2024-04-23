@@ -136,7 +136,7 @@ func (m *Metrics) Start() {
 				fmt.Println("\nОбновление метрик gopcutils завершено...")
 				return
 			default:
-				m.updateGopcMetrics()
+				m.UpdateGopcMetrics()
 				time.Sleep(time.Duration(m.pollInterval) * time.Second)
 			}
 		}
@@ -282,7 +282,7 @@ func (m *Metrics) UpdateMetrics() {
 }
 
 // updateGopcMetrics получение системных и аппаратных метрик и сохранение их в базу.
-func (m *Metrics) updateGopcMetrics() {
+func (m *Metrics) UpdateGopcMetrics() {
 	ctx := context.Background()
 
 	mCounter, err := m.storage.GetCounter(ctx, constants.PollCount)

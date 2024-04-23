@@ -145,9 +145,9 @@ func (w *WebSender) sendJSON(ctx context.Context, mType string, name string, val
 	return nil
 }
 
-// getGzipReader gzip компрессор входяшего потока байтов
+// GetGzipReader gzip компрессор входяшего потока байтов
 // возврат *bytes.Buffer, реализующего интерфейс io.Reader
-func getGzipReader(data []byte) (*bytes.Buffer, error) {
+func GetGzipReader(data []byte) (*bytes.Buffer, error) {
 	buf := bytes.NewBuffer(nil)
 
 	zb := gzip.NewWriter(buf)
@@ -175,7 +175,7 @@ func NewAgentRequest(ctx context.Context, method, url string, data []byte, crypt
 	var err error
 	// gzip сжатие
 	if data != nil {
-		buf, err = getGzipReader(data)
+		buf, err = GetGzipReader(data)
 		if err != nil {
 			logger.Log().Error(err.Error())
 			return nil, err
