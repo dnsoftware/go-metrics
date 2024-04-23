@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,6 +28,45 @@ func TestSetGetCounter(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, int64(123), val)
+}
+
+func TestSetGetAll(t *testing.T) {
+	m := NewMemStorage()
+	ctx := context.Background()
+
+	m.SetGauge(ctx, "Gauge", 123.456)
+	m.SetCounter(ctx, "Counter", 123)
+	gauges, counters, err := m.GetAll(ctx)
+	fmt.Println(gauges, counters)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 123.456, gauges["Gauge"])
+	assert.Equal(t, int64(123), counters["Counter"])
+}
+
+func TestSetGetDump(t *testing.T) {
+	m := NewMemStorage()
+	ctx := context.Background()
+
+	m.SetGauge(ctx, "Gauge", 123.456)
+	m.SetCounter(ctx, "Counter", 123)
+	dump, err := m.GetDump(ctx)
+	fmt.Println(dump)
+
+	assert.NoError(t, err)
+	assert.Equal(t, `{"gauges":{"Gauge":123.456},"counters":{"Counter":123}}`, dump)
+}
+
+func TestRestoreFromDump(t *testing.T) {
+	m := NewMemStorage()
+	ctx := context.Background()
+
+	err := m.RestoreFromDump(ctx, `{"gauges":{"Gauge":123.456},"counters":{"Counter":123}}`)
+	gauges, counters, err := m.GetAll(ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 123.456, gauges["Gauge"])
+	assert.Equal(t, int64(123), counters["Counter"])
 }
 
 func TestSetBatch(t *testing.T) {

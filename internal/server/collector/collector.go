@@ -73,7 +73,7 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
 
 	// Загружаем сохраненную базу, если нужно
 	if cfg.RestoreSaved {
-		err := collector.loadFromDump()
+		err := collector.LoadFromDump()
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +85,7 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
 }
 
 // isMetric проверка на допустимую метрику
-func (c *Collector) isMetric(mType string, name string) bool {
+func (c *Collector) IsMetric(mType string, name string) bool {
 
 	if mType == constants.Gauge {
 		for _, val := range gaugeMetricsList {
@@ -114,7 +114,7 @@ func (c *Collector) SetGaugeMetric(ctx context.Context, metricName string, metri
 
 	// если бэкап синхронный и указан файл
 	if c.cfg.StoreInterval == constants.BackupPeriodSync && c.cfg.FileStoragePath != "" {
-		err = c.generateDump()
+		err = c.GenerateDump()
 		if err != nil {
 			return err
 		}
@@ -143,7 +143,7 @@ func (c *Collector) SetCounterMetric(ctx context.Context, metricName string, met
 
 	// если бэкап синхронный и указан файл
 	if c.cfg.StoreInterval == constants.BackupPeriodSync && c.cfg.FileStoragePath != "" {
-		errB := c.generateDump()
+		errB := c.GenerateDump()
 		if errB != nil {
 			return errB
 		}
@@ -210,7 +210,7 @@ func (c *Collector) GetAll(ctx context.Context) (string, error) {
 }
 
 // generateDump сохранение дампа в файл
-func (c *Collector) generateDump() error {
+func (c *Collector) GenerateDump() error {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
 	defer cancel()
 
@@ -230,7 +230,7 @@ func (c *Collector) generateDump() error {
 }
 
 // loadFromDump загрузка данных из дампа
-func (c *Collector) loadFromDump() error {
+func (c *Collector) LoadFromDump() error {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
 	defer cancel()
 
@@ -272,7 +272,7 @@ func (c *Collector) startBackup() {
 		for {
 			time.Sleep(backupPeriod)
 
-			err := c.generateDump()
+			err := c.GenerateDump()
 			if err != nil {
 				logger.Log().Error(err.Error())
 			}

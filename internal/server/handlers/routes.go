@@ -184,7 +184,7 @@ func (h *HTTPServer) UpdateMetricJSON(res http.ResponseWriter, req *http.Request
 }
 
 // updatesMetricJSON обновление метрик пакетом, json формат
-func (h *HTTPServer) updatesMetricJSON(res http.ResponseWriter, req *http.Request) {
+func (h *HTTPServer) UpdatesMetricJSON(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
 
