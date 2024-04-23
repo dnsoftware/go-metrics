@@ -77,16 +77,16 @@ func TestCollector_GetMetric(t *testing.T) {
 
 	testVal := 123.456
 	c.SetGaugeMetric(ctx, "Alloc", testVal)
-	m, _ := c.GetMetric(ctx, "gauge", "Alloc")
+	m, err := c.GetMetric(ctx, "gauge", "Alloc")
 	assert.NoError(t, err)
 	assert.Equal(t, "123.456", m)
 
 	c.SetCounterMetric(ctx, constants.PollCount, 123)
-	m, _ = c.GetMetric(ctx, "counter", constants.PollCount)
+	m, err = c.GetMetric(ctx, "counter", constants.PollCount)
 	assert.NoError(t, err)
 	assert.Equal(t, "123", m)
 
-	m, _ = c.GetMetric(ctx, "counterBad", constants.PollCount)
+	_, err = c.GetMetric(ctx, "counterBad", constants.PollCount)
 	assert.Error(t, err)
 }
 

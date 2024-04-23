@@ -77,7 +77,7 @@ func TestUpdateGopcMetrics(t *testing.T) {
 	_, err = metrics.storage.GetGauge(ctx, constants.FreeMemory)
 	assert.NoError(t, err)
 	cc, _ := cpu.Percent(time.Second*time.Duration(constants.CPUIntervalUtilization), true)
-	for key, _ := range cc {
+	for key := range cc {
 		_, err = metrics.storage.GetGauge(ctx, constants.CPUutilization+strconv.Itoa(key+1))
 		assert.NoError(t, err)
 	}
