@@ -59,39 +59,45 @@
 				
 				<option value="file1">github.com/dnsoftware/go-metrics/cmd/server/main.go (0.0%)</option>
 				
-				<option value="file2">github.com/dnsoftware/go-metrics/internal/agent/app/app.go (0.0%)</option>
+				<option value="file2">github.com/dnsoftware/go-metrics/cmd/staticlint/main.go (0.0%)</option>
 				
-				<option value="file3">github.com/dnsoftware/go-metrics/internal/agent/app/flags.go (77.8%)</option>
+				<option value="file3">github.com/dnsoftware/go-metrics/internal/agent/app/app.go (0.0%)</option>
 				
-				<option value="file4">github.com/dnsoftware/go-metrics/internal/agent/domain/metrics.go (37.8%)</option>
+				<option value="file4">github.com/dnsoftware/go-metrics/internal/agent/app/flags.go (77.8%)</option>
 				
-				<option value="file5">github.com/dnsoftware/go-metrics/internal/agent/infrastructure/retry.go (0.0%)</option>
+				<option value="file5">github.com/dnsoftware/go-metrics/internal/agent/domain/metrics.go (37.8%)</option>
 				
-				<option value="file6">github.com/dnsoftware/go-metrics/internal/agent/infrastructure/webapi.go (1.4%)</option>
+				<option value="file6">github.com/dnsoftware/go-metrics/internal/agent/infrastructure/retry.go (0.0%)</option>
 				
-				<option value="file7">github.com/dnsoftware/go-metrics/internal/logger/logger.go (90.0%)</option>
+				<option value="file7">github.com/dnsoftware/go-metrics/internal/agent/infrastructure/webapi.go (1.4%)</option>
 				
-				<option value="file8">github.com/dnsoftware/go-metrics/internal/server/app/app.go (0.0%)</option>
+				<option value="file8">github.com/dnsoftware/go-metrics/internal/logger/logger.go (90.0%)</option>
 				
-				<option value="file9">github.com/dnsoftware/go-metrics/internal/server/collector/collector.go (65.6%)</option>
+				<option value="file9">github.com/dnsoftware/go-metrics/internal/noosexit/noosexit.go (100.0%)</option>
 				
-				<option value="file10">github.com/dnsoftware/go-metrics/internal/server/collector/mocks/mock_backup_storage.go (21.2%)</option>
+				<option value="file10">github.com/dnsoftware/go-metrics/internal/server/app/app.go (0.0%)</option>
 				
-				<option value="file11">github.com/dnsoftware/go-metrics/internal/server/config/config.go (0.0%)</option>
+				<option value="file11">github.com/dnsoftware/go-metrics/internal/server/collector/collector.go (65.6%)</option>
 				
-				<option value="file12">github.com/dnsoftware/go-metrics/internal/server/handlers/gzip.go (0.0%)</option>
+				<option value="file12">github.com/dnsoftware/go-metrics/internal/server/collector/mocks/mock_backup_storage.go (21.2%)</option>
 				
-				<option value="file13">github.com/dnsoftware/go-metrics/internal/server/handlers/http.go (100.0%)</option>
+				<option value="file13">github.com/dnsoftware/go-metrics/internal/server/config/config.go (0.0%)</option>
 				
-				<option value="file14">github.com/dnsoftware/go-metrics/internal/server/handlers/middlewares.go (63.0%)</option>
+				<option value="file14">github.com/dnsoftware/go-metrics/internal/server/handlers/gzip.go (0.0%)</option>
 				
-				<option value="file15">github.com/dnsoftware/go-metrics/internal/server/handlers/routes.go (68.7%)</option>
+				<option value="file15">github.com/dnsoftware/go-metrics/internal/server/handlers/http.go (100.0%)</option>
 				
-				<option value="file16">github.com/dnsoftware/go-metrics/internal/storage/filebackup.go (77.3%)</option>
+				<option value="file16">github.com/dnsoftware/go-metrics/internal/server/handlers/middlewares.go (63.0%)</option>
 				
-				<option value="file17">github.com/dnsoftware/go-metrics/internal/storage/memory.go (87.2%)</option>
+				<option value="file17">github.com/dnsoftware/go-metrics/internal/server/handlers/routes.go (68.7%)</option>
 				
-				<option value="file18">github.com/dnsoftware/go-metrics/internal/storage/postgresql.go (0.0%)</option>
+				<option value="file18">github.com/dnsoftware/go-metrics/internal/staticlint/app/app.go (0.0%)</option>
+				
+				<option value="file19">github.com/dnsoftware/go-metrics/internal/storage/filebackup.go (77.3%)</option>
+				
+				<option value="file20">github.com/dnsoftware/go-metrics/internal/storage/memory.go (87.2%)</option>
+				
+				<option value="file21">github.com/dnsoftware/go-metrics/internal/storage/postgresql.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -132,7 +138,20 @@ func main() <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package app
+		<pre class="file" id="file2" style="display: none">package main
+
+import (
+        "github.com/dnsoftware/go-metrics/internal/staticlint/app"
+)
+
+func main() <span class="cov0" title="0">{
+
+        app.StaticCheckerRun()
+
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package app
 
 import (
         "net/http"
@@ -162,7 +181,7 @@ func AgentRun() <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package app
+		<pre class="file" id="file4" style="display: none">package app
 
 import (
         "flag"
@@ -255,7 +274,7 @@ func (f *AgentFlags) RateLimit() int <span class="cov8" title="1">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">// Package domain включает в себя бизнес логика агента. Получение метрик и отправка их на сервер
+		<pre class="file" id="file5" style="display: none">// Package domain включает в себя бизнес логика агента. Получение метрик и отправка их на сервер
 package domain
 
 import (
@@ -725,7 +744,7 @@ func (m *Metrics) IsGauge(name string) bool <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">package infrastructure
+		<pre class="file" id="file6" style="display: none">package infrastructure
 
 import (
         "net/http"
@@ -763,7 +782,7 @@ func retryRequest(r *http.Request) error <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package infrastructure
+		<pre class="file" id="file7" style="display: none">package infrastructure
 
 import (
         "bytes"
@@ -961,7 +980,7 @@ func NewAgentRequest(ctx context.Context, method, url string, data []byte, crypt
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package logger
+		<pre class="file" id="file8" style="display: none">package logger
 
 import (
         "fmt"
@@ -975,8 +994,8 @@ import (
 )
 
 type logger struct {
-        filename string
         *zap.Logger
+        filename string
 }
 
 var projectLogger *logger
@@ -1025,15 +1044,57 @@ func createLogger(filename string, logLevel zapcore.Level) (*logger, error) <spa
 
         // Create the logger with additional context information (caller, stack trace)
         l := &amp;logger{
-                filename,
                 zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel)),
+                filename,
         }
 
         return l, nil</span>
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package app
+		<pre class="file" id="file9" style="display: none">package main
+
+import (
+        "fmt"
+        "go/ast"
+
+        "golang.org/x/tools/go/analysis"
+)
+
+var OsExitAnalyzer = &amp;analysis.Analyzer{
+        Name: "noosexit",
+        Doc:  "анализатор, запрещающий использовать прямой вызов os.Exit в функции main пакета main",
+        Run:  run,
+}
+
+func main() {<span class="cov0" title="0">
+
+}</span>
+
+func run(pass *analysis.Pass) (interface{}, error) <span class="cov1" title="1">{
+
+        //fset := token.NewFileSet()
+        //// получаем дерево разбора
+        //f, err := parser.ParseFile(fset, "", src, parser.AllErrors)
+        //if err != nil {
+        //        fmt.Println(err)
+        //}
+
+        for _, file := range pass.Files </span><span class="cov1" title="1">{
+                ast.Inspect(file, func(n ast.Node) bool </span><span class="cov10" title="4">{
+
+                        fmt.Println(file.Name)
+
+                        return true
+                }</span>)
+
+        }
+
+        <span class="cov1" title="1">return nil, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package app
 
 import (
         "net/http"
@@ -1080,7 +1141,7 @@ func ServerRun() <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package collector
+		<pre class="file" id="file11" style="display: none">package collector
 
 import (
         "context"
@@ -1368,7 +1429,7 @@ func (c *Collector) DatabasePing(ctx context.Context) bool <span class="cov0" ti
 }</span>
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">// Code generated by MockGen. DO NOT EDIT.
+		<pre class="file" id="file12" style="display: none">// Code generated by MockGen. DO NOT EDIT.
 // Source: internal/server/collector/collector.go
 
 // Package mock_collector is a generated GoMock package.
@@ -1588,7 +1649,7 @@ func (mr *MockBackupStorageMockRecorder) Save(dump interface{}) *gomock.Call <sp
 }</span>
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package config
+		<pre class="file" id="file13" style="display: none">package config
 
 import (
         "flag"
@@ -1665,7 +1726,7 @@ func NewServerConfig() *ServerConfig <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package handlers
+		<pre class="file" id="file14" style="display: none">package handlers
 
 import (
         "compress/gzip"
@@ -1739,7 +1800,7 @@ func (c *compressReader) Close() error <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package handlers
+		<pre class="file" id="file15" style="display: none">package handlers
 
 import (
         "context"
@@ -1858,7 +1919,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) <span class="cov9" t
 }</span>
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package handlers
+		<pre class="file" id="file16" style="display: none">package handlers
 
 import (
         "bytes"
@@ -1999,7 +2060,7 @@ func hash(value []byte, key string) string <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">package handlers
+		<pre class="file" id="file17" style="display: none">package handlers
 
 import (
         "bytes"
@@ -2400,7 +2461,142 @@ func (h *HTTPServer) databasePing(res http.ResponseWriter, req *http.Request) <s
 }
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package storage
+		<pre class="file" id="file18" style="display: none">package app
+
+import (
+        "github.com/nunnatsa/ginkgolinter"
+        "github.com/timakin/bodyclose/passes/bodyclose"
+        "golang.org/x/tools/go/analysis"
+        "golang.org/x/tools/go/analysis/multichecker"
+        "golang.org/x/tools/go/analysis/passes/asmdecl"
+        "golang.org/x/tools/go/analysis/passes/assign"
+        "golang.org/x/tools/go/analysis/passes/atomic"
+        "golang.org/x/tools/go/analysis/passes/atomicalign"
+        "golang.org/x/tools/go/analysis/passes/bools"
+        "golang.org/x/tools/go/analysis/passes/buildssa"
+        "golang.org/x/tools/go/analysis/passes/buildtag"
+        "golang.org/x/tools/go/analysis/passes/cgocall"
+        "golang.org/x/tools/go/analysis/passes/composite"
+        "golang.org/x/tools/go/analysis/passes/copylock"
+        "golang.org/x/tools/go/analysis/passes/ctrlflow"
+        "golang.org/x/tools/go/analysis/passes/deepequalerrors"
+        "golang.org/x/tools/go/analysis/passes/directive"
+        "golang.org/x/tools/go/analysis/passes/errorsas"
+        "golang.org/x/tools/go/analysis/passes/findcall"
+        "golang.org/x/tools/go/analysis/passes/framepointer"
+        "golang.org/x/tools/go/analysis/passes/httpresponse"
+        "golang.org/x/tools/go/analysis/passes/ifaceassert"
+        "golang.org/x/tools/go/analysis/passes/inspect"
+        "golang.org/x/tools/go/analysis/passes/loopclosure"
+        "golang.org/x/tools/go/analysis/passes/lostcancel"
+        "golang.org/x/tools/go/analysis/passes/nilfunc"
+        "golang.org/x/tools/go/analysis/passes/nilness"
+        "golang.org/x/tools/go/analysis/passes/pkgfact"
+        "golang.org/x/tools/go/analysis/passes/printf"
+        "golang.org/x/tools/go/analysis/passes/reflectvaluecompare"
+        "golang.org/x/tools/go/analysis/passes/shadow"
+        "golang.org/x/tools/go/analysis/passes/shift"
+        "golang.org/x/tools/go/analysis/passes/sigchanyzer"
+        "golang.org/x/tools/go/analysis/passes/sortslice"
+        "golang.org/x/tools/go/analysis/passes/stdmethods"
+        "golang.org/x/tools/go/analysis/passes/stringintconv"
+        "golang.org/x/tools/go/analysis/passes/structtag"
+        "golang.org/x/tools/go/analysis/passes/testinggoroutine"
+        "golang.org/x/tools/go/analysis/passes/tests"
+        "golang.org/x/tools/go/analysis/passes/timeformat"
+        "golang.org/x/tools/go/analysis/passes/unmarshal"
+        "golang.org/x/tools/go/analysis/passes/unreachable"
+        "golang.org/x/tools/go/analysis/passes/unsafeptr"
+        "golang.org/x/tools/go/analysis/passes/unusedresult"
+        "golang.org/x/tools/go/analysis/passes/unusedwrite"
+        "golang.org/x/tools/go/analysis/passes/usesgenerics"
+        "honnef.co/go/tools/quickfix"
+        "honnef.co/go/tools/simple"
+        "honnef.co/go/tools/staticcheck"
+        "honnef.co/go/tools/stylecheck"
+)
+
+func StaticCheckerRun() <span class="cov0" title="0">{
+
+        mychecks := []*analysis.Analyzer{
+                printf.Analyzer,
+                shadow.Analyzer,
+                structtag.Analyzer,
+                asmdecl.Analyzer,
+                assign.Analyzer,
+                atomic.Analyzer,
+                atomicalign.Analyzer,
+                bools.Analyzer,
+                buildssa.Analyzer,
+                buildtag.Analyzer,
+                cgocall.Analyzer,
+                composite.Analyzer,
+                copylock.Analyzer,
+                ctrlflow.Analyzer,
+                deepequalerrors.Analyzer,
+                directive.Analyzer,
+                errorsas.Analyzer,
+                //fieldalignment.Analyzer,
+                findcall.Analyzer,
+                framepointer.Analyzer,
+                httpresponse.Analyzer,
+                ifaceassert.Analyzer,
+                inspect.Analyzer,
+                loopclosure.Analyzer,
+                lostcancel.Analyzer,
+                nilfunc.Analyzer,
+                nilness.Analyzer,
+                pkgfact.Analyzer,
+                reflectvaluecompare.Analyzer,
+                shift.Analyzer,
+                sigchanyzer.Analyzer,
+                sortslice.Analyzer,
+                stdmethods.Analyzer,
+                stringintconv.Analyzer,
+                testinggoroutine.Analyzer,
+                tests.Analyzer,
+                timeformat.Analyzer,
+                unmarshal.Analyzer,
+                unreachable.Analyzer,
+                unsafeptr.Analyzer,
+                unusedresult.Analyzer,
+                unusedwrite.Analyzer,
+                usesgenerics.Analyzer,
+                bodyclose.Analyzer,    // проверяет, правильно ли закрыт res.Body.
+                ginkgolinter.Analyzer, // Enforces standards of using ginkgo and gomega.
+        }
+
+        // staticcheck анализаторы
+        for _, v := range staticcheck.Analyzers </span><span class="cov0" title="0">{
+                mychecks = append(mychecks, v.Analyzer)
+        }</span>
+
+        // рефакторинг кода
+        <span class="cov0" title="0">for _, v := range quickfix.Analyzers </span><span class="cov0" title="0">{
+                mychecks = append(mychecks, v.Analyzer)
+        }</span>
+
+        // упрощение кода
+        <span class="cov0" title="0">for _, v := range simple.Analyzers </span><span class="cov0" title="0">{
+                mychecks = append(mychecks, v.Analyzer)
+        }</span>
+
+        // Содержит анализы, обеспечивающие соблюдение правил стиля. Большинство сделанных рекомендаций повсеместно
+        // одобрены широким сообществом Go.
+        // По большей части рекомендуется следовать советам анализаторов, которые включены по умолчанию,
+        // но можно отключить дополнительный анализ в каждом конкретном случае.
+        <span class="cov0" title="0">for _, v := range stylecheck.Analyzers </span><span class="cov0" title="0">{
+                mychecks = append(mychecks, v.Analyzer)
+        }</span>
+
+        <span class="cov0" title="0">multichecker.Main(
+                mychecks...,
+        )</span>
+
+}
+</pre>
+		
+		<pre class="file" id="file19" style="display: none">package storage
 
 import (
         "bufio"
@@ -2468,7 +2664,7 @@ func (b *BackupStorage) Load() (string, error) <span class="cov1" title="1">{
 }
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package storage
+		<pre class="file" id="file20" style="display: none">package storage
 
 import (
         "context"
@@ -2606,7 +2802,7 @@ func (m *MemStorage) DatabasePing(ctx context.Context) bool <span class="cov0" t
 }</span>
 </pre>
 		
-		<pre class="file" id="file18" style="display: none">package storage
+		<pre class="file" id="file21" style="display: none">package storage
 
 import (
         "context"

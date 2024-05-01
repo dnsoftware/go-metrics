@@ -12,8 +12,8 @@ import (
 )
 
 type logger struct {
-	filename string
 	*zap.Logger
+	filename string
 }
 
 var projectLogger *logger
@@ -62,8 +62,8 @@ func createLogger(filename string, logLevel zapcore.Level) (*logger, error) {
 
 	// Create the logger with additional context information (caller, stack trace)
 	l := &logger{
-		filename,
 		zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel)),
+		filename,
 	}
 
 	return l, nil

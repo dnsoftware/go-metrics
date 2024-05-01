@@ -20,3 +20,7 @@ cover2:
 	go tool cover -html=coverage.out -o coverage.html
 	rm coverage.out
 
+.PHONY: staticlint
+staticlint:
+	go build -o ./staticlint ./cmd/staticlint
+	go vet -vettool=staticlint ./...
