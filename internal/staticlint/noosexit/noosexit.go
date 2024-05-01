@@ -1,7 +1,6 @@
-package main
+package noosexit
 
 import (
-	"fmt"
 	"go/ast"
 
 	"golang.org/x/tools/go/analysis"
@@ -13,25 +12,48 @@ var OsExitAnalyzer = &analysis.Analyzer{
 	Run:  run,
 }
 
-func main() {
-
-}
-
 func run(pass *analysis.Pass) (interface{}, error) {
 
-	//fset := token.NewFileSet()
-	//// получаем дерево разбора
-	//f, err := parser.ParseFile(fset, "", src, parser.AllErrors)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-
 	for _, file := range pass.Files {
+
+		if pass.Pkg.Name() != "main" {
+			continue
+		}
+
 		ast.Inspect(file, func(n ast.Node) bool {
 
-			fmt.Println(file.Name)
+			mainFunc, ok := n.(*ast.FuncDecl)
+			if !ok {
+				return true // переходим к дочерним узлам
+			}
 
-			return true
+			if mainFunc.Name.String() != "main" {
+				return false // функиция НЕ main - к дочерним узлам смысла переходить нет
+			}
+
+			// переходим к разбору ф-ии main()
+			ast.Inspect(mainFunc, func(node ast.Node) bool {
+				call, okCall := node.(*ast.CallExpr)
+				if !okCall { // если НЕ вызов ф-ии - пропускаем
+					return true
+				}
+
+				s, okSelector := call.Fun.(*ast.SelectorExpr)
+				if !okSelector {
+					return true
+				}
+
+				if s.Sel.Name == "Exit" {
+					ident := s.X.(*ast.Ident)
+					if ident.Name == "os" {
+						pass.Reportf(s.Pos(), "Вызов os.Exit в функции main")
+					}
+				}
+
+				return false
+			})
+
+			return false
 		})
 
 	}

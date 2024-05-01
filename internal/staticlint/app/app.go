@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/dnsoftware/go-metrics/internal/staticlint/noosexit"
 	"github.com/nunnatsa/ginkgolinter"
 	"github.com/timakin/bodyclose/passes/bodyclose"
 	"golang.org/x/tools/go/analysis"
@@ -125,6 +126,8 @@ func StaticCheckerRun() {
 	for _, v := range stylecheck.Analyzers {
 		mychecks = append(mychecks, v.Analyzer)
 	}
+
+	mychecks = append(mychecks, noosexit.OsExitAnalyzer)
 
 	multichecker.Main(
 		mychecks...,

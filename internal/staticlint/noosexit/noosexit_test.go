@@ -1,4 +1,4 @@
-package main
+package noosexit
 
 import (
 	"testing"
@@ -12,4 +12,5 @@ func TestMyAnalyzer(t *testing.T) {
 	// ./... — проверка всех поддиректорий в testdata
 	// можно указать ./pkg1 для проверки только pkg1
 	analysistest.Run(t, analysistest.TestData(), OsExitAnalyzer, "./...")
+
 }
