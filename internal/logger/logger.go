@@ -1,3 +1,4 @@
+// Package logger Синглтон логирования
 package logger
 
 import (

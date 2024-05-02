@@ -1,3 +1,4 @@
+// Package app Приложение свой статический анализатор
 package app
 
 import (

@@ -1,4 +1,4 @@
-// Модуль constants содержит все используемые в проекте константы
+// Package constants содержит все используемые в проекте константы
 package constants
 
 import (
@@ -85,7 +85,7 @@ const (
 	DBAttemtPeriods   string = "1s,2s,5s"
 )
 
-// Имена заголовков.
+// HashHeaderName Имена заголовков.
 const HashHeaderName string = "HashSHA256"
 
 // Для gopcutils.

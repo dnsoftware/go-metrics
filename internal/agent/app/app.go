@@ -1,3 +1,4 @@
+// Package app Приложение Агента
 package app
 
 import (

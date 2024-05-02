@@ -281,7 +281,7 @@ func (m *Metrics) UpdateMetrics() {
 	m.storage.SetCounter(ctx, constants.PollCount, mCounter)
 }
 
-// updateGopcMetrics получение системных и аппаратных метрик и сохранение их в базу.
+// UpdateGopcMetrics получение системных и аппаратных метрик и сохранение их в базу.
 func (m *Metrics) UpdateGopcMetrics() {
 	ctx := context.Background()
 
@@ -456,7 +456,7 @@ func (m *Metrics) SendCounter(ctx context.Context, name string, value int64) err
 	return nil
 }
 
-// проверка на допустимую метрику gauge
+// IsGauge проверка на допустимую метрику gauge
 func (m *Metrics) IsGauge(name string) bool {
 	for _, val := range gaugeMetricsList {
 		if val == name {

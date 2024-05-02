@@ -1,3 +1,4 @@
+// Package collector сборщик метрик, получаемых от Агента
 package collector
 
 import (
@@ -84,7 +85,7 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
 	return collector, nil
 }
 
-// isMetric проверка на допустимую метрику
+// IsMetric проверка на допустимую метрику
 func (c *Collector) IsMetric(mType string, name string) bool {
 
 	if mType == constants.Gauge {
@@ -209,7 +210,7 @@ func (c *Collector) GetAll(ctx context.Context) (string, error) {
 	return mList, nil
 }
 
-// generateDump сохранение дампа в файл
+// GenerateDump сохранение дампа в файл
 func (c *Collector) GenerateDump() error {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
 	defer cancel()
@@ -229,7 +230,7 @@ func (c *Collector) GenerateDump() error {
 	return nil
 }
 
-// loadFromDump загрузка данных из дампа
+// LoadFromDump загрузка данных из дампа
 func (c *Collector) LoadFromDump() error {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
 	defer cancel()

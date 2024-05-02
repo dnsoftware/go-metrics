@@ -1,3 +1,4 @@
+// Package app Приложение Сервер
 package app
 
 import (

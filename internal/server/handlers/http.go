@@ -1,3 +1,4 @@
+// Package handlers Обработчики HTTP запросов
 package handlers
 
 import (
@@ -48,7 +49,7 @@ type HTTPServer struct {
 	Router    chi.Router
 }
 
-// структура для получения json данных от агента
+// Metrics структура для получения json данных от агента
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter

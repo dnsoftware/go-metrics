@@ -183,7 +183,7 @@ func (h *HTTPServer) UpdateMetricJSON(res http.ResponseWriter, req *http.Request
 	}
 }
 
-// updatesMetricJSON обновление метрик пакетом, json формат
+// UpdatesMetricJSON обновление метрик пакетом, json формат
 func (h *HTTPServer) UpdatesMetricJSON(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()
@@ -282,7 +282,7 @@ func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Reque
 	res.Write(resp)
 }
 
-// Deprecated: версия из первого инкремента
+// RootHandler Deprecated: версия из первого инкремента
 func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
 	defer cancel()

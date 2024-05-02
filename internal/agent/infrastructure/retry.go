@@ -1,3 +1,4 @@
+// Package infrastructure HTTP запросы к внешним сервисам
 package infrastructure
 
 import (

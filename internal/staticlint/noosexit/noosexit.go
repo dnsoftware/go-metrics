@@ -1,3 +1,4 @@
+// Package noosexit Анализатор вызова функции os.Exit в пакете main функции main()
 package noosexit
 
 import (
