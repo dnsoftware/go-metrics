@@ -79,7 +79,7 @@
 				
 				<option value="file11">github.com/dnsoftware/go-metrics/internal/server/collector/mocks/mock_backup_storage.go (21.2%)</option>
 				
-				<option value="file12">github.com/dnsoftware/go-metrics/internal/server/config/config.go (0.0%)</option>
+				<option value="file12">github.com/dnsoftware/go-metrics/internal/server/config/config.go (92.0%)</option>
 				
 				<option value="file13">github.com/dnsoftware/go-metrics/internal/server/handlers/gzip.go (0.0%)</option>
 				
@@ -97,7 +97,7 @@
 				
 				<option value="file20">github.com/dnsoftware/go-metrics/internal/storage/memory.go (87.2%)</option>
 				
-				<option value="file21">github.com/dnsoftware/go-metrics/internal/storage/postgresql.go (0.0%)</option>
+				<option value="file21">github.com/dnsoftware/go-metrics/internal/storage/postgresql.go (12.0%)</option>
 				
 				</select>
 			</div>
@@ -1674,7 +1674,7 @@ type serverFlags struct {
         cryptoKey       string
 }
 
-func NewServerConfig() *ServerConfig <span class="cov0" title="0">{
+func NewServerConfig() *ServerConfig <span class="cov8" title="1">{
         cfg := &amp;ServerConfig{}
         sf := serverFlags{}
 
@@ -1683,7 +1683,7 @@ func NewServerConfig() *ServerConfig <span class="cov0" title="0">{
                 log.Fatal(err)
         }</span>
 
-        <span class="cov0" title="0">flag.StringVar(&amp;sf.serverAddress, "a", constants.ServerDefault, "server endpoint")
+        <span class="cov8" title="1">flag.StringVar(&amp;sf.serverAddress, "a", constants.ServerDefault, "server endpoint")
         flag.Int64Var(&amp;sf.storeInterval, "i", constants.StoreInterval, "store interval")
         flag.StringVar(&amp;sf.fileStoragePath, "f", constants.FileStoragePath, "file store path")
         flag.BoolVar(&amp;sf.restoreSaved, "r", constants.RestoreSaved, "to restore?")
@@ -1692,31 +1692,31 @@ func NewServerConfig() *ServerConfig <span class="cov0" title="0">{
         flag.Parse()
 
         // если какого-то параметра нет в переменных окружения - берем значение флага, а если и флага нет - берем по умолчанию
-        if cfg.ServerAddress == "" </span><span class="cov0" title="0">{
+        if cfg.ServerAddress == "" </span><span class="cov8" title="1">{
                 cfg.ServerAddress = sf.serverAddress
         }</span>
 
-        <span class="cov0" title="0">if cfg.StoreInterval == -1 </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if cfg.StoreInterval == -1 </span><span class="cov8" title="1">{
                 cfg.StoreInterval = sf.storeInterval
         }</span>
 
-        <span class="cov0" title="0">if cfg.FileStoragePath == "none" </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if cfg.FileStoragePath == "none" </span><span class="cov8" title="1">{
                 cfg.FileStoragePath = sf.fileStoragePath
         }</span>
 
-        <span class="cov0" title="0">if _, ok := os.LookupEnv(constants.RestoreSavedEnv); !ok </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if _, ok := os.LookupEnv(constants.RestoreSavedEnv); !ok </span><span class="cov8" title="1">{
                 cfg.RestoreSaved = sf.restoreSaved
         }</span>
 
-        <span class="cov0" title="0">if cfg.DatabaseDSN == "" </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if cfg.DatabaseDSN == "" </span><span class="cov0" title="0">{
                 cfg.DatabaseDSN = sf.databaseDSN
         }</span>
 
-        <span class="cov0" title="0">if cfg.CryptoKey == "" </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if cfg.CryptoKey == "" </span><span class="cov8" title="1">{
                 cfg.CryptoKey = sf.cryptoKey
         }</span>
 
-        <span class="cov0" title="0">return cfg</span>
+        <span class="cov8" title="1">return cfg</span>
 }
 </pre>
 		
@@ -2907,7 +2907,7 @@ type DumpData struct {
         Counters map[string]int64   `json:"counters"`
 }
 
-func NewPostgresqlStorage(dsn string) (*PgStorage, error) <span class="cov0" title="0">{
+func NewPostgresqlStorage(dsn string) (*PgStorage, error) <span class="cov1" title="1">{
         ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
         defer cancel()
 
@@ -2917,21 +2917,21 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) <span class="cov0" tit
                 return nil, err
         }</span>
 
-        <span class="cov0" title="0">ps := &amp;PgStorage{
+        <span class="cov1" title="1">ps := &amp;PgStorage{
                 db: db,
         }
 
         // создание таблиц, если не существуют
-        err = ps.createDatabaseTables(ctx)
+        err = ps.CreateDatabaseTables(ctx)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
 
-        <span class="cov0" title="0">return ps, nil</span>
+        <span class="cov1" title="1">return ps, nil</span>
 }
 
 // createDatabaseTables формирование структуры БД
-func (p *PgStorage) createDatabaseTables(ctx context.Context) error <span class="cov0" title="0">{
+func (p *PgStorage) CreateDatabaseTables(ctx context.Context) error <span class="cov5" title="2">{
         var query string
 
         // gauges
@@ -2948,7 +2948,7 @@ func (p *PgStorage) createDatabaseTables(ctx context.Context) error <span class=
         }</span>
 
         // counters
-        <span class="cov0" title="0">query = `CREATE TABLE IF NOT EXISTS counters
+        <span class="cov5" title="2">query = `CREATE TABLE IF NOT EXISTS counters
                         (
                             id character varying(64) PRIMARY KEY,
                             val bigint NOT NULL,
@@ -2960,11 +2960,11 @@ func (p *PgStorage) createDatabaseTables(ctx context.Context) error <span class=
                 return err
         }</span>
 
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov5" title="2">return nil</span>
 }
 
 // retryExec выполнение операции вставки/обновления несколькими попытками, если необходимо
-func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) error <span class="cov0" title="0">{
+func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) error <span class="cov10" title="4">{
         durations := strings.Split(constants.HTTPAttemtPeriods, ",")
 
         _, err := p.db.ExecContext(ctx, query, args...)
@@ -2986,11 +2986,11 @@ func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) er
                 }</span>
         }
 
-        <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+        <span class="cov10" title="4">if err != nil </span><span class="cov0" title="0">{
                 return fmt.Errorf("retryExec: %w", err)
         }</span>
 
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov10" title="4">return nil</span>
 }
 
 // SetGauge сохранение метрики типа gauge в хранилище.
