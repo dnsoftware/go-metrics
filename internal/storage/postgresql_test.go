@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/joho/godotenv"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
@@ -11,7 +13,10 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/server/config"
 )
 
-func setup(t *testing.T) (*PgStorage, error) {
+func setup() (*PgStorage, error) {
+
+	godotenv.Load("../../.env_test")
+
 	cfg := config.NewServerConfig()
 
 	ddsn := cfg.DatabaseDSN
@@ -20,18 +25,20 @@ func setup(t *testing.T) (*PgStorage, error) {
 	}
 
 	pgStorage, err := NewPostgresqlStorage(ddsn)
-	require.NoError(t, err)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx := context.Background()
 	err = pgStorage.CreateDatabaseTables(ctx)
-	require.NoError(t, err)
+	if err != nil {
+		return nil, err
+	}
 
 	return pgStorage, nil
 }
 
 func TestNewPostgresqlStorage(t *testing.T) {
-	ctx := context.Background()
-	db, _ := setup(t)
-
-	db.GetAll(ctx)
+	_, err := setup()
+	require.NoError(t, err)
 }

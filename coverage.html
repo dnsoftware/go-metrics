@@ -97,7 +97,7 @@
 				
 				<option value="file20">github.com/dnsoftware/go-metrics/internal/storage/memory.go (87.2%)</option>
 				
-				<option value="file21">github.com/dnsoftware/go-metrics/internal/storage/postgresql.go (12.0%)</option>
+				<option value="file21">github.com/dnsoftware/go-metrics/internal/storage/postgresql.go (19.6%)</option>
 				
 				</select>
 			</div>
@@ -3207,13 +3207,13 @@ func (p *PgStorage) GetCounter(ctx context.Context, name string) (int64, error) 
 }
 
 // GetAll возврат всех метрик (карт gauge и counters)
-func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]int64, error) <span class="cov0" title="0">{
+func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]int64, error) <span class="cov1" title="1">{
         // gauges
         gRows, err := p.db.QueryContext(ctx, `SELECT id, val FROM gauges`)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, nil, fmt.Errorf("PgStorage | GetAll | gauges: %w", err)
         }</span>
-        <span class="cov0" title="0">defer gRows.Close()
+        <span class="cov1" title="1">defer gRows.Close()
 
         dump := DumpData{
                 Gauges:   make(map[string]float64),
@@ -3231,17 +3231,17 @@ func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]
                 <span class="cov0" title="0">dump.Gauges[v.name] = v.value</span>
         }
 
-        <span class="cov0" title="0">err = gRows.Err()
+        <span class="cov1" title="1">err = gRows.Err()
         if err != nil </span><span class="cov0" title="0">{
                 return nil, nil, fmt.Errorf("PgStorage | GetAll | gauges Next during iteration: %w", err)
         }</span>
 
         // counters
-        <span class="cov0" title="0">cRows, err := p.db.QueryContext(ctx, `SELECT id, val FROM counters`)
+        <span class="cov1" title="1">cRows, err := p.db.QueryContext(ctx, `SELECT id, val FROM counters`)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, nil, fmt.Errorf("PgStorage | GetAll | counters: %w", err)
         }</span>
-        <span class="cov0" title="0">defer cRows.Close()
+        <span class="cov1" title="1">defer cRows.Close()
 
         for cRows.Next() </span><span class="cov0" title="0">{
                 v := Counter{}
@@ -3254,12 +3254,12 @@ func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]
                 <span class="cov0" title="0">dump.Counters[v.name] = v.value</span>
         }
 
-        <span class="cov0" title="0">err = cRows.Err()
+        <span class="cov1" title="1">err = cRows.Err()
         if err != nil </span><span class="cov0" title="0">{
                 return nil, nil, fmt.Errorf("PgStorage | GetAll | counters Next during iteration: %w", err)
         }</span>
 
-        <span class="cov0" title="0">return dump.Gauges, dump.Counters, nil</span>
+        <span class="cov1" title="1">return dump.Gauges, dump.Counters, nil</span>
 }
 
 // GetDump получение json дампа БД
