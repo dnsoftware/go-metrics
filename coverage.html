@@ -73,25 +73,25 @@
 				
 				<option value="file8">github.com/dnsoftware/go-metrics/internal/logger/logger.go (90.0%)</option>
 				
-				<option value="file9">github.com/dnsoftware/go-metrics/internal/noosexit/noosexit.go (100.0%)</option>
+				<option value="file9">github.com/dnsoftware/go-metrics/internal/server/app/app.go (0.0%)</option>
 				
-				<option value="file10">github.com/dnsoftware/go-metrics/internal/server/app/app.go (0.0%)</option>
+				<option value="file10">github.com/dnsoftware/go-metrics/internal/server/collector/collector.go (65.6%)</option>
 				
-				<option value="file11">github.com/dnsoftware/go-metrics/internal/server/collector/collector.go (65.6%)</option>
+				<option value="file11">github.com/dnsoftware/go-metrics/internal/server/collector/mocks/mock_backup_storage.go (21.2%)</option>
 				
-				<option value="file12">github.com/dnsoftware/go-metrics/internal/server/collector/mocks/mock_backup_storage.go (21.2%)</option>
+				<option value="file12">github.com/dnsoftware/go-metrics/internal/server/config/config.go (0.0%)</option>
 				
-				<option value="file13">github.com/dnsoftware/go-metrics/internal/server/config/config.go (0.0%)</option>
+				<option value="file13">github.com/dnsoftware/go-metrics/internal/server/handlers/gzip.go (0.0%)</option>
 				
-				<option value="file14">github.com/dnsoftware/go-metrics/internal/server/handlers/gzip.go (0.0%)</option>
+				<option value="file14">github.com/dnsoftware/go-metrics/internal/server/handlers/http.go (100.0%)</option>
 				
-				<option value="file15">github.com/dnsoftware/go-metrics/internal/server/handlers/http.go (100.0%)</option>
+				<option value="file15">github.com/dnsoftware/go-metrics/internal/server/handlers/middlewares.go (63.0%)</option>
 				
-				<option value="file16">github.com/dnsoftware/go-metrics/internal/server/handlers/middlewares.go (63.0%)</option>
+				<option value="file16">github.com/dnsoftware/go-metrics/internal/server/handlers/routes.go (68.7%)</option>
 				
-				<option value="file17">github.com/dnsoftware/go-metrics/internal/server/handlers/routes.go (68.7%)</option>
+				<option value="file17">github.com/dnsoftware/go-metrics/internal/staticlint/app/app.go (0.0%)</option>
 				
-				<option value="file18">github.com/dnsoftware/go-metrics/internal/staticlint/app/app.go (0.0%)</option>
+				<option value="file18">github.com/dnsoftware/go-metrics/internal/staticlint/noosexit/noosexit.go (95.7%)</option>
 				
 				<option value="file19">github.com/dnsoftware/go-metrics/internal/storage/filebackup.go (77.3%)</option>
 				
@@ -131,14 +131,44 @@ func main() <span class="cov0" title="0">{
 		
 		<pre class="file" id="file1" style="display: none">package main
 
-import "github.com/dnsoftware/go-metrics/internal/server/app"
+import (
+        "fmt"
+
+        "github.com/dnsoftware/go-metrics/internal/server/app"
+)
+
+var (
+        buildVersion = "N/A"
+        buildDate    = "N/A"
+        buildCommit  = "N/A"
+)
 
 func main() <span class="cov0" title="0">{
+        fmt.Printf("Build version: %s\n", buildVersion)
+        fmt.Printf("Build date: %s\n", buildDate)
+        fmt.Printf("Build commit: %s\n", buildCommit)
+
         app.ServerRun()
 }</span>
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package main
+		<pre class="file" id="file2" style="display: none">// Статический анализатор staticlint.
+//
+// Запускается из директории проекта командой: make staticlink.
+//
+// # Анализаторы
+//
+// • стандартные статические анализаторы пакета golang.org/x/tools/go/analysis/passes.
+// • анализаторы staticcheck.io класса SA - выявляют ошибки и проблемы с производительностью.
+// • анализаторы staticcheck.io класса quickfix - рефакторинг кода.
+// • анализаторы staticcheck.io класса simple - упрощение кода.
+// • анализаторы staticcheck.io класса tylecheck -         содержит анализы, обеспечивающие соблюдение правил стиля.
+//
+// • анализатор bodyclose - проверяет, правильно ли закрыт res.Body.
+// • анализатор ginkgolinter - Обеспечивает соблюдение стандартов использования ginkgo и gomega.
+//
+// • собственный анализатор noosexit - анализирует вызовы функции os.Exit в пакете main функции main(). При наличии выдает предупреждение.
+package main
 
 import (
         "github.com/dnsoftware/go-metrics/internal/staticlint/app"
@@ -151,7 +181,8 @@ func main() <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package app
+		<pre class="file" id="file3" style="display: none">// Package app Приложение Агента
+package app
 
 import (
         "net/http"
@@ -199,7 +230,7 @@ type AgentFlags struct {
         flagRateLimit      int
 }
 
-// обрабатывает аргументы командной строки
+// NewAgentFlags обрабатывает аргументы командной строки
 // возвращает соответствующую структуру
 // а также проверяет переменные окружения и задействует их при наличии
 func NewAgentFlags() AgentFlags <span class="cov8" title="1">{
@@ -557,7 +588,7 @@ func (m *Metrics) UpdateMetrics() <span class="cov1" title="1">{
         m.storage.SetCounter(ctx, constants.PollCount, mCounter)</span>
 }
 
-// updateGopcMetrics получение системных и аппаратных метрик и сохранение их в базу.
+// UpdateGopcMetrics получение системных и аппаратных метрик и сохранение их в базу.
 func (m *Metrics) UpdateGopcMetrics() <span class="cov1" title="1">{
         ctx := context.Background()
 
@@ -732,7 +763,7 @@ func (m *Metrics) SendCounter(ctx context.Context, name string, value int64) err
         <span class="cov0" title="0">return nil</span>
 }
 
-// проверка на допустимую метрику gauge
+// IsGauge проверка на допустимую метрику gauge
 func (m *Metrics) IsGauge(name string) bool <span class="cov0" title="0">{
         for _, val := range gaugeMetricsList </span><span class="cov0" title="0">{
                 if val == name </span><span class="cov0" title="0">{
@@ -744,7 +775,8 @@ func (m *Metrics) IsGauge(name string) bool <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package infrastructure
+		<pre class="file" id="file6" style="display: none">// Package infrastructure HTTP запросы к внешним сервисам
+package infrastructure
 
 import (
         "net/http"
@@ -980,7 +1012,8 @@ func NewAgentRequest(ctx context.Context, method, url string, data []byte, crypt
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package logger
+		<pre class="file" id="file8" style="display: none">// Package logger Синглтон логирования
+package logger
 
 import (
         "fmt"
@@ -1052,49 +1085,8 @@ func createLogger(filename string, logLevel zapcore.Level) (*logger, error) <spa
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package main
-
-import (
-        "fmt"
-        "go/ast"
-
-        "golang.org/x/tools/go/analysis"
-)
-
-var OsExitAnalyzer = &amp;analysis.Analyzer{
-        Name: "noosexit",
-        Doc:  "анализатор, запрещающий использовать прямой вызов os.Exit в функции main пакета main",
-        Run:  run,
-}
-
-func main() {<span class="cov0" title="0">
-
-}</span>
-
-func run(pass *analysis.Pass) (interface{}, error) <span class="cov1" title="1">{
-
-        //fset := token.NewFileSet()
-        //// получаем дерево разбора
-        //f, err := parser.ParseFile(fset, "", src, parser.AllErrors)
-        //if err != nil {
-        //        fmt.Println(err)
-        //}
-
-        for _, file := range pass.Files </span><span class="cov1" title="1">{
-                ast.Inspect(file, func(n ast.Node) bool </span><span class="cov10" title="4">{
-
-                        fmt.Println(file.Name)
-
-                        return true
-                }</span>)
-
-        }
-
-        <span class="cov1" title="1">return nil, nil</span>
-}
-</pre>
-		
-		<pre class="file" id="file10" style="display: none">package app
+		<pre class="file" id="file9" style="display: none">// Package app Приложение Сервер
+package app
 
 import (
         "net/http"
@@ -1141,7 +1133,8 @@ func ServerRun() <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package collector
+		<pre class="file" id="file10" style="display: none">// Package collector сборщик метрик, получаемых от Агента
+package collector
 
 import (
         "context"
@@ -1227,7 +1220,7 @@ func NewCollector(cfg *config.ServerConfig, storage ServerStorage, backupStorage
         return collector, nil</span>
 }
 
-// isMetric проверка на допустимую метрику
+// IsMetric проверка на допустимую метрику
 func (c *Collector) IsMetric(mType string, name string) bool <span class="cov5" title="3">{
 
         if mType == constants.Gauge </span><span class="cov1" title="1">{
@@ -1352,7 +1345,7 @@ func (c *Collector) GetAll(ctx context.Context) (string, error) <span class="cov
         <span class="cov1" title="1">return mList, nil</span>
 }
 
-// generateDump сохранение дампа в файл
+// GenerateDump сохранение дампа в файл
 func (c *Collector) GenerateDump() error <span class="cov1" title="1">{
         ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
         defer cancel()
@@ -1372,7 +1365,7 @@ func (c *Collector) GenerateDump() error <span class="cov1" title="1">{
         <span class="cov1" title="1">return nil</span>
 }
 
-// loadFromDump загрузка данных из дампа
+// LoadFromDump загрузка данных из дампа
 func (c *Collector) LoadFromDump() error <span class="cov1" title="1">{
         ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
         defer cancel()
@@ -1429,7 +1422,7 @@ func (c *Collector) DatabasePing(ctx context.Context) bool <span class="cov0" ti
 }</span>
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">// Code generated by MockGen. DO NOT EDIT.
+		<pre class="file" id="file11" style="display: none">// Code generated by MockGen. DO NOT EDIT.
 // Source: internal/server/collector/collector.go
 
 // Package mock_collector is a generated GoMock package.
@@ -1649,7 +1642,8 @@ func (mr *MockBackupStorageMockRecorder) Save(dump interface{}) *gomock.Call <sp
 }</span>
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package config
+		<pre class="file" id="file12" style="display: none">// Package config Конфигурация
+package config
 
 import (
         "flag"
@@ -1726,7 +1720,7 @@ func NewServerConfig() *ServerConfig <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package handlers
+		<pre class="file" id="file13" style="display: none">package handlers
 
 import (
         "compress/gzip"
@@ -1800,7 +1794,8 @@ func (c *compressReader) Close() error <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">package handlers
+		<pre class="file" id="file14" style="display: none">// Package handlers Обработчики HTTP запросов
+package handlers
 
 import (
         "context"
@@ -1850,7 +1845,7 @@ type HTTPServer struct {
         Router    chi.Router
 }
 
-// структура для получения json данных от агента
+// Metrics структура для получения json данных от агента
 type Metrics struct {
         ID    string   `json:"id"`              // имя метрики
         MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
@@ -1919,7 +1914,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) <span class="cov9" t
 }</span>
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package handlers
+		<pre class="file" id="file15" style="display: none">package handlers
 
 import (
         "bytes"
@@ -2060,7 +2055,7 @@ func hash(value []byte, key string) string <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package handlers
+		<pre class="file" id="file16" style="display: none">package handlers
 
 import (
         "bytes"
@@ -2245,7 +2240,7 @@ func (h *HTTPServer) UpdateMetricJSON(res http.ResponseWriter, req *http.Request
         }
 }
 
-// updatesMetricJSON обновление метрик пакетом, json формат
+// UpdatesMetricJSON обновление метрик пакетом, json формат
 func (h *HTTPServer) UpdatesMetricJSON(res http.ResponseWriter, req *http.Request) <span class="cov1" title="1">{
         ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
         defer cancel()
@@ -2344,7 +2339,7 @@ func (h *HTTPServer) getMetricValueJSON(res http.ResponseWriter, req *http.Reque
         res.Write(resp)</span>
 }
 
-// Deprecated: версия из первого инкремента
+// RootHandler Deprecated: версия из первого инкремента
 func (h *HTTPServer) RootHandler(res http.ResponseWriter, req *http.Request) <span class="cov8" title="11">{
         ctx, cancel := context.WithTimeout(req.Context(), constants.DBContextTimeout)
         defer cancel()
@@ -2461,9 +2456,11 @@ func (h *HTTPServer) databasePing(res http.ResponseWriter, req *http.Request) <s
 }
 </pre>
 		
-		<pre class="file" id="file18" style="display: none">package app
+		<pre class="file" id="file17" style="display: none">// Package app реализует свой статический анализатор
+package app
 
 import (
+        "github.com/dnsoftware/go-metrics/internal/staticlint/noosexit"
         "github.com/nunnatsa/ginkgolinter"
         "github.com/timakin/bodyclose/passes/bodyclose"
         "golang.org/x/tools/go/analysis"
@@ -2589,10 +2586,77 @@ func StaticCheckerRun() <span class="cov0" title="0">{
                 mychecks = append(mychecks, v.Analyzer)
         }</span>
 
-        <span class="cov0" title="0">multichecker.Main(
+        <span class="cov0" title="0">mychecks = append(mychecks, noosexit.OsExitAnalyzer)
+
+        multichecker.Main(
                 mychecks...,
         )</span>
 
+}
+</pre>
+		
+		<pre class="file" id="file18" style="display: none">// Package noosexit Анализатор вызова функции os.Exit в пакете main функции main()
+package noosexit
+
+import (
+        "go/ast"
+
+        "golang.org/x/tools/go/analysis"
+)
+
+var OsExitAnalyzer = &amp;analysis.Analyzer{
+        Name: "noosexit",
+        Doc:  "анализатор, запрещающий использовать прямой вызов os.Exit в функции main пакета main",
+        Run:  run,
+}
+
+func run(pass *analysis.Pass) (interface{}, error) <span class="cov3" title="3">{
+
+        for _, file := range pass.Files </span><span class="cov3" title="3">{
+
+                if pass.Pkg.Name() != "main" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov3" title="3">ast.Inspect(file, func(n ast.Node) bool </span><span class="cov9" title="38">{
+
+                        mainFunc, ok := n.(*ast.FuncDecl)
+                        if !ok </span><span class="cov9" title="34">{
+                                return true // переходим к дочерним узлам
+                        }</span>
+
+                        <span class="cov4" title="4">if mainFunc.Name.String() != "main" </span><span class="cov1" title="1">{
+                                return false // функиция НЕ main - к дочерним узлам смысла переходить нет
+                        }</span>
+
+                        // переходим к разбору ф-ии main()
+                        <span class="cov3" title="3">ast.Inspect(mainFunc, func(node ast.Node) bool </span><span class="cov10" title="45">{
+                                call, okCall := node.(*ast.CallExpr)
+                                if !okCall </span><span class="cov9" title="41">{ // если НЕ вызов ф-ии - пропускаем
+                                        return true
+                                }</span>
+
+                                <span class="cov4" title="4">s, okSelector := call.Fun.(*ast.SelectorExpr)
+                                if !okSelector </span><span class="cov1" title="1">{
+                                        return true
+                                }</span>
+
+                                <span class="cov3" title="3">if s.Sel.Name == "Exit" </span><span class="cov2" title="2">{
+                                        ident := s.X.(*ast.Ident)
+                                        if ident.Name == "os" </span><span class="cov2" title="2">{
+                                                pass.Reportf(s.Pos(), "Вызов os.Exit в функции main")
+                                        }</span>
+                                }
+
+                                <span class="cov3" title="3">return false</span>
+                        })
+
+                        <span class="cov3" title="3">return false</span>
+                })
+
+        }
+
+        <span class="cov3" title="3">return nil, nil</span>
 }
 </pre>
 		

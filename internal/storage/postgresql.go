@@ -54,7 +54,7 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
 	}
 
 	// создание таблиц, если не существуют
-	err = ps.createDatabaseTables(ctx)
+	err = ps.CreateDatabaseTables(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
 }
 
 // createDatabaseTables формирование структуры БД
-func (p *PgStorage) createDatabaseTables(ctx context.Context) error {
+func (p *PgStorage) CreateDatabaseTables(ctx context.Context) error {
 	var query string
 
 	// gauges
