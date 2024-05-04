@@ -2,17 +2,21 @@ package storage
 
 import (
 	"context"
-	"os"
 	"testing"
+
+	"github.com/dnsoftware/go-metrics/internal/server/config"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewPostgresqlStorage(t *testing.T) {
 
-	ddsn := os.Getenv("DATABASE_DSN")
+	cfg := config.NewServerConfig()
+
+	//ddsn := os.Getenv("DATABASE_DSN")
+	ddsn := cfg.DatabaseDSN
 	if ddsn == "" {
-		ddsn = "postgres://praktikum:praktikum@127.0.0.2:5532/praktikum?sslmode=disable"
+		ddsn = "postgres://praktikum:praktikum@127.0.0.1:5532/praktikum?sslmode=disable"
 	}
 
 	pgStorage, err := NewPostgresqlStorage(ddsn)
