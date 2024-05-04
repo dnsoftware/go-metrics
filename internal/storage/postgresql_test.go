@@ -4,27 +4,34 @@ import (
 	"context"
 	"testing"
 
-	"github.com/dnsoftware/go-metrics/internal/server/config"
+	"github.com/stretchr/testify/require"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/dnsoftware/go-metrics/internal/constants"
+
+	"github.com/dnsoftware/go-metrics/internal/server/config"
 )
 
-func TestNewPostgresqlStorage(t *testing.T) {
-
+func setup(t *testing.T) (*PgStorage, error) {
 	cfg := config.NewServerConfig()
-	_ = cfg
 
 	ddsn := cfg.DatabaseDSN
 	if ddsn == "" {
-		ddsn = "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable"
+		ddsn = constants.TestDSN
 	}
 
 	pgStorage, err := NewPostgresqlStorage(ddsn)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	err = pgStorage.CreateDatabaseTables(ctx)
+	require.NoError(t, err)
 
-	assert.NoError(t, err)
+	return pgStorage, nil
+}
 
+func TestNewPostgresqlStorage(t *testing.T) {
+	ctx := context.Background()
+	db, _ := setup(t)
+
+	db.GetAll(ctx)
 }

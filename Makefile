@@ -1,6 +1,9 @@
 PROJECT="go-metrics"
-DATABASE_DSN="postgres://praktikum:praktikum@127.0.0.1:5532/praktikum?sslmode=disable"
 
+ifneq (,$(wildcard ./.env_test))
+    include .env_test
+    export
+endif
 
 default:
 	echo ${PROJECT}

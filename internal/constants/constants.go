@@ -102,3 +102,9 @@ const (
 	BatchItemCount int = 5 // кол-во метрик в пакете
 	ChannelCap     int = 5 // емкость канала
 )
+
+// Тестирование
+const (
+	TestDSN string = "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable"
+	//TestDSN string = "postgres://praktikum:praktikum@127.0.0.1:5532/praktikum?sslmode=disable"
+)
