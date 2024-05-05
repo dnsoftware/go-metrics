@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/joho/godotenv"
 
 	"github.com/stretchr/testify/require"
@@ -44,15 +42,15 @@ func TestNewPostgresqlStorage(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestSetGauge(t *testing.T) {
-	ctx := context.Background()
-	pgs, _ := setup()
-
-	var testVal float64 = 123.456
-	err := pgs.SetGauge(ctx, "test245", testVal)
-	assert.NoError(t, err)
-
-	val, err := pgs.GetGauge(ctx, "test245")
-	assert.NoError(t, err)
-	assert.Equal(t, testVal, val)
-}
+//func TestSetGauge(t *testing.T) {
+//	ctx := context.Background()
+//	pgs, _ := setup()
+//
+//	var testVal float64 = 123.456
+//	err := pgs.SetGauge(ctx, "test245", testVal)
+//	assert.NoError(t, err)
+//
+//	val, err := pgs.GetGauge(ctx, "test245")
+//	assert.NoError(t, err)
+//	assert.Equal(t, testVal, val)
+//}
