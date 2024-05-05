@@ -2,9 +2,13 @@ package storage
 
 import (
 	"context"
+	"flag"
 	"testing"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
 
@@ -13,12 +17,22 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/server/config"
 )
 
+var cfg = &config.ServerConfig{}
+var ddsn string
+
+func init() {
+	godotenv.Load("../../.env_test")
+	_ = env.Parse(cfg)
+
+	flag.StringVar(&ddsn, "d", "", "data source name")
+}
+
 func setup() (*PgStorage, error) {
 
-	godotenv.Load("../../.env_test")
+	if ddsn == "" {
+		ddsn = cfg.DatabaseDSN
+	}
 
-	cfg := config.NewServerConfig()
-	ddsn := cfg.DatabaseDSN
 	if ddsn == "" {
 		ddsn = constants.TestDSN
 	}
@@ -42,15 +56,15 @@ func TestNewPostgresqlStorage(t *testing.T) {
 	require.NoError(t, err)
 }
 
-//func TestSetGauge(t *testing.T) {
-//	ctx := context.Background()
-//	pgs, _ := setup()
-//
-//	var testVal float64 = 123.456
-//	err := pgs.SetGauge(ctx, "test245", testVal)
-//	assert.NoError(t, err)
-//
-//	val, err := pgs.GetGauge(ctx, "test245")
-//	assert.NoError(t, err)
-//	assert.Equal(t, testVal, val)
-//}
+func TestSetGauge(t *testing.T) {
+	ctx := context.Background()
+	pgs, _ := setup()
+
+	var testVal float64 = 123.456
+	err := pgs.SetGauge(ctx, "test245", testVal)
+	assert.NoError(t, err)
+
+	val, err := pgs.GetGauge(ctx, "test245")
+	assert.NoError(t, err)
+	assert.Equal(t, testVal, val)
+}
