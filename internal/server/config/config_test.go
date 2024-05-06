@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/dnsoftware/go-metrics/internal/constants"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestConfig(t *testing.T) {
 	cfg := NewServerConfig()
 
-	assert.Equal(t, "localhost:8080", cfg.ServerAddress)
+	assert.Equal(t, constants.ServerDefault, cfg.ServerAddress)
 	assert.Greater(t, cfg.StoreInterval, int64(0))
-	assert.Equal(t, "/tmp/metrics-db.json", cfg.FileStoragePath)
+	assert.Equal(t, constants.FileStoragePath, cfg.FileStoragePath)
 
 	fmt.Println(cfg)
 }
