@@ -95,6 +95,52 @@ func (p *PgStorage) CreateDatabaseTables(ctx context.Context) error {
 	return nil
 }
 
+// DropDatabaseTables удаление таблиц из базы
+func (p *PgStorage) DropDatabaseTables(ctx context.Context) error {
+	var query string
+
+	// gauges
+	query = `DROP TABLE gauges`
+
+	err := p.retryExec(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	// counters
+	query = `DROP TABLE counters`
+
+	err = p.retryExec(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ClearDatabaseTables очистка таблиц базы.
+func (p *PgStorage) ClearDatabaseTables(ctx context.Context) error {
+	var query string
+
+	// gauges
+	query = `TRUNCATE TABLE gauges`
+
+	err := p.retryExec(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	// counters
+	query = `TRUNCATE TABLE counters`
+
+	err = p.retryExec(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // retryExec выполнение операции вставки/обновления несколькими попытками, если необходимо
 func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) error {
 	durations := strings.Split(constants.HTTPAttemtPeriods, ",")
@@ -173,6 +219,22 @@ func (p *PgStorage) SetCounter(ctx context.Context, name string, value int64) er
 	}
 
 	return nil
+}
+
+// GetCounter получение значения метрики типа counter из хранилища.
+// Параметры: name - название метрики.
+func (p *PgStorage) GetCounter(ctx context.Context, name string) (int64, error) {
+	query := `SELECT val FROM counters WHERE id = $1`
+	row := p.db.QueryRowContext(ctx, query, name)
+
+	var val int64
+
+	err := row.Scan(&val)
+	if err != nil {
+		return 0, fmt.Errorf("PgStorage | GetCounter: %w", err)
+	}
+
+	return val, nil
 }
 
 // SetBatch сохраняет метрики в базу пакетом из нескольких штук
@@ -295,7 +357,7 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 		errR := p.retryExec(ctx, query, gaugesKeyVal...)
 		if errR != nil {
 			tx.Rollback()
-			return fmt.Errorf("PgStorage | SetBatch | Upsert gauge: %w", err)
+			return fmt.Errorf("PgStorage | SetBatch | Upsert gauge: %w", errR)
 		}
 	}
 
@@ -309,7 +371,7 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 		errR := p.retryExec(ctx, query, countersKeyVal...)
 		if errR != nil {
 			tx.Rollback()
-			return fmt.Errorf("PgStorage | SetBatch | Upsert counter: %w", err)
+			return fmt.Errorf("PgStorage | SetBatch | Upsert counter: %w", errR)
 		}
 	}
 
@@ -320,22 +382,6 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error {
 	}
 
 	return nil
-}
-
-// GetCounter получение значения метрики типа counter из хранилища.
-// Параметры: name - название метрики.
-func (p *PgStorage) GetCounter(ctx context.Context, name string) (int64, error) {
-	query := `SELECT val FROM counters WHERE id = $1`
-	row := p.db.QueryRowContext(ctx, query, name)
-
-	var val int64
-
-	err := row.Scan(&val)
-	if err != nil {
-		return 0, fmt.Errorf("PgStorage | GetCounter: %w", err)
-	}
-
-	return val, nil
 }
 
 // GetAll возврат всех метрик (карт gauge и counters)

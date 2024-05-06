@@ -97,7 +97,7 @@
 				
 				<option value="file20">github.com/dnsoftware/go-metrics/internal/storage/memory.go (87.2%)</option>
 				
-				<option value="file21">github.com/dnsoftware/go-metrics/internal/storage/postgresql.go (12.0%)</option>
+				<option value="file21">github.com/dnsoftware/go-metrics/internal/storage/postgresql.go (77.5%)</option>
 				
 				</select>
 			</div>
@@ -1737,7 +1737,7 @@ type compressWriter struct {
         zw *gzip.Writer
 }
 
-func newCompressWriter(w http.ResponseWriter) *compressWriter <span class="cov0" title="0">{
+func NewCompressWriter(w http.ResponseWriter) *compressWriter <span class="cov0" title="0">{
         return &amp;compressWriter{
                 w:  w,
                 zw: gzip.NewWriter(w),
@@ -2907,7 +2907,7 @@ type DumpData struct {
         Counters map[string]int64   `json:"counters"`
 }
 
-func NewPostgresqlStorage(dsn string) (*PgStorage, error) <span class="cov1" title="1">{
+func NewPostgresqlStorage(dsn string) (*PgStorage, error) <span class="cov5" title="9">{
         ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)
         defer cancel()
 
@@ -2917,7 +2917,7 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) <span class="cov1" tit
                 return nil, err
         }</span>
 
-        <span class="cov1" title="1">ps := &amp;PgStorage{
+        <span class="cov5" title="9">ps := &amp;PgStorage{
                 db: db,
         }
 
@@ -2927,11 +2927,11 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) <span class="cov1" tit
                 return nil, err
         }</span>
 
-        <span class="cov1" title="1">return ps, nil</span>
+        <span class="cov5" title="9">return ps, nil</span>
 }
 
 // createDatabaseTables формирование структуры БД
-func (p *PgStorage) CreateDatabaseTables(ctx context.Context) error <span class="cov5" title="2">{
+func (p *PgStorage) CreateDatabaseTables(ctx context.Context) error <span class="cov7" title="18">{
         var query string
 
         // gauges
@@ -2948,7 +2948,7 @@ func (p *PgStorage) CreateDatabaseTables(ctx context.Context) error <span class=
         }</span>
 
         // counters
-        <span class="cov5" title="2">query = `CREATE TABLE IF NOT EXISTS counters
+        <span class="cov7" title="18">query = `CREATE TABLE IF NOT EXISTS counters
                         (
                             id character varying(64) PRIMARY KEY,
                             val bigint NOT NULL,
@@ -2960,11 +2960,57 @@ func (p *PgStorage) CreateDatabaseTables(ctx context.Context) error <span class=
                 return err
         }</span>
 
-        <span class="cov5" title="2">return nil</span>
+        <span class="cov7" title="18">return nil</span>
+}
+
+// DropDatabaseTables удаление таблиц из базы
+func (p *PgStorage) DropDatabaseTables(ctx context.Context) error <span class="cov3" title="3">{
+        var query string
+
+        // gauges
+        query = `DROP TABLE gauges`
+
+        err := p.retryExec(ctx, query)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // counters
+        <span class="cov3" title="3">query = `DROP TABLE counters`
+
+        err = p.retryExec(ctx, query)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov3" title="3">return nil</span>
+}
+
+// ClearDatabaseTables очистка таблиц базы.
+func (p *PgStorage) ClearDatabaseTables(ctx context.Context) error <span class="cov4" title="5">{
+        var query string
+
+        // gauges
+        query = `TRUNCATE TABLE gauges`
+
+        err := p.retryExec(ctx, query)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // counters
+        <span class="cov4" title="5">query = `TRUNCATE TABLE counters`
+
+        err = p.retryExec(ctx, query)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov4" title="5">return nil</span>
 }
 
 // retryExec выполнение операции вставки/обновления несколькими попытками, если необходимо
-func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) error <span class="cov10" title="4">{
+func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) error <span class="cov9" title="63">{
         durations := strings.Split(constants.HTTPAttemtPeriods, ",")
 
         _, err := p.db.ExecContext(ctx, query, args...)
@@ -2986,16 +3032,16 @@ func (p *PgStorage) retryExec(ctx context.Context, query string, args ...any) er
                 }</span>
         }
 
-        <span class="cov10" title="4">if err != nil </span><span class="cov0" title="0">{
+        <span class="cov9" title="63">if err != nil </span><span class="cov2" title="2">{
                 return fmt.Errorf("retryExec: %w", err)
         }</span>
 
-        <span class="cov10" title="4">return nil</span>
+        <span class="cov9" title="61">return nil</span>
 }
 
 // SetGauge сохранение метрики типа gauge в хранилище.
 // Параметры: name - название метрики, value - ее значение.
-func (p *PgStorage) SetGauge(ctx context.Context, name string, value float64) error <span class="cov0" title="0">{
+func (p *PgStorage) SetGauge(ctx context.Context, name string, value float64) error <span class="cov3" title="3">{
         query := `INSERT INTO gauges (id, val, updated_at)
                         VALUES ($1, $2, now())
                         ON CONFLICT (id)
@@ -3003,32 +3049,32 @@ func (p *PgStorage) SetGauge(ctx context.Context, name string, value float64) er
                         SET id = $1, val = $2`
 
         err := p.retryExec(ctx, query, name, value)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("PgStorage | SetGauge: %w", err)
         }</span>
 
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov2" title="2">return nil</span>
 }
 
 // GetGauge получение значения метрики типа gauge из хранилища.
 // Параметры: name - название метрики.
-func (p *PgStorage) GetGauge(ctx context.Context, name string) (float64, error) <span class="cov0" title="0">{
+func (p *PgStorage) GetGauge(ctx context.Context, name string) (float64, error) <span class="cov4" title="5">{
         query := `SELECT val FROM gauges WHERE id = $1`
         row := p.db.QueryRowContext(ctx, query, name)
 
         var val float64
 
         err := row.Scan(&amp;val)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return 0, fmt.Errorf("PgStorage | GetGauge: %w", err)
         }</span>
 
-        <span class="cov0" title="0">return val, nil</span>
+        <span class="cov3" title="4">return val, nil</span>
 }
 
 // SetCounter сохранение метрики типа counter в хранилище.
 // Параметры: name - название метрики, value - ее значение.
-func (p *PgStorage) SetCounter(ctx context.Context, name string, value int64) error <span class="cov0" title="0">{
+func (p *PgStorage) SetCounter(ctx context.Context, name string, value int64) error <span class="cov3" title="3">{
         query := `INSERT INTO counters (id, val, updated_at)
                         VALUES ($1, $2, now())
                         ON CONFLICT (id)
@@ -3036,19 +3082,35 @@ func (p *PgStorage) SetCounter(ctx context.Context, name string, value int64) er
                         SET id = $1, val = $2`
 
         err := p.retryExec(ctx, query, name, value)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("PgStorage | SetCounter: %w", err)
         }</span>
 
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov2" title="2">return nil</span>
+}
+
+// GetCounter получение значения метрики типа counter из хранилища.
+// Параметры: name - название метрики.
+func (p *PgStorage) GetCounter(ctx context.Context, name string) (int64, error) <span class="cov4" title="5">{
+        query := `SELECT val FROM counters WHERE id = $1`
+        row := p.db.QueryRowContext(ctx, query, name)
+
+        var val int64
+
+        err := row.Scan(&amp;val)
+        if err != nil </span><span class="cov1" title="1">{
+                return 0, fmt.Errorf("PgStorage | GetCounter: %w", err)
+        }</span>
+
+        <span class="cov3" title="4">return val, nil</span>
 }
 
 // SetBatch сохраняет метрики в базу пакетом из нескольких штук
-func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error <span class="cov0" title="0">{
+func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error <span class="cov3" title="3">{
         var metrics []Metrics
 
         err := json.Unmarshal(batch, &amp;metrics)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("PgStorage | SetBatch | json.Unmarshal: %w", err)
         }</span>
 
@@ -3097,14 +3159,14 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error <span clas
         */
 
         // карта предварительно подготовленных метрик
-        <span class="cov0" title="0">data := make(map[string]Metrics)
+        <span class="cov2" title="2">data := make(map[string]Metrics)
 
-        for _, mt := range metrics </span><span class="cov0" title="0">{
-                if mt.MType == constants.Gauge </span><span class="cov0" title="0">{
+        for _, mt := range metrics </span><span class="cov10" title="70">{
+                if mt.MType == constants.Gauge </span><span class="cov9" title="68">{
                         data[mt.ID] = mt
                 }</span>
 
-                <span class="cov0" title="0">if mt.MType == constants.Counter </span><span class="cov0" title="0">{
+                <span class="cov10" title="70">if mt.MType == constants.Counter </span><span class="cov2" title="2">{
                         if v, ok := data[mt.ID]; ok </span><span class="cov0" title="0">{
                                 vd := *v.Delta + *mt.Delta
                                 v.Delta = &amp;vd
@@ -3113,11 +3175,11 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error <span clas
                                 continue</span>
                         }
 
-                        <span class="cov0" title="0">data[mt.ID] = mt</span>
+                        <span class="cov2" title="2">data[mt.ID] = mt</span>
                 }
         }
 
-        <span class="cov0" title="0">var (
+        <span class="cov2" title="2">var (
                 gaugesKeyVal     []any    // срез пар значений для подстановки в SQL запрос вставки/обновления gauges
                 countersKeyVal   []any    // срез пар значений для подстановки в SQL запрос вставки/обновления counters
                 gaugeTemplates   []string // срез для формирования фрагмента множественной вставки gauges
@@ -3127,8 +3189,8 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error <span clas
         )
 
         // формирование данных для генерации запроса множественной вставки
-        for _, mt := range data </span><span class="cov0" title="0">{
-                if mt.MType == constants.Gauge </span><span class="cov0" title="0">{
+        for _, mt := range data </span><span class="cov10" title="70">{
+                if mt.MType == constants.Gauge </span><span class="cov9" title="68">{
                         g++
                         val1 := g
                         g++
@@ -3137,7 +3199,7 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error <span clas
                         gaugesKeyVal = append(gaugesKeyVal, mt.ID, mt.Value)
                 }</span>
 
-                <span class="cov0" title="0">if mt.MType == constants.Counter </span><span class="cov0" title="0">{
+                <span class="cov10" title="70">if mt.MType == constants.Counter </span><span class="cov2" title="2">{
                         c++
                         val1 := c
                         c++
@@ -3148,12 +3210,12 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error <span clas
         }
 
         // старт транзакции
-        <span class="cov0" title="0">tx, err := p.db.Begin()
+        <span class="cov2" title="2">tx, err := p.db.Begin()
         if err != nil </span><span class="cov0" title="0">{
                 return fmt.Errorf("PgStorage | SetBatch | p.db.Begin(): %w", err)
         }</span>
 
-        <span class="cov0" title="0">if len(gaugeTemplates) &gt; 0 </span><span class="cov0" title="0">{
+        <span class="cov2" title="2">if len(gaugeTemplates) &gt; 0 </span><span class="cov2" title="2">{
                 query := `INSERT INTO gauges (id, val, updated_at)
                         VALUES ` + strings.Join(gaugeTemplates, ",") + `
                         ON CONFLICT (id)
@@ -3163,11 +3225,11 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error <span clas
                 errR := p.retryExec(ctx, query, gaugesKeyVal...)
                 if errR != nil </span><span class="cov0" title="0">{
                         tx.Rollback()
-                        return fmt.Errorf("PgStorage | SetBatch | Upsert gauge: %w", err)
+                        return fmt.Errorf("PgStorage | SetBatch | Upsert gauge: %w", errR)
                 }</span>
         }
 
-        <span class="cov0" title="0">if len(counterTemplates) &gt; 0 </span><span class="cov0" title="0">{
+        <span class="cov2" title="2">if len(counterTemplates) &gt; 0 </span><span class="cov2" title="2">{
                 query := `INSERT INTO counters (id, val, updated_at)
                         VALUES ` + strings.Join(counterTemplates, ",") + `
                         ON CONFLICT (id)
@@ -3177,50 +3239,34 @@ func (p *PgStorage) SetBatch(ctx context.Context, batch []byte) error <span clas
                 errR := p.retryExec(ctx, query, countersKeyVal...)
                 if errR != nil </span><span class="cov0" title="0">{
                         tx.Rollback()
-                        return fmt.Errorf("PgStorage | SetBatch | Upsert counter: %w", err)
+                        return fmt.Errorf("PgStorage | SetBatch | Upsert counter: %w", errR)
                 }</span>
         }
 
         // завершаем транзакцию
-        <span class="cov0" title="0">err = tx.Commit()
+        <span class="cov2" title="2">err = tx.Commit()
         if err != nil </span><span class="cov0" title="0">{
                 return fmt.Errorf("PgStorage | SetBatch | Commit: %w", err)
         }</span>
 
-        <span class="cov0" title="0">return nil</span>
-}
-
-// GetCounter получение значения метрики типа counter из хранилища.
-// Параметры: name - название метрики.
-func (p *PgStorage) GetCounter(ctx context.Context, name string) (int64, error) <span class="cov0" title="0">{
-        query := `SELECT val FROM counters WHERE id = $1`
-        row := p.db.QueryRowContext(ctx, query, name)
-
-        var val int64
-
-        err := row.Scan(&amp;val)
-        if err != nil </span><span class="cov0" title="0">{
-                return 0, fmt.Errorf("PgStorage | GetCounter: %w", err)
-        }</span>
-
-        <span class="cov0" title="0">return val, nil</span>
+        <span class="cov2" title="2">return nil</span>
 }
 
 // GetAll возврат всех метрик (карт gauge и counters)
-func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]int64, error) <span class="cov0" title="0">{
+func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]int64, error) <span class="cov4" title="6">{
         // gauges
         gRows, err := p.db.QueryContext(ctx, `SELECT id, val FROM gauges`)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, nil, fmt.Errorf("PgStorage | GetAll | gauges: %w", err)
         }</span>
-        <span class="cov0" title="0">defer gRows.Close()
+        <span class="cov4" title="5">defer gRows.Close()
 
         dump := DumpData{
                 Gauges:   make(map[string]float64),
                 Counters: make(map[string]int64),
         }
 
-        for gRows.Next() </span><span class="cov0" title="0">{
+        for gRows.Next() </span><span class="cov8" title="36">{
                 v := Gauge{}
 
                 err = gRows.Scan(&amp;v.name, &amp;v.value)
@@ -3228,22 +3274,22 @@ func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]
                         return nil, nil, fmt.Errorf("PgStorage | GetAll | gauges Next: %w", err)
                 }</span>
 
-                <span class="cov0" title="0">dump.Gauges[v.name] = v.value</span>
+                <span class="cov8" title="36">dump.Gauges[v.name] = v.value</span>
         }
 
-        <span class="cov0" title="0">err = gRows.Err()
+        <span class="cov4" title="5">err = gRows.Err()
         if err != nil </span><span class="cov0" title="0">{
                 return nil, nil, fmt.Errorf("PgStorage | GetAll | gauges Next during iteration: %w", err)
         }</span>
 
         // counters
-        <span class="cov0" title="0">cRows, err := p.db.QueryContext(ctx, `SELECT id, val FROM counters`)
+        <span class="cov4" title="5">cRows, err := p.db.QueryContext(ctx, `SELECT id, val FROM counters`)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, nil, fmt.Errorf("PgStorage | GetAll | counters: %w", err)
         }</span>
-        <span class="cov0" title="0">defer cRows.Close()
+        <span class="cov4" title="5">defer cRows.Close()
 
-        for cRows.Next() </span><span class="cov0" title="0">{
+        for cRows.Next() </span><span class="cov2" title="2">{
                 v := Counter{}
 
                 err = cRows.Scan(&amp;v.name, &amp;v.value)
@@ -3251,19 +3297,19 @@ func (p *PgStorage) GetAll(ctx context.Context) (map[string]float64, map[string]
                         return nil, nil, fmt.Errorf("PgStorage | GetAll | counters Next: %w", err)
                 }</span>
 
-                <span class="cov0" title="0">dump.Counters[v.name] = v.value</span>
+                <span class="cov2" title="2">dump.Counters[v.name] = v.value</span>
         }
 
-        <span class="cov0" title="0">err = cRows.Err()
+        <span class="cov4" title="5">err = cRows.Err()
         if err != nil </span><span class="cov0" title="0">{
                 return nil, nil, fmt.Errorf("PgStorage | GetAll | counters Next during iteration: %w", err)
         }</span>
 
-        <span class="cov0" title="0">return dump.Gauges, dump.Counters, nil</span>
+        <span class="cov4" title="5">return dump.Gauges, dump.Counters, nil</span>
 }
 
 // GetDump получение json дампа БД
-func (p *PgStorage) GetDump(ctx context.Context) (string, error) <span class="cov0" title="0">{
+func (p *PgStorage) GetDump(ctx context.Context) (string, error) <span class="cov3" title="3">{
         dump := DumpData{}
 
         var err error
@@ -3273,30 +3319,30 @@ func (p *PgStorage) GetDump(ctx context.Context) (string, error) <span class="co
                 return "", fmt.Errorf("PgStorage | GetDump | GetAll: %w", err)
         }</span>
 
-        <span class="cov0" title="0">data, err := json.Marshal(dump)
+        <span class="cov3" title="3">data, err := json.Marshal(dump)
         if err != nil </span><span class="cov0" title="0">{
                 return "", fmt.Errorf("PgStorage | GetDump | json.Marshal: %w", err)
         }</span>
 
-        <span class="cov0" title="0">return string(data), nil</span>
+        <span class="cov3" title="3">return string(data), nil</span>
 }
 
 // RestoreFromDump восстановление БД из json дампа
-func (p *PgStorage) RestoreFromDump(ctx context.Context, dump string) error <span class="cov0" title="0">{
+func (p *PgStorage) RestoreFromDump(ctx context.Context, dump string) error <span class="cov3" title="3">{
         data := DumpData{}
 
         err := json.Unmarshal([]byte(dump), &amp;data)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov2" title="2">{
                 return fmt.Errorf("PgStorage | RestoreFromDump | json.Unmarshal: %w", err)
         }</span>
 
         // старт транзакции
-        <span class="cov0" title="0">tx, err := p.db.Begin()
+        <span class="cov1" title="1">tx, err := p.db.Begin()
         if err != nil </span><span class="cov0" title="0">{
                 return fmt.Errorf("PgStorage | RestoreFromDump | Tx begin: %w", err)
         }</span>
 
-        <span class="cov0" title="0">queryDel := `TRUNCATE gauges, counters`
+        <span class="cov1" title="1">queryDel := `TRUNCATE gauges, counters`
 
         err = p.retryExec(ctx, queryDel)
         if err != nil </span><span class="cov0" title="0">{
@@ -3304,15 +3350,15 @@ func (p *PgStorage) RestoreFromDump(ctx context.Context, dump string) error <spa
                 return fmt.Errorf("PgStorage | RestoreFromDump | Truncate: %w", err)
         }</span>
 
-        <span class="cov0" title="0">stmt, err := p.db.Prepare(`INSERT INTO gauges (id, val, updated_at)
+        <span class="cov1" title="1">stmt, err := p.db.Prepare(`INSERT INTO gauges (id, val, updated_at)
                         VALUES ($1, $2, now())`)
         if err != nil </span><span class="cov0" title="0">{
                 tx.Rollback()
                 return fmt.Errorf("PgStorage | RestoreFromDump | Prepare gauges: %w", err)
         }</span>
-        <span class="cov0" title="0">defer stmt.Close()
+        <span class="cov1" title="1">defer stmt.Close()
 
-        for name, val := range data.Gauges </span><span class="cov0" title="0">{
+        for name, val := range data.Gauges </span><span class="cov1" title="1">{
                 _, err = stmt.ExecContext(ctx, name, val)
                 if err != nil </span><span class="cov0" title="0">{
                         tx.Rollback()
@@ -3320,15 +3366,15 @@ func (p *PgStorage) RestoreFromDump(ctx context.Context, dump string) error <spa
                 }</span>
         }
 
-        <span class="cov0" title="0">stmt, err = p.db.Prepare(`INSERT INTO counters (id, val, updated_at)
+        <span class="cov1" title="1">stmt, err = p.db.Prepare(`INSERT INTO counters (id, val, updated_at)
                         VALUES ($1, $2, now())`)
         if err != nil </span><span class="cov0" title="0">{
                 tx.Rollback()
                 return fmt.Errorf("PgStorage | RestoreFromDump | Prepare counters: %w", err)
         }</span>
-        <span class="cov0" title="0">defer stmt.Close()
+        <span class="cov1" title="1">defer stmt.Close()
 
-        for name, val := range data.Counters </span><span class="cov0" title="0">{
+        for name, val := range data.Counters </span><span class="cov1" title="1">{
                 _, err = stmt.ExecContext(ctx, name, val)
                 if err != nil </span><span class="cov0" title="0">{
                         tx.Rollback()
@@ -3337,16 +3383,16 @@ func (p *PgStorage) RestoreFromDump(ctx context.Context, dump string) error <spa
         }
 
         // завершаем транзакцию
-        <span class="cov0" title="0">err = tx.Commit()
+        <span class="cov1" title="1">err = tx.Commit()
         if err != nil </span><span class="cov0" title="0">{
                 return fmt.Errorf("PgStorage | RestoreFromDump | Commit: %w", err)
         }</span>
 
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov1" title="1">return nil</span>
 }
 
 // DatabasePing проверка работоспособности соединения с БД
-func (p *PgStorage) DatabasePing(ctx context.Context) bool <span class="cov0" title="0">{
+func (p *PgStorage) DatabasePing(ctx context.Context) bool <span class="cov2" title="2">{
         return p.db.PingContext(ctx) == nil
 }</span>
 </pre>
