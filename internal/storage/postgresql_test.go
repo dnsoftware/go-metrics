@@ -63,7 +63,7 @@ func TestPostgresqlSetGetGauge(t *testing.T) {
 	ctx := context.Background()
 	pgs, _ := setup()
 
-	var testVal float64 = 123.456
+	var testVal = 123.456
 	err := pgs.SetGauge(ctx, "test245", testVal)
 	assert.NoError(t, err)
 
@@ -77,7 +77,7 @@ func TestPostgresqlSetGetGauge(t *testing.T) {
 	err = pgs.SetGauge(ctx, "test245", testVal)
 	assert.Error(t, err)
 
-	val, err = pgs.GetGauge(ctx, "test245")
+	_, err = pgs.GetGauge(ctx, "test245")
 	assert.Error(t, err)
 
 }
@@ -100,7 +100,7 @@ func TestPostgresqlSetGetCounter(t *testing.T) {
 	err = pgs.SetCounter(ctx, "test245", testVal)
 	assert.Error(t, err)
 
-	val, err = pgs.GetCounter(ctx, "test245")
+	_, err = pgs.GetCounter(ctx, "test245")
 	assert.Error(t, err)
 
 }
@@ -124,10 +124,10 @@ func TestPostgresqlSetBatch(t *testing.T) {
 	assert.ErrorAs(t, err, &e)
 
 	// проверка правильности добавленных данных
-	valGauge, err := pgs.GetGauge(ctx, "TotalAlloc")
+	valGauge, _ := pgs.GetGauge(ctx, "TotalAlloc")
 	assert.Equal(t, float64(343728), valGauge)
 
-	valCounter, err := pgs.GetCounter(ctx, "PollCount")
+	valCounter, _ := pgs.GetCounter(ctx, "PollCount")
 	assert.Equal(t, int64(62), valCounter)
 
 }
@@ -157,10 +157,10 @@ func TestPostgresqlGetAll(t *testing.T) {
 	assert.NotEmpty(t, counters)
 
 	// проверка первого и последнего добавленных значений
-	valGauge, err := pgs.GetGauge(ctx, "Alloc")
+	valGauge, _ := pgs.GetGauge(ctx, "Alloc")
 	assert.Equal(t, float64(343728), valGauge)
 
-	valCounter, err := pgs.GetCounter(ctx, "PollCount")
+	valCounter, _ := pgs.GetCounter(ctx, "PollCount")
 	assert.Equal(t, int64(62), valCounter)
 
 	// проверка количества добавленных записей
@@ -187,14 +187,14 @@ func TestPostgresqlGetDump(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, `{"gauges":{},"counters":{}}`, dump)
 
-	var testVal float64 = 123.456
+	var testVal = 123.456
 	pgs.SetGauge(ctx, "test245", testVal)
 	dump, err = pgs.GetDump(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, `{"gauges":{"test245":123.456},"counters":{}}`, dump)
 
 	var testCounter int64 = 123
-	err = pgs.SetCounter(ctx, "test245", testCounter)
+	_ = pgs.SetCounter(ctx, "test245", testCounter)
 	dump, err = pgs.GetDump(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, `{"gauges":{"test245":123.456},"counters":{"test245":123}}`, dump)
