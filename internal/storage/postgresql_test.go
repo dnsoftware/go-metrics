@@ -6,6 +6,8 @@ import (
 	"flag"
 	"testing"
 
+	"github.com/dnsoftware/go-metrics/internal/constants"
+
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/caarlos0/env/v6"
@@ -14,8 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/dnsoftware/go-metrics/internal/constants"
 
 	"github.com/dnsoftware/go-metrics/internal/server/config"
 )
