@@ -108,3 +108,12 @@ const (
 	TestDSN string = "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable"
 	//TestDSN string = "postgres://praktikum:praktikum@127.0.0.1:5532/praktikum?sslmode=disable"
 )
+
+// Сообщения о завершении программы
+const (
+	MetricsUpdateCompleted                string = "Обновление метрик завершено..."
+	MetricsGopsutilsUpdateCompletedstring string = "Обновление метрик gopcutils завершено..."
+	PackagesPrepareCompleted              string = "Подготовка пакетов на отправку завершена..."
+	SendMetricsCompleted                  string = "Отправка метрик завершена..."
+	ProgramCompleted                      string = "Программа завершена!"
+)

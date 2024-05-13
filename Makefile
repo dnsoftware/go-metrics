@@ -18,7 +18,8 @@ cover:
 
 .PHONY: gen
 gen:
-	mockgen -source=internal/server/collector/collector.go -destination=internal/server/collector/mocks/mock_backup_storage.go
+	#mockgen -source=internal/server/collector/collector.go -destination=internal/server/collector/mocks/mock_backup_storage.go
+	mockgen -source=internal/agent/domain/metrics.go -destination=internal/agent/domain/mocks/mock_metrics.go
 
 cover2:
 	DATABASE_DSN=${DATABASE_DSN} go test -short -count=1 -race -coverprofile=coverage.out ./...

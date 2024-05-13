@@ -50,9 +50,9 @@ func NewWebSender(protocol string, flags Flags, contentType string) WebSender {
 func (w *WebSender) SendData(ctx context.Context, mType string, name string, value string) error {
 	switch w.contentType {
 	case constants.TextPlain, constants.TextHTML:
-		return w.sendPlain(ctx, mType, name, value)
+		return w.SendPlain(ctx, mType, name, value)
 	case constants.ApplicationJSON:
-		return w.sendJSON(ctx, mType, name, value)
+		return w.SendJSON(ctx, mType, name, value)
 	}
 
 	return errors.New("bad send data content type")
@@ -76,8 +76,8 @@ func (w *WebSender) SendDataBatch(ctx context.Context, data []byte) error {
 	return err
 }
 
-// sendPlain отправка метрики на сервер простым текстом через url.
-func (w *WebSender) sendPlain(ctx context.Context, mType string, name string, value string) error {
+// SendPlain отправка метрики на сервер простым текстом через url.
+func (w *WebSender) SendPlain(ctx context.Context, mType string, name string, value string) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction + "/" + mType + "/" + name + "/" + value
 
 	request, err := NewAgentRequest(ctx, http.MethodPost, url, nil, w.cryptoKey)
@@ -101,8 +101,8 @@ func (w *WebSender) sendPlain(ctx context.Context, mType string, name string, va
 	return nil
 }
 
-// sendJSON отпрвка данных на сервер в json формате.
-func (w *WebSender) sendJSON(ctx context.Context, mType string, name string, value string) error {
+// SendJSON отпрвка данных на сервер в json формате.
+func (w *WebSender) SendJSON(ctx context.Context, mType string, name string, value string) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction
 
 	data := Metrics{

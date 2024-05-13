@@ -5,12 +5,12 @@
 package mock_collector
 
 import (
-	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
 )
 
+/*
 // MockServerStorage is a mock of ServerStorage interface.
 type MockServerStorage struct {
 	ctrl     *gomock.Controller
@@ -21,6 +21,7 @@ type MockServerStorage struct {
 type MockServerStorageMockRecorder struct {
 	mock *MockServerStorage
 }
+
 
 // NewMockServerStorage creates a new mock instance.
 func NewMockServerStorage(ctrl *gomock.Controller) *MockServerStorage {
@@ -164,6 +165,8 @@ func (mr *MockServerStorageMockRecorder) SetGauge(ctx, name, value interface{}) 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGauge", reflect.TypeOf((*MockServerStorage)(nil).SetGauge), ctx, name, value)
 }
+
+*/
 
 // MockBackupStorage is a mock of BackupStorage interface.
 type MockBackupStorage struct {

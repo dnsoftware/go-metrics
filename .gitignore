@@ -33,3 +33,4 @@ cmd/server/log.log
 
 .run
 #.env_test
+coverage.html

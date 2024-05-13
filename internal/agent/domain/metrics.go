@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	_ "net/http/pprof"
 	"os"
@@ -67,6 +68,9 @@ type Metrics struct {
 	reportInterval  int64
 	gopcMetricsList []string
 	rateLimit       int
+	mutex           sync.Mutex
+	messageWriter   io.Writer // для вывода сообщения в консоль (и для тестирования)
+
 }
 
 // MetricsItem структура для отправки json данных на сервер
@@ -96,6 +100,7 @@ func NewMetrics(storage AgentStorage, sender MetricsSender, flags Flags) Metrics
 		reportInterval:  flags.ReportInterval(),
 		rateLimit:       flags.RateLimit(),
 		gopcMetricsList: gopcMetricsList,
+		messageWriter:   os.Stdout,
 	}
 }
 
@@ -115,7 +120,7 @@ func (m *Metrics) Start() {
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("\nОбновление метрик завершено...")
+				m.PrintOut(m.messageWriter, "\n"+constants.MetricsUpdateCompleted)
 				return
 			default:
 				m.UpdateMetrics()
@@ -133,7 +138,7 @@ func (m *Metrics) Start() {
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("\nОбновление метрик gopcutils завершено...")
+				m.PrintOut(m.messageWriter, "\n"+constants.MetricsGopsutilsUpdateCompletedstring)
 				return
 			default:
 				m.UpdateGopcMetrics()
@@ -154,7 +159,7 @@ func (m *Metrics) Start() {
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("\nПодготовка пакетов на отправку завершена...")
+				m.PrintOut(m.messageWriter, "\n"+constants.PackagesPrepareCompleted)
 				return
 			default:
 				time.Sleep(time.Duration(m.reportInterval) * time.Second)
@@ -174,7 +179,7 @@ func (m *Metrics) Start() {
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("\nОтправка метрик завершена...") ///
+				m.PrintOut(m.messageWriter, "\n"+constants.SendMetricsCompleted)
 				return
 			case job := <-jobsCh:
 				rateLimitChan <- struct{}{}
@@ -185,7 +190,7 @@ func (m *Metrics) Start() {
 
 	wg.Wait()
 
-	fmt.Println("\nПрограмма завершена!")
+	m.PrintOut(m.messageWriter, "\n"+constants.ProgramCompleted)
 }
 
 // UpdateMetricsReflect сохранение метрик в базу с использованием рефлексии.
@@ -306,9 +311,12 @@ func (m *Metrics) UpdateGopcMetrics() {
 }
 
 // sendMetrics отправка метрик на сервер
-func (m *Metrics) sendMetrics() {
+// возвращает кол-во отправленных метрик
+func (m *Metrics) sendMetrics() int {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.HTTPContextTimeout)
 	defer cancel()
+
+	var sendCount int
 
 	// gauge
 	allGaugeMetrics := append(gaugeMetricsList, m.gopcMetricsList...)
@@ -324,6 +332,7 @@ func (m *Metrics) sendMetrics() {
 			logger.Log().Error(err.Error())
 			continue
 		}
+		sendCount++
 	}
 
 	// counter
@@ -335,9 +344,13 @@ func (m *Metrics) sendMetrics() {
 	err = m.SendCounter(ctx, constants.PollCount, cValue)
 	if err != nil {
 		logger.Log().Error("Set PollCounter error: " + err.Error())
+	} else {
+		sendCount++
 	}
 
 	_ = m.storage.SetCounter(ctx, constants.PollCount, 0)
+
+	return sendCount
 }
 
 // worker воркер по пакетной отправке метрик на сервер.
@@ -465,4 +478,15 @@ func (m *Metrics) IsGauge(name string) bool {
 	}
 
 	return false
+}
+
+// PrintOut печать выходных данных (сообщения в консоль)
+func (m *Metrics) PrintOut(w io.Writer, message string) {
+	m.mutex.Lock()
+	fmt.Fprintf(w, "%s", message)
+	m.mutex.Unlock()
+}
+
+func (m *Metrics) SetMessageWriter(writer io.Writer) {
+	m.messageWriter = writer
 }

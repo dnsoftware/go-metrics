@@ -56,7 +56,7 @@ func BenchmarkUpdateMetrics(b *testing.B) {
 type fl struct {
 }
 
-func updateMetricsSetup() Metrics {
+func updateMetricsSetup() *Metrics {
 	repository := storage.NewMemStorage()
 	flg := fl{}
 	sender := infrastructure.NewWebSender("http", &flg, constants.ApplicationJSON)
@@ -70,7 +70,7 @@ func updateMetricsSetup() Metrics {
 
 	metrics := NewMetrics(repository, &sender, &flg)
 
-	return metrics
+	return &metrics
 }
 
 func (f *fl) RunAddr() string {

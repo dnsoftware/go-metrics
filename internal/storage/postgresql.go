@@ -62,7 +62,7 @@ func NewPostgresqlStorage(dsn string) (*PgStorage, error) {
 	return ps, nil
 }
 
-// createDatabaseTables формирование структуры БД
+// CreateDatabaseTables формирование структуры БД
 func (p *PgStorage) CreateDatabaseTables(ctx context.Context) error {
 	var query string
 
