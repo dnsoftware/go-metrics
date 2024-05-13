@@ -51,13 +51,6 @@ func TestPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Clean up the container after the test is complete
-	//t.Cleanup(func() {
-	//	if err := container.Terminate(ctx); err != nil {
-	//		t.Fatalf("failed to terminate container: %s", err)
-	//	}
-	//})
-
 	t.Run("Test PostgresqlSetGetGauge", func(t *testing.T) {
 
 		err = pgs.CreateDatabaseTables(ctx)
@@ -251,5 +244,9 @@ func TestPostgres(t *testing.T) {
 		assert.False(t, ok)
 
 	})
+
+	if err = container.Terminate(ctx); err != nil {
+		t.Fatalf("failed to terminate container: %s", err)
+	}
 
 }
