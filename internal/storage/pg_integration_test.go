@@ -60,18 +60,18 @@ func TestPostgres(t *testing.T) {
 		err = pgs.SetGauge(ctx, "test245", testVal)
 		assert.NoError(t, err)
 
-		val, err := pgs.GetGauge(ctx, "test245")
-		assert.NoError(t, err)
+		val, err2 := pgs.GetGauge(ctx, "test245")
+		assert.NoError(t, err2)
 		assert.Equal(t, testVal, val)
 
-		err = pgs.DropDatabaseTables(ctx)
-		assert.NoError(t, err)
+		err2 = pgs.DropDatabaseTables(ctx)
+		assert.NoError(t, err2)
 
-		err = pgs.SetGauge(ctx, "test245", testVal)
-		assert.Error(t, err)
+		err2 = pgs.SetGauge(ctx, "test245", testVal)
+		assert.Error(t, err2)
 
-		_, err = pgs.GetGauge(ctx, "test245")
-		assert.Error(t, err)
+		_, err2 = pgs.GetGauge(ctx, "test245")
+		assert.Error(t, err2)
 
 	})
 
@@ -83,8 +83,8 @@ func TestPostgres(t *testing.T) {
 		err = pgs.SetCounter(ctx, "test245", testVal)
 		assert.NoError(t, err)
 
-		val, err := pgs.GetCounter(ctx, "test245")
-		assert.NoError(t, err)
+		val, err2 := pgs.GetCounter(ctx, "test245")
+		assert.NoError(t, err2)
 		assert.Equal(t, testVal, val)
 
 		err = pgs.DropDatabaseTables(ctx)
@@ -132,8 +132,8 @@ func TestPostgres(t *testing.T) {
 		assert.NoError(t, err)
 
 		// пустая база
-		gauges, counters, err := pgs.GetAll(ctx)
-		assert.NoError(t, err)
+		gauges, counters, err2 := pgs.GetAll(ctx)
+		assert.NoError(t, err2)
 		assert.Empty(t, gauges)
 		assert.Empty(t, counters)
 
@@ -175,8 +175,8 @@ func TestPostgres(t *testing.T) {
 
 		pgs.ClearDatabaseTables(ctx)
 
-		dump, err := pgs.GetDump(ctx)
-		assert.NoError(t, err)
+		dump, err2 := pgs.GetDump(ctx)
+		assert.NoError(t, err2)
 		assert.Equal(t, `{"gauges":{},"counters":{}}`, dump)
 
 		var testVal = 123.456
@@ -200,15 +200,15 @@ func TestPostgres(t *testing.T) {
 		pgs.ClearDatabaseTables(ctx)
 
 		dump := `{"gauges":{"test245":123.456},"counters":{"test245":123}}`
-		err := pgs.RestoreFromDump(ctx, dump)
-		assert.NoError(t, err)
+		err2 := pgs.RestoreFromDump(ctx, dump)
+		assert.NoError(t, err2)
 
-		valGauge, err := pgs.GetGauge(ctx, "test245")
-		assert.NoError(t, err)
+		valGauge, err3 := pgs.GetGauge(ctx, "test245")
+		assert.NoError(t, err3)
 		assert.Equal(t, 123.456, valGauge)
 
-		valCounter, err := pgs.GetCounter(ctx, "test245")
-		assert.NoError(t, err)
+		valCounter, err4 := pgs.GetCounter(ctx, "test245")
+		assert.NoError(t, err4)
 		assert.Equal(t, int64(123), valCounter)
 
 	})
@@ -221,9 +221,9 @@ func TestPostgres(t *testing.T) {
 
 		// некорректный json
 		dump := `{"gauges":{"test245":123.456},"counters":{"test245":123}`
-		err := pgs.RestoreFromDump(ctx, dump)
+		err2 := pgs.RestoreFromDump(ctx, dump)
 		var e *json.SyntaxError
-		assert.ErrorAs(t, err, &e)
+		assert.ErrorAs(t, err2, &e)
 
 		dump = `{"gauges":{"test245":123.5},"counters":{"test245":123.123}}`
 		err = pgs.RestoreFromDump(ctx, dump)
