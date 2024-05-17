@@ -29,6 +29,7 @@ vendor/
 /logs/
 /log.log
 cmd/agent/log.log
+cmd/agent/domain/log.log
 cmd/server/log.log
 
 .run
