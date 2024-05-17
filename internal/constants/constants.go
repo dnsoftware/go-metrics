@@ -48,11 +48,17 @@ const (
 
 // Параметры работы сервера (по умолчанию).
 const (
-	ServerDefault   string = "localhost:8080"       // адрес:порт сервера по умолчанию
-	StoreInterval   int64  = 300                    // интервалс сохранения значений метрик в файл
-	FileStoragePath string = "/tmp/metrics-db.json" // полное имя файла, куда сохраняются значения метрик
-	RestoreSaved    bool   = true                   // загружать или нет ранее сохранённые значения из указанного файла при старте сервера
-	AgentPprofAddr  string = ":8082"                // адрес:порт агента для работы с профилировщиком
+	ServerDefault     string = "localhost:8080"       // адрес:порт сервера по умолчанию
+	StoreInterval     int64  = 300                    // интервалс сохранения значений метрик в файл
+	FileStoragePath   string = "/tmp/metrics-db.json" // полное имя файла, куда сохраняются значения метрик
+	RestoreSaved      bool   = true                   // загружать или нет ранее сохранённые значения из указанного файла при старте сервера
+	AgentPprofAddr    string = ":8082"                // адрес:порт агента для работы с профилировщиком
+	CryptoPublicFile  string = "certificate.pem"      // название файла с публичным ключом шифрования
+	CryptoPrivateFile string = "privatekey.pem"       // название файла с приватным ключом шифрования
+	//CryptoPublicFilePath  string = "/home/dmitry/go/src/go-metrics/internal/crypto/" + CryptoPublicFile
+	//CryptoPrivateFilePath string = "/home/dmitry/go/src/go-metrics/internal/crypto/" + CryptoPrivateFile
+	CryptoPublicFilePath  string = ""
+	CryptoPrivateFilePath string = ""
 )
 
 // Логгер.
@@ -70,7 +76,9 @@ const (
 
 // Encoding
 const (
-	EncodingGzip string = "gzip"
+	EncodingGzip      string = "gzip"
+	CryptoHeaderName  string = "X-Content-Encoding" // ключ HTTP заголовка для асимметричного шифрования
+	CryptoHeaderValue string = "crypto"             // значение HTTP заголовка CryptoHeaderName для асимметричного шифрования
 )
 
 // Тип хранилища данных.

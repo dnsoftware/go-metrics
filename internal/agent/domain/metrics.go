@@ -70,7 +70,6 @@ type Metrics struct {
 	rateLimit       int
 	mutex           sync.Mutex
 	messageWriter   io.Writer // для вывода сообщения в консоль (и для тестирования)
-
 }
 
 // MetricsItem структура для отправки json данных на сервер

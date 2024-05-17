@@ -14,6 +14,7 @@ type AgentFlags struct {
 	flagPollInterval   int64
 	flagCryptoKey      string
 	flagRateLimit      int
+	flagAsymPubKeyPath string // путь к файлу с публичным асимметричным ключом
 }
 
 // NewAgentFlags обрабатывает аргументы командной строки
@@ -26,6 +27,7 @@ func NewAgentFlags() AgentFlags {
 		PollInterval   int64  `env:"POLL_INTERVAL"`
 		CryptoKey      string `env:"KEY"`
 		RateLimit      int    `env:"RATE_LIMIT"`
+		AsymPubKeyPath string `env:"CRYPTO_KEY"` // путь к файлу с публичным асимметричным ключом
 	}
 
 	var (
@@ -43,6 +45,7 @@ func NewAgentFlags() AgentFlags {
 	flag.Int64Var(&flags.flagPollInterval, "p", constants.PollInterval, "poll interval")
 	flag.StringVar(&flags.flagCryptoKey, "k", "", "crypto key")
 	flag.IntVar(&flags.flagRateLimit, "l", constants.RateLimit, "poll interval")
+	flag.StringVar(&flags.flagAsymPubKeyPath, "crypto-key", constants.CryptoPublicFilePath, "asymmetric crypto key")
 
 	flag.Parse()
 
@@ -67,6 +70,10 @@ func NewAgentFlags() AgentFlags {
 		flags.flagRateLimit = cfg.RateLimit
 	}
 
+	if cfg.AsymPubKeyPath != "" {
+		flags.flagAsymPubKeyPath = cfg.AsymPubKeyPath
+	}
+
 	return flags
 }
 
@@ -88,4 +95,8 @@ func (f *AgentFlags) CryptoKey() string {
 
 func (f *AgentFlags) RateLimit() int {
 	return f.flagRateLimit
+}
+
+func (f *AgentFlags) AsymPubKeyPath() string {
+	return f.flagAsymPubKeyPath
 }

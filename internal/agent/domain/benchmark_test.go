@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/dnsoftware/go-metrics/internal/crypto"
+
 	"github.com/dnsoftware/go-metrics/internal/agent/infrastructure"
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/storage"
@@ -59,7 +61,9 @@ type fl struct {
 func updateMetricsSetup() *Metrics {
 	repository := storage.NewMemStorage()
 	flg := fl{}
-	sender := infrastructure.NewWebSender("http", &flg, constants.ApplicationJSON)
+	certFilename, _, _ := crypto.DefaultCryptoFilesName()
+	publicCryptoKey, _ := crypto.MakePublicKey(certFilename)
+	sender := infrastructure.NewWebSender("http", &flg, constants.ApplicationJSON, publicCryptoKey)
 
 	gopcMetricsList := []string{constants.TotalMemory, constants.FreeMemory}
 
@@ -91,4 +95,8 @@ func (f *fl) PollInterval() int64 {
 
 func (f *fl) RateLimit() int {
 	return 10
+}
+
+func (f *fl) AsymPubKeyPath() string {
+	return ""
 }
