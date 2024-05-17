@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"context"
+	"crypto/rsa"
 	"net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -45,8 +46,9 @@ type Collector interface {
 }
 
 type HTTPServer struct {
-	collector Collector
-	Router    chi.Router
+	collector  Collector
+	Router     chi.Router
+	PrivateKey *rsa.PrivateKey
 }
 
 // Metrics структура для получения json данных от агента
@@ -71,16 +73,18 @@ type (
 	}
 )
 
-func NewHTTPServer(collector Collector, cryptoKey string) HTTPServer {
+func NewHTTPServer(collector Collector, cryptoKey string, privateKey *rsa.PrivateKey) HTTPServer {
 	h := HTTPServer{
-		collector: collector,
-		Router:    NewRouter(),
+		collector:  collector,
+		Router:     NewRouter(),
+		PrivateKey: privateKey,
 	}
 
 	h.Router.Use(trimEnd)
 	h.Router.Use(CheckSignMiddleware(cryptoKey))
 	h.Router.Use(GzipMiddleware)
 	h.Router.Use(middleware.Compress(5))
+	h.Router.Use(AsyncCryptoMiddleware(privateKey))
 	h.Router.Use(WithLogging)
 
 	h.Router.Mount("/debug", middleware.Profiler())

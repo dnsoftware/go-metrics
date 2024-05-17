@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"bytes"
+	"crypto"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
@@ -35,6 +37,30 @@ func CheckSignMiddleware(cryptoKey string) func(http.Handler) http.Handler {
 				}
 			}
 
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// AsyncCryptoMiddleware расшифровывает данные, зашифрованные асимметричным ключом
+func AsyncCryptoMiddleware(privateKey *rsa.PrivateKey) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			xContentEncoding := r.Header.Get(constants.CryptoHeaderName)
+			isCrypto := strings.Contains(xContentEncoding, constants.CryptoHeaderValue)
+			if privateKey != nil && isCrypto {
+				// вычитываем тело запроса для расшифровки
+				var buf bytes.Buffer
+
+				buf.ReadFrom(r.Body)
+				decryptedBytes, err := privateKey.Decrypt(nil, buf.Bytes(), &rsa.OAEPOptions{Hash: crypto.SHA256})
+				if err != nil {
+					http.Error(w, "Bad decrypt by asymmetric key", http.StatusBadRequest)
+					return
+				}
+				r.Body = io.NopCloser(bytes.NewBuffer(decryptedBytes))
+				logger.Log().Info("Debug encrypt: " + string(decryptedBytes))
+			}
 			next.ServeHTTP(w, r)
 		})
 	}

@@ -18,6 +18,7 @@ type ServerConfig struct {
 	RestoreSaved    bool   `env:"RESTORE" envDefault:"true"`
 	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:""`
 	CryptoKey       string `env:"KEY" envDefault:""`
+	AsymPrivKeyPath string `env:"CRYPTO_KEY"` // путь к файлу с приватным асимметричным ключом
 }
 
 // serverFlags флаги конфигурации
@@ -28,6 +29,7 @@ type serverFlags struct {
 	restoreSaved    bool
 	databaseDSN     string
 	cryptoKey       string
+	asymPrivKeyPath string // путь к файлу с приватным асимметричным ключом
 }
 
 func NewServerConfig() *ServerConfig {
@@ -45,6 +47,7 @@ func NewServerConfig() *ServerConfig {
 	flag.BoolVar(&sf.restoreSaved, "r", constants.RestoreSaved, "to restore?")
 	flag.StringVar(&sf.databaseDSN, "d", "", "data source name")
 	flag.StringVar(&sf.cryptoKey, "k", "", "crypto key")
+	flag.StringVar(&sf.asymPrivKeyPath, "crypto-key", constants.CryptoPrivateFilePath, "asymmetric crypto key")
 	flag.Parse()
 
 	// если какого-то параметра нет в переменных окружения - берем значение флага, а если и флага нет - берем по умолчанию
@@ -70,6 +73,10 @@ func NewServerConfig() *ServerConfig {
 
 	if cfg.CryptoKey == "" {
 		cfg.CryptoKey = sf.cryptoKey
+	}
+
+	if cfg.AsymPrivKeyPath == "" {
+		cfg.AsymPrivKeyPath = sf.asymPrivKeyPath
 	}
 
 	return cfg

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -19,6 +21,7 @@ import (
 type Flags interface {
 	RunAddr() string
 	CryptoKey() string
+	AsymPubKeyPath() string
 }
 
 // WebSender отправляет данные на сервер.
@@ -27,6 +30,7 @@ type WebSender struct {
 	domain      string
 	contentType string
 	cryptoKey   string
+	publicKey   *rsa.PublicKey // публичный асимметричный ключ
 }
 
 // Metrics структура для отправки json данных на сервер
@@ -37,12 +41,14 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func NewWebSender(protocol string, flags Flags, contentType string) WebSender {
+func NewWebSender(protocol string, flags Flags, contentType string, publicKey *rsa.PublicKey) WebSender {
+
 	return WebSender{
 		protocol:    protocol,
 		domain:      flags.RunAddr(),
 		contentType: contentType,
 		cryptoKey:   flags.CryptoKey(),
+		publicKey:   publicKey,
 	}
 }
 
@@ -62,16 +68,20 @@ func (w *WebSender) SendData(ctx context.Context, mType string, name string, val
 func (w *WebSender) SendDataBatch(ctx context.Context, data []byte) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdatesAction
 
-	request, err := NewAgentRequest(ctx, http.MethodPost, url, data, w.cryptoKey)
+	request, err := NewAgentRequest(ctx, http.MethodPost, url, data, w.cryptoKey, w.publicKey)
 	if err != nil {
 		logger.Log().Error(err.Error())
 		return err
 	}
 
 	request.Header.Set("Content-Type", w.contentType)
-	request.Header.Set("Content-Encoding", constants.EncodingGzip)
+	request.Header.Add("Content-Encoding", constants.EncodingGzip)
 
 	err = retryRequest(request)
+	//if err != nil {
+	//	logger.Log().Error("\n\nDebug batch: " + strconv.Itoa(w.publicKey.Size()) + ", content type: " + request.Header.Get("Content-Encoding"))
+	//	logger.Log().Error("Debug retry data: " + string(data) + "\n\n")
+	//}
 
 	return err
 }
@@ -80,7 +90,7 @@ func (w *WebSender) SendDataBatch(ctx context.Context, data []byte) error {
 func (w *WebSender) SendPlain(ctx context.Context, mType string, name string, value string) error {
 	url := w.protocol + "://" + w.domain + "/" + constants.UpdateAction + "/" + mType + "/" + name + "/" + value
 
-	request, err := NewAgentRequest(ctx, http.MethodPost, url, nil, w.cryptoKey)
+	request, err := NewAgentRequest(ctx, http.MethodPost, url, nil, w.cryptoKey, w.publicKey)
 	if err != nil {
 		// обрабатываем ошибку
 		logger.Log().Error(err.Error())
@@ -124,7 +134,7 @@ func (w *WebSender) SendJSON(ctx context.Context, mType string, name string, val
 		return err
 	}
 
-	request, err := NewAgentRequest(ctx, http.MethodPost, url, body, w.cryptoKey)
+	request, err := NewAgentRequest(ctx, http.MethodPost, url, body, w.cryptoKey, w.publicKey)
 	if err != nil {
 		// обрабатываем ошибку
 		logger.Log().Error(err.Error())
@@ -132,7 +142,7 @@ func (w *WebSender) SendJSON(ctx context.Context, mType string, name string, val
 	}
 
 	request.Header.Set("Content-Type", w.contentType)
-	request.Header.Set("Content-Encoding", constants.EncodingGzip)
+	request.Header.Add("Content-Encoding", constants.EncodingGzip)
 
 	client := &http.Client{}
 
@@ -169,10 +179,19 @@ func hash(value []byte, key string) string {
 	return hex.EncodeToString(h[:])
 }
 
-func NewAgentRequest(ctx context.Context, method, url string, data []byte, cryptoKey string) (*http.Request, error) {
+func NewAgentRequest(ctx context.Context, method, url string, data []byte, cryptoKey string, publicKey *rsa.PublicKey) (*http.Request, error) {
 	buf := &bytes.Buffer{}
-
 	var err error
+
+	// асимметричное шифрование, если нужно
+	if publicKey != nil {
+		data, err = rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, data, nil)
+		if err != nil {
+			logger.Log().Error(err.Error())
+			return nil, err
+		}
+	}
+
 	// gzip сжатие
 	if data != nil {
 		buf, err = GetGzipReader(data)
@@ -184,12 +203,18 @@ func NewAgentRequest(ctx context.Context, method, url string, data []byte, crypt
 
 	request, err := http.NewRequestWithContext(ctx, method, url, buf)
 	if err != nil {
+		logger.Log().Error(err.Error())
 		return nil, err
 	}
 
 	h := hash(buf.Bytes(), cryptoKey)
 	if cryptoKey != "" {
 		request.Header.Set(constants.HashHeaderName, h)
+	}
+
+	// признак асимметричного шифрования
+	if publicKey != nil {
+		request.Header.Set(constants.CryptoHeaderName, constants.CryptoHeaderValue)
 	}
 
 	return request, nil

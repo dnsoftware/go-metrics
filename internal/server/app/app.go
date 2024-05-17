@@ -4,6 +4,8 @@ package app
 import (
 	"net/http"
 
+	"github.com/dnsoftware/go-metrics/internal/crypto"
+
 	"github.com/dnsoftware/go-metrics/internal/logger"
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
 	"github.com/dnsoftware/go-metrics/internal/server/config"
@@ -37,7 +39,12 @@ func ServerRun() {
 		panic(err)
 	}
 
-	server := handlers.NewHTTPServer(collect, cfg.CryptoKey)
+	privateCryptoKey, err := crypto.MakePrivateKey(cfg.AsymPrivKeyPath)
+	if err != nil {
+		logger.Log().Error(err.Error())
+	}
+
+	server := handlers.NewHTTPServer(collect, cfg.CryptoKey, privateCryptoKey)
 
 	err = http.ListenAndServe(cfg.ServerAddress, server.Router)
 	if err != nil {

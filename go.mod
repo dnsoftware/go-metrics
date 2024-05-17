@@ -8,7 +8,6 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgx/v5 v5.5.4
-	github.com/joho/godotenv v1.5.1
 	github.com/nunnatsa/ginkgolinter v0.16.2
 	github.com/shirou/gopsutil/v3 v3.24.1
 	github.com/stretchr/testify v1.9.0

@@ -5,6 +5,9 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	"github.com/dnsoftware/go-metrics/internal/crypto"
+	"github.com/dnsoftware/go-metrics/internal/logger"
+
 	"github.com/dnsoftware/go-metrics/internal/agent/domain"
 	"github.com/dnsoftware/go-metrics/internal/agent/infrastructure"
 	"github.com/dnsoftware/go-metrics/internal/constants"
@@ -16,8 +19,13 @@ func AgentRun() {
 
 	repository := storage.NewMemStorage()
 
+	publicCryptoKey, err := crypto.MakePublicKey(flags.flagAsymPubKeyPath)
+	if err != nil {
+		logger.Log().Error(err.Error())
+	}
+
 	// для нового API - constants.ApplicationJson (для старого - constants.TextPlain)
-	sender := infrastructure.NewWebSender("http", &flags, constants.ApplicationJSON)
+	sender := infrastructure.NewWebSender("http", &flags, constants.ApplicationJSON, publicCryptoKey)
 
 	metrics := domain.NewMetrics(repository, &sender, &flags)
 
