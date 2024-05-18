@@ -9,6 +9,7 @@ import (
 )
 
 func TestRestoreFromDump(t *testing.T) {
+
 	flags := NewAgentFlags()
 	fmt.Println(flags)
 
