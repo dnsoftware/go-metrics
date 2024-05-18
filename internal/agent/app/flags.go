@@ -61,7 +61,7 @@ func NewAgentFlags() AgentFlags {
 		configFile = cFile
 	}
 
-	jsonConf, err := newJsonConfig(configFile)
+	jsonConf, _ := newJSONConfig(configFile)
 	if jsonConf != nil {
 		if jsonConf.Address != "" {
 			cfg.RunAddr = jsonConf.Address

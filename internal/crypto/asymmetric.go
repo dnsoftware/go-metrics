@@ -30,7 +30,7 @@ func MakePublicKey(fullPathCert string) (*rsa.PublicKey, error) {
 
 	pk, ok := cert.PublicKey.(*rsa.PublicKey)
 	if !ok {
-		return nil, errors.New("No rsa.PublicKey type")
+		return nil, errors.New("no rsa publickey type")
 	}
 
 	//	enc, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pk, []byte("super secret message"), nil)

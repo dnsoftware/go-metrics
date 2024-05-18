@@ -15,14 +15,14 @@ type jsonParseConfig struct {
 	AsymCryptoKey  string `json:"crypto_key"`
 }
 
-type JsonConfig struct {
+type JSONConfig struct {
 	Address        string
 	ReportInterval int64
 	PollInterval   int64
 	AsymCryptoKey  string
 }
 
-func newJsonConfig(configFile string) (*JsonConfig, error) {
+func newJSONConfig(configFile string) (*JSONConfig, error) {
 
 	conf, err := os.Open(configFile)
 	if err != nil {
@@ -32,7 +32,7 @@ func newJsonConfig(configFile string) (*JsonConfig, error) {
 	defer conf.Close()
 
 	cfgParse := jsonParseConfig{}
-	cfg := JsonConfig{}
+	cfg := JSONConfig{}
 	jsonParser := json.NewDecoder(conf)
 	if err = jsonParser.Decode(&cfgParse); err != nil {
 		logger.Log().Error("json config parse error error: " + err.Error())
