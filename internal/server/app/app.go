@@ -67,7 +67,7 @@ func ServerRun() {
 		// можно обойтись без цикла
 		<-sigint
 		// получили сигнал os.Interrupt, запускаем процедуру graceful shutdown
-		if err := srv.Shutdown(context.Background()); err != nil {
+		if err = srv.Shutdown(context.Background()); err != nil {
 			// ошибки закрытия Listener
 			logger.Log().Error("HTTP server Shutdown: " + err.Error())
 		}
