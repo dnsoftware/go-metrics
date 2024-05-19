@@ -8,18 +8,13 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/logger"
 )
 
-type jsonParseConfig struct {
-	Address        string `json:"address"`
-	ReportInterval string `json:"report_interval"`
-	PollInterval   string `json:"poll_interval"`
-	AsymCryptoKey  string `json:"crypto_key"`
-}
-
 type JSONConfig struct {
-	Address        string
-	ReportInterval int64
-	PollInterval   int64
-	AsymCryptoKey  string
+	Address           string `json:"address"`
+	ReportIntervalStr string `json:"report_interval"`
+	ReportInterval    int64
+	PollIntervalStr   string `json:"poll_interval"`
+	PollInterval      int64
+	AsymCryptoKey     string `json:"crypto_key"`
 }
 
 func newJSONConfig(configFile string) (*JSONConfig, error) {
@@ -31,29 +26,26 @@ func newJSONConfig(configFile string) (*JSONConfig, error) {
 	}
 	defer conf.Close()
 
-	cfgParse := jsonParseConfig{}
 	cfg := JSONConfig{}
 	jsonParser := json.NewDecoder(conf)
-	if err = jsonParser.Decode(&cfgParse); err != nil {
+	if err = jsonParser.Decode(&cfg); err != nil {
 		logger.Log().Error("json config parse error error: " + err.Error())
 		return nil, err
 	}
 
-	cfg.Address = cfgParse.Address
-	d, err := time.ParseDuration(cfgParse.ReportInterval)
+	d, err := time.ParseDuration(cfg.ReportIntervalStr)
 	if err != nil {
 		logger.Log().Error("parse report interval error: " + err.Error())
 		return nil, err
 	}
 	cfg.ReportInterval = int64(d.Seconds())
 
-	p, err := time.ParseDuration(cfgParse.PollInterval)
+	p, err := time.ParseDuration(cfg.PollIntervalStr)
 	if err != nil {
 		logger.Log().Error("parse poll interval error: " + err.Error())
 		return nil, err
 	}
 	cfg.PollInterval = int64(p.Seconds())
-	cfg.AsymCryptoKey = cfgParse.AsymCryptoKey
 
 	return &cfg, err
 }

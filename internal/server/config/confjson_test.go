@@ -1,4 +1,4 @@
-package app
+package config
 
 import (
 	"testing"
@@ -8,9 +8,9 @@ import (
 
 func TestJsonConfig(t *testing.T) {
 
-	configFile := "../../../cmd/agent/config.json"
+	configFile := "../../../cmd/server/config.json"
 
-	_, err := newJSONConfig(configFile)
+	_, err := newJSONConfigServer(configFile)
 	assert.NoError(t, err)
 
 }

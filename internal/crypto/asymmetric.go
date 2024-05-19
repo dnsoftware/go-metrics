@@ -1,3 +1,4 @@
+// Package crypto создает публичный и приватный ключи шифрования
 package crypto
 
 import (

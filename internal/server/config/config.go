@@ -41,14 +41,78 @@ func NewServerConfig() *ServerConfig {
 		log.Fatal(err)
 	}
 
-	flag.StringVar(&sf.serverAddress, "a", constants.ServerDefault, "server endpoint")
-	flag.Int64Var(&sf.storeInterval, "i", constants.StoreInterval, "store interval")
-	flag.StringVar(&sf.fileStoragePath, "f", constants.FileStoragePath, "file store path")
-	flag.BoolVar(&sf.restoreSaved, "r", constants.RestoreSaved, "to restore?")
+	// конфиг из файла
+	var cFile, configFile string
+	flag.StringVar(&cFile, "c", "", "json server config file path")
+	flag.StringVar(&configFile, "config", "", "json server config file path")
+
+	flag.StringVar(&sf.serverAddress, "a", "", "server endpoint")
+	flag.Int64Var(&sf.storeInterval, "i", 0, "store interval")
+	flag.StringVar(&sf.fileStoragePath, "f", "", "file store path")
+	flag.BoolVar(&sf.restoreSaved, "r", true, "to restore?")
 	flag.StringVar(&sf.databaseDSN, "d", "", "data source name")
 	flag.StringVar(&sf.cryptoKey, "k", "", "crypto key")
 	flag.StringVar(&sf.asymPrivKeyPath, "crypto-key", constants.CryptoPrivateFilePath, "asymmetric crypto key")
 	flag.Parse()
+
+	// из конфиг файла
+	if cFile != "" {
+		configFile = cFile
+	}
+
+	jsonConf, _ := newJSONConfigServer(configFile)
+	if jsonConf != nil {
+		if jsonConf.ServerAddress != "" {
+			cfg.ServerAddress = jsonConf.ServerAddress
+		} else {
+			cfg.ServerAddress = constants.ServerDefault
+		}
+
+		if jsonConf.StoreInterval != 0 {
+			cfg.StoreInterval = jsonConf.StoreInterval
+		} else {
+			cfg.StoreInterval = constants.StoreInterval
+		}
+
+		if jsonConf.FileStoragePath != "" {
+			cfg.FileStoragePath = jsonConf.FileStoragePath
+		} else {
+			cfg.FileStoragePath = constants.FileStoragePath
+		}
+
+		if !jsonConf.RestoreSaved {
+			cfg.RestoreSaved = jsonConf.RestoreSaved
+		} else {
+			cfg.RestoreSaved = constants.RestoreSaved
+		}
+
+		if jsonConf.DatabaseDSN != "" {
+			cfg.DatabaseDSN = jsonConf.DatabaseDSN
+		}
+
+		if jsonConf.AsymPrivKeyPath != "" {
+			cfg.AsymPrivKeyPath = jsonConf.AsymPrivKeyPath
+		} else {
+			cfg.AsymPrivKeyPath = constants.CryptoPrivateFilePath
+		}
+
+	} else {
+		if sf.serverAddress == "" {
+			sf.serverAddress = constants.ServerDefault
+		}
+		if sf.storeInterval == 0 {
+			sf.storeInterval = constants.StoreInterval
+		}
+		if sf.fileStoragePath == "" {
+			sf.fileStoragePath = constants.FileStoragePath
+		}
+		if !sf.restoreSaved {
+			sf.restoreSaved = constants.RestoreSaved
+		}
+		if sf.asymPrivKeyPath == "" {
+			sf.asymPrivKeyPath = constants.CryptoPrivateFilePath
+		}
+	}
 
 	// если какого-то параметра нет в переменных окружения - берем значение флага, а если и флага нет - берем по умолчанию
 	if cfg.ServerAddress == "" {
