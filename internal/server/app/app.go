@@ -2,7 +2,12 @@
 package app
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/dnsoftware/go-metrics/internal/crypto"
 
@@ -44,10 +49,43 @@ func ServerRun() {
 		logger.Log().Error(err.Error())
 	}
 
-	server := handlers.NewHTTPServer(collect, cfg.CryptoKey, privateCryptoKey)
+	server := handlers.NewServer(collect, cfg.CryptoKey, privateCryptoKey)
+	srv := &http.Server{Addr: cfg.ServerAddress, Handler: server.Router}
 
-	err = http.ListenAndServe(cfg.ServerAddress, server.Router)
-	if err != nil {
-		panic(err)
+	// через этот канал сообщим основному потоку, что соединения закрыты
+	idleConnsClosed := make(chan struct{})
+	// канал для перенаправления прерываний
+	// поскольку нужно отловить всего одно прерывание,
+	// ёмкости 1 для канала будет достаточно
+	sigint := make(chan os.Signal, 1)
+	// регистрируем перенаправление прерываний
+	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	// запускаем горутину обработки пойманных прерываний
+	go func() {
+		// читаем из канала прерываний
+		// поскольку нужно прочитать только одно прерывание,
+		// можно обойтись без цикла
+		<-sigint
+		// получили сигнал os.Interrupt, запускаем процедуру graceful shutdown
+		if err := srv.Shutdown(context.Background()); err != nil {
+			// ошибки закрытия Listener
+			logger.Log().Error("HTTP server Shutdown: " + err.Error())
+		}
+		// сообщаем основному потоку,
+		// что все сетевые соединения обработаны и закрыты
+		close(idleConnsClosed)
+	}()
+
+	if err = srv.ListenAndServe(); err != http.ErrServerClosed {
+		logger.Log().Fatal("HTTP server ListenAndServe: " + err.Error())
 	}
+
+	// ждём завершения процедуры graceful shutdown
+	<-idleConnsClosed
+	// получили оповещение о завершении
+	// здесь можно освобождать ресурсы перед выходом,
+	// например закрыть соединение с базой данных,
+	// закрыть открытые файлы
+	fmt.Println("Server Shutdown gracefully")
+
 }

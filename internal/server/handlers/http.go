@@ -73,7 +73,7 @@ type (
 	}
 )
 
-func NewHTTPServer(collector Collector, cryptoKey string, privateKey *rsa.PrivateKey) HTTPServer {
+func NewServer(collector Collector, cryptoKey string, privateKey *rsa.PrivateKey) HTTPServer {
 	h := HTTPServer{
 		collector:  collector,
 		Router:     NewRouter(),

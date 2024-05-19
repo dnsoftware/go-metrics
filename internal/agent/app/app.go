@@ -21,7 +21,7 @@ func AgentRun() {
 
 	publicCryptoKey, err := crypto.MakePublicKey(flags.flagAsymPubKeyPath)
 	if err != nil {
-		logger.Log().Error(err.Error())
+		logger.Log().Error(err.Error() + ": " + flags.flagAsymPubKeyPath)
 	}
 
 	// для нового API - constants.ApplicationJson (для старого - constants.TextPlain)
