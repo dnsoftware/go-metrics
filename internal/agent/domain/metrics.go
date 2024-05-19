@@ -107,7 +107,7 @@ func NewMetrics(storage AgentStorage, sender MetricsSender, flags Flags) Metrics
 func (m *Metrics) Start() {
 	var wg sync.WaitGroup
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
 
 	// обновление метрик
