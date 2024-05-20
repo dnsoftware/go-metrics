@@ -10,6 +10,7 @@ import (
 )
 
 func TestConfig(t *testing.T) {
+
 	cfg := NewServerConfig()
 
 	assert.Equal(t, constants.ServerDefault, cfg.ServerAddress)

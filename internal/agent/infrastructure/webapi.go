@@ -78,10 +78,6 @@ func (w *WebSender) SendDataBatch(ctx context.Context, data []byte) error {
 	request.Header.Add("Content-Encoding", constants.EncodingGzip)
 
 	err = retryRequest(request)
-	//if err != nil {
-	//	logger.Log().Error("\n\nDebug batch: " + strconv.Itoa(w.publicKey.Size()) + ", content type: " + request.Header.Get("Content-Encoding"))
-	//	logger.Log().Error("Debug retry data: " + string(data) + "\n\n")
-	//}
 
 	return err
 }
