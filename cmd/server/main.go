@@ -17,5 +17,8 @@ func main() {
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
 
-	app.ServerRun()
+	err := app.ServerRun()
+	if err != nil {
+		panic(err)
+	}
 }

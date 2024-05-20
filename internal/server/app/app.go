@@ -18,7 +18,7 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/storage"
 )
 
-func ServerRun() {
+func ServerRun() error {
 	srvLogger := logger.Log()
 	defer srvLogger.Sync()
 
@@ -26,7 +26,7 @@ func ServerRun() {
 
 	backupStorage, err := storage.NewBackupStorage(cfg.FileStoragePath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	var (
@@ -41,7 +41,7 @@ func ServerRun() {
 
 	collect, err = collector.NewCollector(cfg, repo, backupStorage)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	privateCryptoKey, err := crypto.MakePrivateKey(cfg.AsymPrivKeyPath)
@@ -76,8 +76,8 @@ func ServerRun() {
 		close(idleConnsClosed)
 	}()
 
-	if err = srv.ListenAndServe(); err != http.ErrServerClosed {
-		logger.Log().Fatal("HTTP server ListenAndServe: " + err.Error())
+	if err2 := srv.ListenAndServe(); err2 != http.ErrServerClosed {
+		logger.Log().Fatal("HTTP server ListenAndServe: " + err2.Error())
 	}
 
 	// ждём завершения процедуры graceful shutdown
@@ -88,4 +88,5 @@ func ServerRun() {
 	// закрыть открытые файлы
 	fmt.Println("Server Shutdown gracefully")
 
+	return nil // нормальное завершение
 }
