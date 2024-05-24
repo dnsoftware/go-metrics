@@ -26,15 +26,7 @@ vendor/
 # IDEs directories
 .idea
 .vscode
-/logs/
-/log.log
-cmd/agent/log.log
-cmd/agent/domain/log.log
-cmd/server/log.log
-internal/agent/app/log.log
-internal/agent/domain/log.log
-internal/server/app/log.log
-internal/server/config/log.log
+*.log
 
 .run
 #.env_test
