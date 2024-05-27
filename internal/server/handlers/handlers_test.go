@@ -373,7 +373,7 @@ func setupTestServer() *httptest.Server {
 	repository := storage.NewMemStorage()
 	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
 	collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
-	server := NewServer(collect, "key", nil)
+	server := NewServer(collect, "key", nil, "")
 
 	return httptest.NewServer(server.Router)
 }

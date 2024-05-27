@@ -16,6 +16,7 @@ type JSONConfig struct {
 	FileStoragePath  string `json:"store_file"`
 	DatabaseDSN      string `json:"database_dsn"`
 	AsymPrivKeyPath  string `json:"crypto_key"`
+	TrustedSubnet    string `json:"trusted_subnet"`
 }
 
 func newJSONConfigServer(configFile string) (*JSONConfig, error) {

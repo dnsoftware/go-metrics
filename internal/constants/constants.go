@@ -59,6 +59,7 @@ const (
 	//CryptoPrivateFilePath string = "/home/dmitry/go/src/go-metrics/internal/crypto/" + CryptoPrivateFile
 	CryptoPublicFilePath  string = ""
 	CryptoPrivateFilePath string = ""
+	TrustedSubnet         string = ""
 )
 
 // Логгер.
@@ -95,6 +96,7 @@ const (
 
 // HashHeaderName Имена заголовков.
 const HashHeaderName string = "HashSHA256"
+const XRealIPName string = "X-Real-IP"
 
 // Для gopcutils.
 const (

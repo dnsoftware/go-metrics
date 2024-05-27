@@ -145,7 +145,7 @@ func TestHTTPServer_rootHandler(t *testing.T) {
 			repository := storage.NewMemStorage()
 			backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
 			collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
-			server := NewServer(collect, "key", nil)
+			server := NewServer(collect, "key", nil, "")
 
 			request := httptest.NewRequest(tt.method, tt.request, nil)
 			w := httptest.NewRecorder()
@@ -160,21 +160,6 @@ func TestHTTPServer_rootHandler(t *testing.T) {
 	}
 }
 
-func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, method, ts.URL+path, nil)
-	require.NoError(t, err)
-
-	resp, err := ts.Client().Do(req)
-	require.NoError(t, err)
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-
-	return resp, string(respBody)
-}
-
 func TestRouter(t *testing.T) {
 	cfg := config.ServerConfig{
 		ServerAddress:   "localhost:8080",
@@ -186,20 +171,74 @@ func TestRouter(t *testing.T) {
 	repository := storage.NewMemStorage()
 	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
 	collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
-	server := NewServer(collect, "key", nil)
+	server := NewServer(collect, "key", nil, "")
 	ts := httptest.NewServer(server.Router)
 
 	postData := "982"
 
-	respPost, _ := testRequest(t, ts, "POST", "/update/counter/testSetGet33/"+postData)
+	respPost, _ := testRequest(t, ts, "POST", "/update/counter/testSetGet33/"+postData, nil)
 	defer respPost.Body.Close()
 
 	assert.Equal(t, http.StatusOK, respPost.StatusCode)
 
-	respGet, get := testRequest(t, ts, "GET", "/value/counter/testSetGet33")
+	respGet, get := testRequest(t, ts, "GET", "/value/counter/testSetGet33", nil)
 	defer respGet.Body.Close()
 
 	assert.Equal(t, http.StatusOK, respGet.StatusCode)
 
 	assert.Equal(t, postData, get)
+}
+
+// Тестирование принадлежности IP адреса клиента к подсети
+func TestSubnet(t *testing.T) {
+	cfg := config.ServerConfig{
+		ServerAddress:   "localhost:8080",
+		StoreInterval:   constants.BackupPeriod,
+		FileStoragePath: constants.FileStoragePath,
+		RestoreSaved:    false,
+	}
+
+	repository := storage.NewMemStorage()
+	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
+	collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
+	server := NewServer(collect, "key", nil, "127.0.0.0/24")
+	ts := httptest.NewServer(server.Router)
+
+	headers := make(map[string]string)
+	headers[constants.XRealIPName] = "127.0.0.1"
+
+	// позитивный сценарий
+	respPost, _ := testRequest(t, ts, "POST", "/update/counter/testSetGet33/111", headers)
+	defer respPost.Body.Close()
+	assert.Equal(t, http.StatusOK, respPost.StatusCode)
+
+	respGet, _ := testRequest(t, ts, "GET", "/value/counter/testSetGet33", headers)
+	defer respGet.Body.Close()
+	assert.Equal(t, http.StatusOK, respGet.StatusCode)
+
+	// негативный сценарий
+	headers[constants.XRealIPName] = "127.0.1.1"
+	respPost, _ = testRequest(t, ts, "POST", "/update/counter/testSetGet33/111", headers)
+	defer respPost.Body.Close()
+	assert.Equal(t, http.StatusForbidden, respPost.StatusCode)
+
+}
+
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, headers map[string]string) (*http.Response, string) {
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, method, ts.URL+path, nil)
+	require.NoError(t, err)
+
+	for i, h := range headers {
+		req.Header.Set(i, h)
+	}
+
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp, string(respBody)
 }

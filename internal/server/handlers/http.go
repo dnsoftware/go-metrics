@@ -46,9 +46,10 @@ type Collector interface {
 }
 
 type HTTPServer struct {
-	collector  Collector
-	Router     chi.Router
-	PrivateKey *rsa.PrivateKey
+	collector     Collector
+	Router        chi.Router
+	PrivateKey    *rsa.PrivateKey
+	TrustedSubnet string
 }
 
 // Metrics структура для получения json данных от агента
@@ -73,13 +74,15 @@ type (
 	}
 )
 
-func NewServer(collector Collector, cryptoKey string, privateKey *rsa.PrivateKey) HTTPServer {
+func NewServer(collector Collector, cryptoKey string, privateKey *rsa.PrivateKey, trustedSubnet string) HTTPServer {
 	h := HTTPServer{
-		collector:  collector,
-		Router:     NewRouter(),
-		PrivateKey: privateKey,
+		collector:     collector,
+		Router:        NewRouter(),
+		PrivateKey:    privateKey,
+		TrustedSubnet: trustedSubnet,
 	}
 
+	h.Router.Use(TrustedSubnet(trustedSubnet))
 	h.Router.Use(trimEnd)
 	h.Router.Use(CheckSignMiddleware(cryptoKey))
 	h.Router.Use(GzipMiddleware)

@@ -49,7 +49,7 @@ func ServerRun() error {
 		logger.Log().Error(err.Error())
 	}
 
-	server := handlers.NewServer(collect, cfg.CryptoKey, privateCryptoKey)
+	server := handlers.NewServer(collect, cfg.CryptoKey, privateCryptoKey, cfg.TrustedSubnet)
 	srv := &http.Server{Addr: cfg.ServerAddress, Handler: server.Router}
 
 	// через этот канал сообщим основному потоку, что соединения закрыты

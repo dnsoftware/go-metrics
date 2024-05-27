@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -155,6 +156,28 @@ func GzipMiddleware(h http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(gzipFn)
+}
+
+func TrustedSubnet(subnet string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			if ipStr := r.Header.Get(constants.XRealIPName); ipStr != "" {
+				ipClient := net.ParseIP(ipStr)
+				_, ipnet, err := net.ParseCIDR(subnet)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				if !ipnet.Contains(ipClient) {
+					w.WriteHeader(http.StatusForbidden)
+					return
+				}
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func hash(value []byte, key string) string {

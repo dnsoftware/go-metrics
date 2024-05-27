@@ -19,6 +19,7 @@ type ServerConfig struct {
 	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:""`
 	CryptoKey       string `env:"KEY" envDefault:""`
 	AsymPrivKeyPath string `env:"CRYPTO_KEY"` // путь к файлу с приватным асимметричным ключом
+	TrustedSubnet   string `env:"TRUSTED_SUBNET"`
 }
 
 // serverFlags флаги конфигурации
@@ -30,6 +31,7 @@ type serverFlags struct {
 	databaseDSN     string
 	cryptoKey       string
 	asymPrivKeyPath string // путь к файлу с приватным асимметричным ключом
+	trustedSubnet   string
 }
 
 func NewServerConfig() *ServerConfig {
@@ -53,6 +55,7 @@ func NewServerConfig() *ServerConfig {
 	flag.StringVar(&sf.databaseDSN, "d", "", "data source name")
 	flag.StringVar(&sf.cryptoKey, "k", "", "crypto key")
 	flag.StringVar(&sf.asymPrivKeyPath, "crypto-key", constants.CryptoPrivateFilePath, "asymmetric crypto key")
+	flag.StringVar(&sf.trustedSubnet, "t", constants.TrustedSubnet, "trusted subnet")
 	flag.Parse()
 
 	// из конфиг файла
@@ -96,6 +99,12 @@ func NewServerConfig() *ServerConfig {
 			cfg.AsymPrivKeyPath = constants.CryptoPrivateFilePath
 		}
 
+		if jsonConf.TrustedSubnet != "" {
+			cfg.TrustedSubnet = jsonConf.TrustedSubnet
+		} else {
+			cfg.TrustedSubnet = constants.TrustedSubnet
+		}
+
 	} else {
 		if sf.serverAddress == "" {
 			sf.serverAddress = constants.ServerDefault
@@ -111,6 +120,9 @@ func NewServerConfig() *ServerConfig {
 		}
 		if sf.asymPrivKeyPath == "" {
 			sf.asymPrivKeyPath = constants.CryptoPrivateFilePath
+		}
+		if sf.trustedSubnet == "" {
+			sf.trustedSubnet = constants.TrustedSubnet
 		}
 	}
 
@@ -141,6 +153,10 @@ func NewServerConfig() *ServerConfig {
 
 	if cfg.AsymPrivKeyPath == "" {
 		cfg.AsymPrivKeyPath = sf.asymPrivKeyPath
+	}
+
+	if cfg.TrustedSubnet == "" {
+		cfg.TrustedSubnet = sf.trustedSubnet
 	}
 
 	return cfg
