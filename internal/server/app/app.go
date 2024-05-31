@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,8 +20,6 @@ import (
 )
 
 func ServerRun() error {
-	srvLogger := logger.Log()
-	defer srvLogger.Sync()
 
 	cfg := config.NewServerConfig()
 
@@ -49,8 +48,24 @@ func ServerRun() error {
 		logger.Log().Error(err.Error())
 	}
 
+	// http server
 	server := handlers.NewServer(collect, cfg.CryptoKey, privateCryptoKey, cfg.TrustedSubnet)
 	srv := &http.Server{Addr: cfg.ServerAddress, Handler: server.Router}
+
+	// grpc server
+	// определяем порт для сервера
+	listen, err := net.Listen("tcp", cfg.GrpcAddress)
+	if err != nil {
+		logger.Log().Fatal(err.Error())
+	}
+	grpcServer := handlers.NewGRPCServer(collect, cfg.CryptoKey, privateCryptoKey, cfg.TrustedSubnet)
+	fmt.Println("Сервер gRPC начал работу")
+	// получаем запрос gRPC
+	go func() {
+		if err = grpcServer.Serve(listen); err != nil {
+			logger.Log().Fatal(err.Error())
+		}
+	}()
 
 	// через этот канал сообщим основному потоку, что соединения закрыты
 	idleConnsClosed := make(chan struct{})
@@ -71,6 +86,12 @@ func ServerRun() error {
 			// ошибки закрытия Listener
 			logger.Log().Error("HTTP server Shutdown: " + err.Error())
 		}
+		fmt.Println("\nhttp server shutdown gracefully")
+
+		// корректное завершение работы gRPC сервера
+		grpcServer.GracefulStop()
+		fmt.Println("grpc server shutdown gracefully")
+
 		// сообщаем основному потоку,
 		// что все сетевые соединения обработаны и закрыты
 		close(idleConnsClosed)

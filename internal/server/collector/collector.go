@@ -210,6 +210,16 @@ func (c *Collector) GetAll(ctx context.Context) (string, error) {
 	return mList, nil
 }
 
+// GetAllByTypes все метрики в картах (сделал для gRPC)
+func (c *Collector) GetAllByTypes(ctx context.Context) (map[string]float64, map[string]int64, error) {
+	gauges, counters, err := c.storage.GetAll(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return gauges, counters, nil
+}
+
 // GenerateDump сохранение дампа в файл
 func (c *Collector) GenerateDump() error {
 	ctx, cancel := context.WithTimeout(context.Background(), constants.DBContextTimeout)

@@ -41,6 +41,9 @@ type Collector interface {
 	// GetAll получение всех метрик списком
 	GetAll(ctx context.Context) (string, error)
 
+	// GetAllByTypes получение всех метрик картами
+	GetAllByTypes(ctx context.Context) (map[string]float64, map[string]int64, error)
+
 	// DatabasePing проверка работоспособности СУБД
 	DatabasePing(ctx context.Context) bool
 }

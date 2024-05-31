@@ -60,6 +60,7 @@ const (
 	CryptoPublicFilePath  string = ""
 	CryptoPrivateFilePath string = ""
 	TrustedSubnet         string = ""
+	GRPCDefault           string = "localhost:8090" // адрес:порт gRpc сервера по умолчанию
 )
 
 // Логгер.

@@ -4,5 +4,7 @@
   "store_interval": "1s",
   "store_file": "/tmp/metrics-db.json",
   "database_dsn": "",
-  "crypto_key": "/home/dmitry/go/src/go-metrics/internal/crypto/privatekey.pem"
+  "crypto_key": "/home/dmitry/go/src/go-metrics/internal/crypto/privatekey.pem",
+  "trusted_subnet": "127.0.0.0/24",
+  "grpc_address": "localhost:8090"
 }

@@ -25,3 +25,7 @@ cover2:
 staticlint:
 	go build -o ./staticlint ./cmd/staticlint
 	go vet -vettool=staticlint ./...
+
+.PHONY: protogen
+protogen:
+	protoc --go_out=. --go_opt=paths=source_relative   --go-grpc_out=. --go-grpc_opt=paths=source_relative   internal/proto/metrics.proto

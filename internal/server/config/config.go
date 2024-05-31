@@ -20,6 +20,7 @@ type ServerConfig struct {
 	CryptoKey       string `env:"KEY" envDefault:""`
 	AsymPrivKeyPath string `env:"CRYPTO_KEY"` // путь к файлу с приватным асимметричным ключом
 	TrustedSubnet   string `env:"TRUSTED_SUBNET"`
+	GrpcAddress     string `env:"GRPC_ADDRESS"` // адрес:порт на котором работает gRPC сервер
 }
 
 // serverFlags флаги конфигурации
@@ -32,6 +33,7 @@ type serverFlags struct {
 	cryptoKey       string
 	asymPrivKeyPath string // путь к файлу с приватным асимметричным ключом
 	trustedSubnet   string
+	grpcAddress     string // адрес:порт на котором работает gRPC сервер
 }
 
 func NewServerConfig() *ServerConfig {
@@ -56,6 +58,7 @@ func NewServerConfig() *ServerConfig {
 	flag.StringVar(&sf.cryptoKey, "k", "", "crypto key")
 	flag.StringVar(&sf.asymPrivKeyPath, "crypto-key", constants.CryptoPrivateFilePath, "asymmetric crypto key")
 	flag.StringVar(&sf.trustedSubnet, "t", constants.TrustedSubnet, "trusted subnet")
+	flag.StringVar(&sf.grpcAddress, "g", constants.GRPCDefault, "grpc address")
 	flag.Parse()
 
 	// из конфиг файла
@@ -105,6 +108,12 @@ func NewServerConfig() *ServerConfig {
 			cfg.TrustedSubnet = constants.TrustedSubnet
 		}
 
+		if jsonConf.GrpcAddress != "" {
+			cfg.GrpcAddress = jsonConf.GrpcAddress
+		} else {
+			cfg.GrpcAddress = constants.GRPCDefault
+		}
+
 	} else {
 		if sf.serverAddress == "" {
 			sf.serverAddress = constants.ServerDefault
@@ -123,6 +132,9 @@ func NewServerConfig() *ServerConfig {
 		}
 		if sf.trustedSubnet == "" {
 			sf.trustedSubnet = constants.TrustedSubnet
+		}
+		if sf.grpcAddress == "" {
+			sf.grpcAddress = constants.GRPCDefault
 		}
 	}
 
@@ -157,6 +169,10 @@ func NewServerConfig() *ServerConfig {
 
 	if cfg.TrustedSubnet == "" {
 		cfg.TrustedSubnet = sf.trustedSubnet
+	}
+
+	if cfg.GrpcAddress == "" {
+		cfg.GrpcAddress = sf.grpcAddress
 	}
 
 	return cfg

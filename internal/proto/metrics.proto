@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "internal/proto";
+
+// простой вариант
+message GetMetricRequest {
+  string metric_type = 1;
+  string metric_name = 2;
+}
+
+message GetMetricResponse {
+  string metric_value = 1;
+  string error = 2;
+}
+
+message UpdateMetricRequest {
+  string metric_type = 1;
+  string metric_name = 2;
+  string metric_value = 3;
+}
+
+message UpdateMetricResponse {
+  string error = 1;
+}
+
+// запрос единичной метрики, расширенный вариант (аналог getMetricValueJSON)
+message GetMetricExtRequest {
+    string id = 1;         // название метрики
+    string mtype = 2;      // параметр, принимающий значение gauge или counter
+    int64 delta = 3;       // значение метрики в случае передачи counter
+    double value = 4;      // значение метрики в случае передачи gauge
+}
+
+message GetMetricExtResponse {
+  string id = 1;
+  string mtype = 2;
+  int64 delta = 3;
+  double value = 4;
+  string error = 5;
+}
+
+// обновление единичной метрики, расширенный вариант (аналог UpdateMetricJSON)
+message UpdateMetricExtRequest {
+  string id = 1;
+  string mtype = 2;
+  int64 delta = 3;
+  double value = 4;
+}
+
+message UpdateMetricExtResponse {
+  string error = 1;
+}
+
+message GetAllMetricsRequest {
+}
+
+message GetAllMetricsResponse {
+  repeated GetMetricExtResponse metrics = 1;
+}
+
+service Metrics {
+  rpc GetMetricValue(GetMetricRequest) returns (GetMetricResponse);
+  rpc UpdateMetric(UpdateMetricRequest) returns (UpdateMetricResponse);
+
+  rpc GetMetricExt(GetMetricExtRequest) returns (GetMetricExtResponse);
+  rpc UpdateMetricExt(UpdateMetricExtRequest) returns (UpdateMetricExtResponse);
+
+  rpc GetAllMetrics(GetAllMetricsRequest) returns (GetAllMetricsResponse);
+  rpc UpdateMetricsStream(stream UpdateMetricExtRequest) returns (stream UpdateMetricExtResponse);
+}
