@@ -18,7 +18,8 @@ type ServerConfig struct {
 	RestoreSaved    bool   `env:"RESTORE" envDefault:"true"`
 	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:""`
 	CryptoKey       string `env:"KEY" envDefault:""`
-	AsymPrivKeyPath string `env:"CRYPTO_KEY"` // путь к файлу с приватным асимметричным ключом
+	AsymCertKeyPath string `env:"CRYPTO_CERT"` // путь к файлу с публичным асимметричным ключом
+	AsymPrivKeyPath string `env:"CRYPTO_KEY"`  // путь к файлу с приватным асимметричным ключом
 	TrustedSubnet   string `env:"TRUSTED_SUBNET"`
 	GrpcAddress     string `env:"GRPC_ADDRESS"` // адрес:порт на котором работает gRPC сервер
 }
@@ -31,6 +32,7 @@ type serverFlags struct {
 	restoreSaved    bool
 	databaseDSN     string
 	cryptoKey       string
+	asymCertKeyPath string // путь к файлу с публичным асимметричным ключом (сертификат)
 	asymPrivKeyPath string // путь к файлу с приватным асимметричным ключом
 	trustedSubnet   string
 	grpcAddress     string // адрес:порт на котором работает gRPC сервер
@@ -56,6 +58,7 @@ func NewServerConfig() *ServerConfig {
 	flag.BoolVar(&sf.restoreSaved, "r", true, "to restore?")
 	flag.StringVar(&sf.databaseDSN, "d", "", "data source name")
 	flag.StringVar(&sf.cryptoKey, "k", "", "crypto key")
+	flag.StringVar(&sf.asymCertKeyPath, "crypto-cert", constants.CryptoPublicFilePath, "asymmetric public crypto key")
 	flag.StringVar(&sf.asymPrivKeyPath, "crypto-key", constants.CryptoPrivateFilePath, "asymmetric crypto key")
 	flag.StringVar(&sf.trustedSubnet, "t", constants.TrustedSubnet, "trusted subnet")
 	flag.StringVar(&sf.grpcAddress, "g", constants.GRPCDefault, "grpc address")
@@ -96,6 +99,12 @@ func NewServerConfig() *ServerConfig {
 			cfg.DatabaseDSN = jsonConf.DatabaseDSN
 		}
 
+		if jsonConf.AsymCertKeyPath != "" {
+			cfg.AsymCertKeyPath = jsonConf.AsymCertKeyPath
+		} else {
+			cfg.AsymCertKeyPath = constants.CryptoPublicFile
+		}
+
 		if jsonConf.AsymPrivKeyPath != "" {
 			cfg.AsymPrivKeyPath = jsonConf.AsymPrivKeyPath
 		} else {
@@ -126,6 +135,9 @@ func NewServerConfig() *ServerConfig {
 		}
 		if !sf.restoreSaved {
 			sf.restoreSaved = constants.RestoreSaved
+		}
+		if sf.asymCertKeyPath == "" {
+			sf.asymCertKeyPath = constants.CryptoPublicFilePath
 		}
 		if sf.asymPrivKeyPath == "" {
 			sf.asymPrivKeyPath = constants.CryptoPrivateFilePath
@@ -161,6 +173,10 @@ func NewServerConfig() *ServerConfig {
 
 	if cfg.CryptoKey == "" {
 		cfg.CryptoKey = sf.cryptoKey
+	}
+
+	if cfg.AsymCertKeyPath == "" {
+		cfg.AsymCertKeyPath = sf.asymCertKeyPath
 	}
 
 	if cfg.AsymPrivKeyPath == "" {

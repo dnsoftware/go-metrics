@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"io"
 	"strconv"
+
+	"google.golang.org/grpc/credentials"
 
 	"google.golang.org/grpc"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/constants"
 
 	pb "github.com/dnsoftware/go-metrics/internal/proto"
+	//	_ "google.golang.org/grpc/encoding/gzip"
 )
 
 type GRPCServer struct {
@@ -22,31 +24,42 @@ type GRPCServer struct {
 	// для совместимости с будущими версиями
 	pb.UnimplementedMetricsServer
 
-	collector     Collector
-	CryptoKey     string
-	PrivateKey    *rsa.PrivateKey
-	TrustedSubnet string
-	Server        *grpc.Server
+	collector          Collector
+	CryptoKey          string
+	CertificateKeyPath string
+	PrivateKeyPath     string
+	TrustedSubnet      string
+	Server             *grpc.Server
 }
 
-func NewGRPCServer(collector Collector, cryptoKey string, privateKey *rsa.PrivateKey, trustedSubnet string) *grpc.Server {
+func NewGRPCServer(collector Collector, cryptoKey string, certificateKeyPath string, privateKeyPath string, trustedSubnet string) (*grpc.Server, error) {
 
 	server := &GRPCServer{
-		collector:     collector,
-		CryptoKey:     cryptoKey,
-		PrivateKey:    privateKey,
-		TrustedSubnet: trustedSubnet,
+		collector:          collector,
+		CryptoKey:          cryptoKey,
+		CertificateKeyPath: certificateKeyPath,
+		PrivateKeyPath:     privateKeyPath,
+		TrustedSubnet:      trustedSubnet,
 	}
 
-	// инициализируем перехватчики, если нужно
-	//tsi := NewTrustedSubnetInterceptor(trustedSubnet)
+	var opts []grpc.ServerOption
+	opts = append(opts, grpc.ChainUnaryInterceptor(trustedSubnetInterceptor, checkSignInterceptor))
+
+	if certificateKeyPath != "" && privateKeyPath != "" {
+		creds, err := credentials.NewServerTLSFromFile(certificateKeyPath, privateKeyPath)
+		if err != nil {
+			return nil, fmt.Errorf("could not load TLS keys for gRPC: %s", err)
+		}
+		opts = append(opts, grpc.Creds(creds))
+	}
 
 	// создаём gRPC-сервер
-	server.Server = grpc.NewServer(grpc.ChainUnaryInterceptor(trustedSubnetInterceptor))
+	server.Server = grpc.NewServer(opts...)
+
 	// регистрируем сервис
 	pb.RegisterMetricsServer(server.Server, server)
 
-	return server.Server
+	return server.Server, nil
 }
 
 func (g *GRPCServer) GetMetricValue(ctx context.Context, in *pb.GetMetricRequest) (*pb.GetMetricResponse, error) {

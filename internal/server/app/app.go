@@ -58,7 +58,10 @@ func ServerRun() error {
 	if err != nil {
 		logger.Log().Fatal(err.Error())
 	}
-	grpcServer := handlers.NewGRPCServer(collect, cfg.CryptoKey, privateCryptoKey, cfg.TrustedSubnet)
+	grpcServer, err := handlers.NewGRPCServer(collect, cfg.CryptoKey, cfg.AsymCertKeyPath, cfg.AsymPrivKeyPath, cfg.TrustedSubnet)
+	if err != nil {
+		logger.Log().Fatal(err.Error())
+	}
 	fmt.Println("Сервер gRPC начал работу")
 	// получаем запрос gRPC
 	go func() {

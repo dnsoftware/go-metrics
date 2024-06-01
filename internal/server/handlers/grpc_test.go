@@ -3,10 +3,15 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net"
 	"testing"
+
+	"google.golang.org/grpc/credentials"
+
+	"google.golang.org/grpc/encoding/gzip"
 
 	"google.golang.org/grpc/metadata"
 
@@ -30,7 +35,7 @@ const bufSize = 1024 * 64
 
 var listen *bufconn.Listener
 
-func setup(trustedSubnet string) {
+func setup(trustedSubnet string, cryptoSignKey string, certificateKeyPath string, privateKeyPath string) error {
 	cfg := config.ServerConfig{
 		ServerAddress:   "localhost:8090",
 		StoreInterval:   constants.BackupPeriod,
@@ -44,13 +49,18 @@ func setup(trustedSubnet string) {
 	repository := storage.NewMemStorage()
 	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
 	collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
-	server := NewGRPCServer(collect, "key", nil, trustedSubnet)
+	server, err := NewGRPCServer(collect, cryptoSignKey, certificateKeyPath, privateKeyPath, trustedSubnet)
+	if err != nil {
+		return errors.New("Not start GRPC server: " + err.Error())
+	}
 
 	go func() {
 		if err := server.Serve(listen); err != nil {
 			log.Fatalf("Test grpc server exited with error: %v", err)
 		}
 	}()
+
+	return nil
 }
 
 func bufDialer(context.Context, string) (net.Conn, error) {
@@ -60,7 +70,7 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 // запрос значения метрики, аналог http getMetricValue
 // должен возвратить ошибку, так как база пустая
 func TestGetMetricValueNegative(t *testing.T) {
-	setup("")
+	setup("", "", "", "")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -83,7 +93,7 @@ func TestGetMetricValueNegative(t *testing.T) {
 // потом запрашиваем эту метрику и сравниваем значения
 // ошибки быть не должно
 func TestUpdateAndGetMetric(t *testing.T) {
-	setup("")
+	setup("", "", "", "")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -142,7 +152,7 @@ func TestUpdateAndGetMetric(t *testing.T) {
 // добавляем/обновляем метрику, аналог http updateMetricJSON
 // потом запрашиваем эту метрику и сравниваем значения
 func TestUpdateAndGetMetricExtended(t *testing.T) {
-	setup("")
+	setup("", "", "", "")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -210,7 +220,7 @@ func TestUpdateAndGetMetricExtended(t *testing.T) {
 
 // Получение потока обновлений / отправка потока ответов
 func TestUpdateAndGetMetricStream(t *testing.T) {
-	setup("")
+	setup("", "", "", "")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -263,7 +273,7 @@ func TestUpdateAndGetMetricStream(t *testing.T) {
 }
 
 func TestGetAllMetrics(t *testing.T) {
-	setup("")
+	setup("", "", "", "")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -296,7 +306,7 @@ func TestGetAllMetrics(t *testing.T) {
 }
 
 func TestTrustedSubnetInterceptor(t *testing.T) {
-	setup("127.0.0.0/24")
+	setup("127.0.0.0/24", "", "", "")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -316,5 +326,155 @@ func TestTrustedSubnetInterceptor(t *testing.T) {
 	ctx = metadata.NewOutgoingContext(ctx, md)
 	_, err = client.GetAllMetrics(ctx, &pb.GetAllMetricsRequest{})
 	require.Error(t, err)
+
+}
+
+func TestCheckSignInterceptor(t *testing.T) {
+	setup("", "testkey", "", "")
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Failed to dial : %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewMetricsClient(conn)
+
+	// позитивный тест: делаем запрос на добавление и запрос на получение с одинаковым хеш-ключом - данные должны совпадать
+	testVal := 123.456
+	updRequest := &pb.UpdateMetricExtRequest{
+		Mtype: constants.Gauge,
+		Id:    "Alloc",
+		Value: testVal,
+	}
+	serialized, _ := json.Marshal(updRequest)
+	hashKeyVal := "testkey"
+	h := hash(serialized, hashKeyVal)
+	md := metadata.New(map[string]string{constants.HashHeaderName: h})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	respUpd, err := client.UpdateMetricExt(ctx, updRequest)
+
+	require.NotNil(t, respUpd)
+	require.NoError(t, err)
+
+	// запрос значения метрики
+	getRequest := &pb.GetMetricExtRequest{
+		Mtype: constants.Gauge,
+		Id:    "Alloc",
+	}
+	serialized, _ = json.Marshal(getRequest)
+	h = hash(serialized, hashKeyVal)
+	md = metadata.New(map[string]string{constants.HashHeaderName: h})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	respGet, err := client.GetMetricExt(ctx, getRequest)
+
+	errStatus, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, errStatus.Code(), codes.OK)
+	require.Equal(t, testVal, respGet.Value)
+
+	// негативный тест: меняем ключ хеширования у клиента: запрос должен завершиться с ошибкой с кодом codes.Aborted
+	h = hash(serialized, "badkey")
+	md = metadata.New(map[string]string{constants.HashHeaderName: h})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	_, err = client.GetMetricExt(ctx, getRequest)
+
+	errStatus, ok = status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, errStatus.Code(), codes.Aborted)
+
+}
+
+func TestGzipGrpc(t *testing.T) {
+	setup("", "", "", "")
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Failed to dial : %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewMetricsClient(conn)
+
+	compressor := grpc.UseCompressor(gzip.Name)
+
+	testVal := 123.456
+	respUpd, err := client.UpdateMetricExt(ctx, &pb.UpdateMetricExtRequest{
+		Mtype: constants.Gauge,
+		Id:    "Alloc",
+		Value: testVal,
+	}, compressor)
+
+	require.NotNil(t, respUpd)
+	require.NoError(t, err)
+
+	// запрос значения метрики
+	respGet, err := client.GetMetricExt(ctx, &pb.GetMetricExtRequest{
+		Mtype: constants.Gauge,
+		Id:    "Alloc",
+	}, compressor)
+
+	errStatus, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, errStatus.Code(), codes.OK)
+	require.Equal(t, testVal, respGet.Value)
+
+}
+
+func TestAsymmetricCryptoGrpc(t *testing.T) {
+	certificateKeyPath := "../../crypto/certificate.pem"
+	privateKeyPath := "../../crypto/privatekey.pem"
+
+	err := setup("", "", certificateKeyPath, privateKeyPath)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// негативный тест: запускаем клиента без ключа - должна возникнуть ошибка
+	conn, err := grpc.DialContext(ctx, "127.0.0.1", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Failed to dial : %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewMetricsClient(conn)
+
+	testVal := "123.456"
+	respUpd, err := client.UpdateMetric(ctx, &pb.UpdateMetricRequest{
+		MetricType:  constants.Gauge,
+		MetricName:  "Alloc",
+		MetricValue: testVal,
+	})
+
+	require.Error(t, err)
+
+	// позитивный тест: для клиента указываем публичный ключ - должны успешно передать данные и получить корректные данные
+	creds, err := credentials.NewClientTLSFromFile(certificateKeyPath, "")
+	require.NoError(t, err)
+
+	conn, err = grpc.DialContext(ctx, "127.0.0.1", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(creds))
+	if err != nil {
+		t.Fatalf("Failed to dial : %v", err)
+	}
+	defer conn.Close()
+	client = pb.NewMetricsClient(conn)
+
+	testVal = "123.456"
+	respUpd, err = client.UpdateMetric(ctx, &pb.UpdateMetricRequest{
+		MetricType:  constants.Gauge,
+		MetricName:  "Alloc",
+		MetricValue: testVal,
+	})
+
+	require.NotNil(t, respUpd)
+	require.NoError(t, err)
+
+	// запрос значения метрики, аналог http getMetricValue
+	respGet, err := client.GetMetricValue(ctx, &pb.GetMetricRequest{
+		MetricType: constants.Gauge,
+		MetricName: "Alloc",
+	})
+
+	errStatus, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, errStatus.Code(), codes.OK)
+	require.Equal(t, respGet.MetricValue, testVal)
 
 }

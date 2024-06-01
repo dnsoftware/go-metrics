@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"net"
 	"strings"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -11,16 +14,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
-
-//type TrustedSubnetInterceptor struct {
-//	subnet string
-//}
-
-//func NewTrustedSubnetInterceptor(trustedSubnet string) TrustedSubnetInterceptor {
-//	return TrustedSubnetInterceptor{
-//		subnet: trustedSubnet,
-//	}
-//}
 
 func trustedSubnetInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
@@ -35,6 +28,25 @@ func trustedSubnetInterceptor(ctx context.Context, req interface{}, info *grpc.U
 		}
 		if !ipnet.Contains(ipClient) {
 			return nil, status.Errorf(codes.Unavailable, `Request from untrusted subnet, %s`, serv.TrustedSubnet)
+		}
+	}
+
+	return handler(ctx, req)
+}
+
+func checkSignInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+
+	serv := info.Server.(*GRPCServer)
+	serialized, _ := json.Marshal(req)
+
+	if headers, ok := metadata.FromIncomingContext(ctx); ok {
+		hashHeader := headers.Get(constants.HashHeaderName)
+		if len(hashHeader) > 0 && hashHeader[0] != "" {
+			clientHash := hashHeader[0]
+			h := hash(serialized, serv.CryptoKey)
+			if h != clientHash {
+				return nil, status.Errorf(codes.Aborted, `Invalid sign %s`, constants.HashHeaderName)
+			}
 		}
 	}
 
