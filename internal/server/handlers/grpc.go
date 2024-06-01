@@ -23,6 +23,7 @@ type GRPCServer struct {
 	pb.UnimplementedMetricsServer
 
 	collector     Collector
+	CryptoKey     string
 	PrivateKey    *rsa.PrivateKey
 	TrustedSubnet string
 	Server        *grpc.Server
@@ -32,12 +33,16 @@ func NewGRPCServer(collector Collector, cryptoKey string, privateKey *rsa.Privat
 
 	server := &GRPCServer{
 		collector:     collector,
+		CryptoKey:     cryptoKey,
 		PrivateKey:    privateKey,
 		TrustedSubnet: trustedSubnet,
 	}
 
-	// создаём gRPC-сервер без зарегистрированной службы
-	server.Server = grpc.NewServer()
+	// инициализируем перехватчики, если нужно
+	//tsi := NewTrustedSubnetInterceptor(trustedSubnet)
+
+	// создаём gRPC-сервер
+	server.Server = grpc.NewServer(grpc.ChainUnaryInterceptor(trustedSubnetInterceptor))
 	// регистрируем сервис
 	pb.RegisterMetricsServer(server.Server, server)
 

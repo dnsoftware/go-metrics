@@ -8,6 +8,8 @@ import (
 	"net"
 	"testing"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,7 +30,7 @@ const bufSize = 1024 * 64
 
 var listen *bufconn.Listener
 
-func setup() {
+func setup(trustedSubnet string) {
 	cfg := config.ServerConfig{
 		ServerAddress:   "localhost:8090",
 		StoreInterval:   constants.BackupPeriod,
@@ -42,7 +44,7 @@ func setup() {
 	repository := storage.NewMemStorage()
 	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
 	collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
-	server := NewGRPCServer(collect, "key", nil, "")
+	server := NewGRPCServer(collect, "key", nil, trustedSubnet)
 
 	go func() {
 		if err := server.Serve(listen); err != nil {
@@ -58,7 +60,7 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 // запрос значения метрики, аналог http getMetricValue
 // должен возвратить ошибку, так как база пустая
 func TestGetMetricValueNegative(t *testing.T) {
-	setup()
+	setup("")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -81,7 +83,7 @@ func TestGetMetricValueNegative(t *testing.T) {
 // потом запрашиваем эту метрику и сравниваем значения
 // ошибки быть не должно
 func TestUpdateAndGetMetric(t *testing.T) {
-	setup()
+	setup("")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -140,7 +142,7 @@ func TestUpdateAndGetMetric(t *testing.T) {
 // добавляем/обновляем метрику, аналог http updateMetricJSON
 // потом запрашиваем эту метрику и сравниваем значения
 func TestUpdateAndGetMetricExtended(t *testing.T) {
-	setup()
+	setup("")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -208,7 +210,7 @@ func TestUpdateAndGetMetricExtended(t *testing.T) {
 
 // Получение потока обновлений / отправка потока ответов
 func TestUpdateAndGetMetricStream(t *testing.T) {
-	setup()
+	setup("")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -261,7 +263,7 @@ func TestUpdateAndGetMetricStream(t *testing.T) {
 }
 
 func TestGetAllMetrics(t *testing.T) {
-	setup()
+	setup("")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -290,5 +292,29 @@ func TestGetAllMetrics(t *testing.T) {
 	require.Greater(t, len(all.Metrics), 30)
 
 	require.NoError(t, errAll)
+
+}
+
+func TestTrustedSubnetInterceptor(t *testing.T) {
+	setup("127.0.0.0/24")
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Failed to dial : %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewMetricsClient(conn)
+
+	// положительный тест
+	md := metadata.New(map[string]string{constants.XRealIPName: "127.0.0.1"})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	_, err = client.GetAllMetrics(ctx, &pb.GetAllMetricsRequest{})
+	require.NoError(t, err)
+
+	// отрицательный тест
+	md = metadata.New(map[string]string{constants.XRealIPName: "127.0.1.1"})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	_, err = client.GetAllMetrics(ctx, &pb.GetAllMetricsRequest{})
+	require.Error(t, err)
 
 }
