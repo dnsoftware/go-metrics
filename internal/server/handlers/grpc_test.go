@@ -249,7 +249,6 @@ func TestUpdateAndGetMetricStream(t *testing.T) {
 		require.NoError(t, err2)
 		require.Equal(t, resp.Error, "")
 
-		log.Printf(resp.String())
 	}
 
 	// проверяем наличие внесенных метрик
@@ -286,10 +285,10 @@ func TestGetAllMetrics(t *testing.T) {
 	stream, _ := client.UpdateMetricsStream(ctx)
 	batch := `[{"id":"Alloc","mtype":"gauge","value":343728},{"id":"BuckHashSys","mtype":"gauge","value":7321},{"id":"Frees","mtype":"gauge","value":268},{"id":"GCCPUFraction","mtype":"gauge","value":0},{"id":"GCSys","mtype":"gauge","value":1758064},{"id":"HeapAlloc","mtype":"gauge","value":343728},{"id":"HeapIdle","mtype":"gauge","value":2490368},{"id":"HeapInuse","mtype":"gauge","value":1179648},{"id":"HeapObjects","mtype":"gauge","value":1959},{"id":"HeapReleased","mtype":"gauge","value":2490368},{"id":"HeapSys","mtype":"gauge","value":3670016},{"id":"LastGC","mtype":"gauge","value":0},{"id":"Lookups","mtype":"gauge","value":0},{"id":"MCacheInuse","mtype":"gauge","value":4800},{"id":"MCacheSys","mtype":"gauge","value":15600},{"id":"MSpanInuse","mtype":"gauge","value":54400},{"id":"MSpanSys","mtype":"gauge","value":65280},{"id":"Mallocs","mtype":"gauge","value":2227},{"id":"NextGC","mtype":"gauge","value":4194304},{"id":"NumForcedGC","mtype":"gauge","value":0},{"id":"NumGC","mtype":"gauge","value":0},{"id":"OtherSys","mtype":"gauge","value":1126423},{"id":"PauseTotalNs","mtype":"gauge","value":0},{"id":"StackInuse","mtype":"gauge","value":524288},{"id":"StackSys","mtype":"gauge","value":524288},{"id":"Sys","mtype":"gauge","value":7166992},{"id":"TotalAlloc","mtype":"gauge","value":343728},{"id":"RandomValue","mtype":"gauge","value":0.5116380300334399},{"id":"TotalMemory","mtype":"gauge","value":33518669824},{"id":"FreeMemory","mtype":"gauge","value":3527917568},{"id":"CPUutilization1","mtype":"gauge","value":59.793814433156726},{"id":"CPUutilization2","mtype":"gauge","value":46.487603307343086},{"id":"CPUutilization3","mtype":"gauge","value":42.47422680367953},{"id":"CPUutilization4","mtype":"gauge","value":25.63559321940101},{"id":"PollCount","mtype":"counter","delta":62}]`
 	var metrics []*pb.UpdateMetricExtRequest
-	err = json.Unmarshal([]byte(batch), &metrics)
+	_ = json.Unmarshal([]byte(batch), &metrics)
 
 	for _, metric := range metrics {
-		err = stream.Send(metric)
+		_ = stream.Send(metric)
 		resp, err2 := stream.Recv()
 		if err2 == io.EOF {
 			break
@@ -438,7 +437,7 @@ func TestAsymmetricCryptoGrpc(t *testing.T) {
 	client := pb.NewMetricsClient(conn)
 
 	testVal := "123.456"
-	respUpd, err := client.UpdateMetric(ctx, &pb.UpdateMetricRequest{
+	_, err = client.UpdateMetric(ctx, &pb.UpdateMetricRequest{
 		MetricType:  constants.Gauge,
 		MetricName:  "Alloc",
 		MetricValue: testVal,
@@ -458,7 +457,7 @@ func TestAsymmetricCryptoGrpc(t *testing.T) {
 	client = pb.NewMetricsClient(conn)
 
 	testVal = "123.456"
-	respUpd, err = client.UpdateMetric(ctx, &pb.UpdateMetricRequest{
+	respUpd, err := client.UpdateMetric(ctx, &pb.UpdateMetricRequest{
 		MetricType:  constants.Gauge,
 		MetricName:  "Alloc",
 		MetricValue: testVal,

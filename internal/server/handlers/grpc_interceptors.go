@@ -77,16 +77,16 @@ func loggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySe
 func GetIP(ctx context.Context) string {
 	if headers, ok := metadata.FromIncomingContext(ctx); ok {
 		xForwardFor := headers.Get("x-forwarded-for")
-		xRealIp := headers.Get("X-Real-IP")
+		xRealIP := headers.Get("X-Real-IP")
 		if len(xForwardFor) > 0 && xForwardFor[0] != "" {
 			ips := strings.Split(xForwardFor[0], ",")
 			if len(ips) > 0 {
-				clientIp := ips[0]
-				return clientIp
+				clientIP := ips[0]
+				return clientIP
 			}
-		} else if len(xRealIp) > 0 && xRealIp[0] != "" {
-			clientIp := xRealIp[0]
-			return clientIp
+		} else if len(xRealIP) > 0 && xRealIP[0] != "" {
+			clientIP := xRealIP[0]
+			return clientIP
 		}
 	}
 	return ""
@@ -97,7 +97,6 @@ func getLastLineWithSeek(filepath string) string {
 
 	if err != nil {
 		panic("Cannot open file")
-		os.Exit(1)
 	}
 	defer fileHandle.Close()
 

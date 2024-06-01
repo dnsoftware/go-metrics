@@ -216,14 +216,14 @@ func (g *GRPCServer) UpdateMetricsStream(stream pb.Metrics_UpdateMetricsStreamSe
 
 		// заносим в базу
 		if metric.Mtype != constants.Gauge && metric.Mtype != constants.Counter {
-			err = stream.Send(&pb.UpdateMetricExtResponse{Error: fmt.Sprintf(`Bad metric type: %v, name: %v, value: %v`, metric.Mtype, metric.Id, metric.Value)})
+			_ = stream.Send(&pb.UpdateMetricExtResponse{Error: fmt.Sprintf(`Bad metric type: %v, name: %v, value: %v`, metric.Mtype, metric.Id, metric.Value)})
 			continue
 		}
 
 		if metric.Mtype == constants.Gauge {
 			err = g.collector.SetGaugeMetric(ctx, metric.Id, metric.Value)
 			if err != nil {
-				err = stream.Send(&pb.UpdateMetricExtResponse{Error: fmt.Sprintf(`SetGaugeMetric error: %v, name: %v, value: %v`, metric.Mtype, metric.Id, metric.Value)})
+				_ = stream.Send(&pb.UpdateMetricExtResponse{Error: fmt.Sprintf(`SetGaugeMetric error: %v, name: %v, value: %v`, metric.Mtype, metric.Id, metric.Value)})
 				continue
 			}
 		}
@@ -231,7 +231,7 @@ func (g *GRPCServer) UpdateMetricsStream(stream pb.Metrics_UpdateMetricsStreamSe
 		if metric.Mtype == constants.Counter {
 			err = g.collector.SetCounterMetric(ctx, metric.Id, metric.Delta)
 			if err != nil {
-				err = stream.Send(&pb.UpdateMetricExtResponse{Error: fmt.Sprintf(`SetCounterMetric error: %v, name: %v, value: %v`, metric.Mtype, metric.Id, metric.Delta)})
+				_ = stream.Send(&pb.UpdateMetricExtResponse{Error: fmt.Sprintf(`SetCounterMetric error: %v, name: %v, value: %v`, metric.Mtype, metric.Id, metric.Delta)})
 				continue
 			}
 
