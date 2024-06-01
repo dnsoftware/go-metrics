@@ -43,7 +43,7 @@ func NewGRPCServer(collector Collector, cryptoKey string, certificateKeyPath str
 	}
 
 	var opts []grpc.ServerOption
-	opts = append(opts, grpc.ChainUnaryInterceptor(trustedSubnetInterceptor, checkSignInterceptor))
+	opts = append(opts, grpc.ChainUnaryInterceptor(trustedSubnetInterceptor, checkSignInterceptor, loggingInterceptor))
 
 	if certificateKeyPath != "" && privateKeyPath != "" {
 		creds, err := credentials.NewServerTLSFromFile(certificateKeyPath, privateKeyPath)

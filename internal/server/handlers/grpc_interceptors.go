@@ -3,8 +3,15 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net"
+	"os"
 	"strings"
+	"time"
+
+	"github.com/dnsoftware/go-metrics/internal/logger"
+	"go.uber.org/zap"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
 
@@ -53,6 +60,20 @@ func checkSignInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	return handler(ctx, req)
 }
 
+func loggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+
+	data, _ := json.Marshal(req)
+
+	// отправляем сведения о запросе в лог
+	logger.Log().Info("grpc request",
+		zap.String("method", info.FullMethod),
+		zap.Time("time", time.Now()),
+		zap.String("data", string(data)),
+	)
+
+	return handler(ctx, req)
+}
+
 func GetIP(ctx context.Context) string {
 	if headers, ok := metadata.FromIncomingContext(ctx); ok {
 		xForwardFor := headers.Get("x-forwarded-for")
@@ -69,4 +90,38 @@ func GetIP(ctx context.Context) string {
 		}
 	}
 	return ""
+}
+
+func getLastLineWithSeek(filepath string) string {
+	fileHandle, err := os.Open(filepath)
+
+	if err != nil {
+		panic("Cannot open file")
+		os.Exit(1)
+	}
+	defer fileHandle.Close()
+
+	line := ""
+	var cursor int64 = 0
+	stat, _ := fileHandle.Stat()
+	filesize := stat.Size()
+	for {
+		cursor -= 1
+		fileHandle.Seek(cursor, io.SeekEnd)
+
+		char := make([]byte, 1)
+		fileHandle.Read(char)
+
+		if cursor != -1 && (char[0] == 10 || char[0] == 13) { // stop if we find a line
+			break
+		}
+
+		line = fmt.Sprintf("%s%s", string(char), line) // there is more efficient way
+
+		if cursor == -filesize { // stop if we are at the begining
+			break
+		}
+	}
+
+	return line
 }
