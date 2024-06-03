@@ -36,6 +36,16 @@ const bufSize = 1024 * 64
 
 var listen *bufconn.Listener
 
+// MetricForUnmarshal нужна для конвертации из json со структурным тегом, не совпадающим с именем поля
+// как вариант можно тупо править сгенерированный metric.pb.go файл
+// или использовать какой-то плагин (с теми что нашел - успеха не добился)
+type MetricForUnmarshal struct {
+	ID    string  `json:"id"`              // имя метрики
+	MType string  `json:"type"`            // структурный тег ЭТОГО поле не совпадает со сгенерированным proto файлом mtype != type
+	Delta int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
+
 func setup(trustedSubnet string, cryptoSignKey string, certificateKeyPath string, privateKeyPath string) error {
 	cfg := config.ServerConfig{
 		ServerAddress:   "localhost:8090",
@@ -219,8 +229,7 @@ func TestUpdateAndGetMetricExtended(t *testing.T) {
 
 }
 
-// Получение потока обновлений / отправка потока ответов
-func TestUpdateAndGetMetricStream(t *testing.T) {
+func TestUpdateMetricsBatch(t *testing.T) {
 	setup("", "", "", "")
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -230,15 +239,64 @@ func TestUpdateAndGetMetricStream(t *testing.T) {
 	defer conn.Close()
 	client := pb.NewMetricsClient(conn)
 
+	batch := `[{"id":"Alloc","type":"gauge","value":343728},{"id":"BuckHashSys","type":"gauge","value":7321},{"id":"Frees","type":"gauge","value":268},{"id":"GCCPUFraction","type":"gauge","value":0},{"id":"GCSys","type":"gauge","value":1758064},{"id":"HeapAlloc","type":"gauge","value":343728},{"id":"HeapIdle","type":"gauge","value":2490368},{"id":"HeapInuse","type":"gauge","value":1179648},{"id":"HeapObjects","type":"gauge","value":1959},{"id":"HeapReleased","type":"gauge","value":2490368},{"id":"HeapSys","type":"gauge","value":3670016},{"id":"LastGC","type":"gauge","value":0},{"id":"Lookups","type":"gauge","value":0},{"id":"MCacheInuse","type":"gauge","value":4800},{"id":"MCacheSys","type":"gauge","value":15600},{"id":"MSpanInuse","type":"gauge","value":54400},{"id":"MSpanSys","type":"gauge","value":65280},{"id":"Mallocs","type":"gauge","value":2227},{"id":"NextGC","type":"gauge","value":4194304},{"id":"NumForcedGC","type":"gauge","value":0},{"id":"NumGC","type":"gauge","value":0},{"id":"OtherSys","type":"gauge","value":1126423},{"id":"PauseTotalNs","type":"gauge","value":0},{"id":"StackInuse","type":"gauge","value":524288},{"id":"StackSys","type":"gauge","value":524288},{"id":"Sys","type":"gauge","value":7166992},{"id":"TotalAlloc","type":"gauge","value":343728},{"id":"RandomValue","type":"gauge","value":0.5116380300334399},{"id":"TotalMemory","type":"gauge","value":33518669824},{"id":"FreeMemory","type":"gauge","value":3527917568},{"id":"CPUutilization1","type":"gauge","value":59.793814433156726},{"id":"CPUutilization2","type":"gauge","value":46.487603307343086},{"id":"CPUutilization3","type":"gauge","value":42.47422680367953},{"id":"CPUutilization4","type":"gauge","value":25.63559321940101},{"id":"PollCount","type":"counter","delta":62}]`
+	var metrics []MetricForUnmarshal
+	_ = json.Unmarshal([]byte(batch), &metrics)
+	metricsToSend := &pb.UpdateMetricBatchRequest{}
+
+	for _, m := range metrics {
+		metricsToSend.Metrics = append(metricsToSend.Metrics, &pb.UpdateMetricExtRequest{
+			Id:    m.ID,
+			Mtype: m.MType,
+			Delta: m.Delta,
+			Value: m.Value,
+		})
+	}
+	_, err = client.UpdateMetricsBatch(ctx, metricsToSend)
+
+	require.NoError(t, err)
+	// проверяем наличие внесенных метрик
+	m, err := client.GetMetricExt(ctx, &pb.GetMetricExtRequest{
+		Mtype: constants.Gauge,
+		Id:    "Alloc",
+	})
+	require.Equal(t, float64(343728), m.Value)
+
+	m, _ = client.GetMetricExt(ctx, &pb.GetMetricExtRequest{
+		Mtype: constants.Gauge,
+		Id:    "CPUutilization4",
+	})
+	require.Equal(t, 25.63559321940101, m.Value)
+
+}
+
+// Получение потока обновлений / отправка потока ответов
+func TestUpdateAndGetMetricStream(t *testing.T) {
+	setup("", "", "", "")
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "127.0.0.1", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Failed to dial : %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewMetricsClient(conn)
+
 	stream, err := client.UpdateMetricsStream(ctx)
 	require.NoError(t, err)
 
-	batch := `[{"id":"Alloc","mtype":"gauge","value":343728},{"id":"BuckHashSys","mtype":"gauge","value":7321},{"id":"Frees","mtype":"gauge","value":268},{"id":"GCCPUFraction","mtype":"gauge","value":0},{"id":"GCSys","mtype":"gauge","value":1758064},{"id":"HeapAlloc","mtype":"gauge","value":343728},{"id":"HeapIdle","mtype":"gauge","value":2490368},{"id":"HeapInuse","mtype":"gauge","value":1179648},{"id":"HeapObjects","mtype":"gauge","value":1959},{"id":"HeapReleased","mtype":"gauge","value":2490368},{"id":"HeapSys","mtype":"gauge","value":3670016},{"id":"LastGC","mtype":"gauge","value":0},{"id":"Lookups","mtype":"gauge","value":0},{"id":"MCacheInuse","mtype":"gauge","value":4800},{"id":"MCacheSys","mtype":"gauge","value":15600},{"id":"MSpanInuse","mtype":"gauge","value":54400},{"id":"MSpanSys","mtype":"gauge","value":65280},{"id":"Mallocs","mtype":"gauge","value":2227},{"id":"NextGC","mtype":"gauge","value":4194304},{"id":"NumForcedGC","mtype":"gauge","value":0},{"id":"NumGC","mtype":"gauge","value":0},{"id":"OtherSys","mtype":"gauge","value":1126423},{"id":"PauseTotalNs","mtype":"gauge","value":0},{"id":"StackInuse","mtype":"gauge","value":524288},{"id":"StackSys","mtype":"gauge","value":524288},{"id":"Sys","mtype":"gauge","value":7166992},{"id":"TotalAlloc","mtype":"gauge","value":343728},{"id":"RandomValue","mtype":"gauge","value":0.5116380300334399},{"id":"TotalMemory","mtype":"gauge","value":33518669824},{"id":"FreeMemory","mtype":"gauge","value":3527917568},{"id":"CPUutilization1","mtype":"gauge","value":59.793814433156726},{"id":"CPUutilization2","mtype":"gauge","value":46.487603307343086},{"id":"CPUutilization3","mtype":"gauge","value":42.47422680367953},{"id":"CPUutilization4","mtype":"gauge","value":25.63559321940101},{"id":"PollCount","mtype":"counter","delta":62}]`
-	var metrics []*pb.UpdateMetricExtRequest
+	batch := `[{"id":"Alloc","type":"gauge","value":343728},{"id":"BuckHashSys","type":"gauge","value":7321},{"id":"Frees","type":"gauge","value":268},{"id":"GCCPUFraction","type":"gauge","value":0},{"id":"GCSys","type":"gauge","value":1758064},{"id":"HeapAlloc","type":"gauge","value":343728},{"id":"HeapIdle","type":"gauge","value":2490368},{"id":"HeapInuse","type":"gauge","value":1179648},{"id":"HeapObjects","type":"gauge","value":1959},{"id":"HeapReleased","type":"gauge","value":2490368},{"id":"HeapSys","type":"gauge","value":3670016},{"id":"LastGC","type":"gauge","value":0},{"id":"Lookups","type":"gauge","value":0},{"id":"MCacheInuse","type":"gauge","value":4800},{"id":"MCacheSys","type":"gauge","value":15600},{"id":"MSpanInuse","type":"gauge","value":54400},{"id":"MSpanSys","type":"gauge","value":65280},{"id":"Mallocs","type":"gauge","value":2227},{"id":"NextGC","type":"gauge","value":4194304},{"id":"NumForcedGC","type":"gauge","value":0},{"id":"NumGC","type":"gauge","value":0},{"id":"OtherSys","type":"gauge","value":1126423},{"id":"PauseTotalNs","type":"gauge","value":0},{"id":"StackInuse","type":"gauge","value":524288},{"id":"StackSys","type":"gauge","value":524288},{"id":"Sys","type":"gauge","value":7166992},{"id":"TotalAlloc","type":"gauge","value":343728},{"id":"RandomValue","type":"gauge","value":0.5116380300334399},{"id":"TotalMemory","type":"gauge","value":33518669824},{"id":"FreeMemory","type":"gauge","value":3527917568},{"id":"CPUutilization1","type":"gauge","value":59.793814433156726},{"id":"CPUutilization2","type":"gauge","value":46.487603307343086},{"id":"CPUutilization3","type":"gauge","value":42.47422680367953},{"id":"CPUutilization4","type":"gauge","value":25.63559321940101},{"id":"PollCount","type":"counter","delta":62}]`
+	var metrics []MetricForUnmarshal
 	err = json.Unmarshal([]byte(batch), &metrics)
 	require.NoError(t, err)
 
-	for _, metric := range metrics {
+	for _, m := range metrics {
+		metric := &pb.UpdateMetricExtRequest{
+			Id:    m.ID,
+			Mtype: m.MType,
+			Delta: m.Delta,
+			Value: m.Value,
+		}
+
 		err = stream.Send(metric)
 		require.NoError(t, err)
 
@@ -283,11 +341,17 @@ func TestGetAllMetrics(t *testing.T) {
 	client := pb.NewMetricsClient(conn)
 
 	stream, _ := client.UpdateMetricsStream(ctx)
-	batch := `[{"id":"Alloc","mtype":"gauge","value":343728},{"id":"BuckHashSys","mtype":"gauge","value":7321},{"id":"Frees","mtype":"gauge","value":268},{"id":"GCCPUFraction","mtype":"gauge","value":0},{"id":"GCSys","mtype":"gauge","value":1758064},{"id":"HeapAlloc","mtype":"gauge","value":343728},{"id":"HeapIdle","mtype":"gauge","value":2490368},{"id":"HeapInuse","mtype":"gauge","value":1179648},{"id":"HeapObjects","mtype":"gauge","value":1959},{"id":"HeapReleased","mtype":"gauge","value":2490368},{"id":"HeapSys","mtype":"gauge","value":3670016},{"id":"LastGC","mtype":"gauge","value":0},{"id":"Lookups","mtype":"gauge","value":0},{"id":"MCacheInuse","mtype":"gauge","value":4800},{"id":"MCacheSys","mtype":"gauge","value":15600},{"id":"MSpanInuse","mtype":"gauge","value":54400},{"id":"MSpanSys","mtype":"gauge","value":65280},{"id":"Mallocs","mtype":"gauge","value":2227},{"id":"NextGC","mtype":"gauge","value":4194304},{"id":"NumForcedGC","mtype":"gauge","value":0},{"id":"NumGC","mtype":"gauge","value":0},{"id":"OtherSys","mtype":"gauge","value":1126423},{"id":"PauseTotalNs","mtype":"gauge","value":0},{"id":"StackInuse","mtype":"gauge","value":524288},{"id":"StackSys","mtype":"gauge","value":524288},{"id":"Sys","mtype":"gauge","value":7166992},{"id":"TotalAlloc","mtype":"gauge","value":343728},{"id":"RandomValue","mtype":"gauge","value":0.5116380300334399},{"id":"TotalMemory","mtype":"gauge","value":33518669824},{"id":"FreeMemory","mtype":"gauge","value":3527917568},{"id":"CPUutilization1","mtype":"gauge","value":59.793814433156726},{"id":"CPUutilization2","mtype":"gauge","value":46.487603307343086},{"id":"CPUutilization3","mtype":"gauge","value":42.47422680367953},{"id":"CPUutilization4","mtype":"gauge","value":25.63559321940101},{"id":"PollCount","mtype":"counter","delta":62}]`
-	var metrics []*pb.UpdateMetricExtRequest
+	batch := `[{"id":"Alloc","type":"gauge","value":343728},{"id":"BuckHashSys","type":"gauge","value":7321},{"id":"Frees","type":"gauge","value":268},{"id":"GCCPUFraction","type":"gauge","value":0},{"id":"GCSys","type":"gauge","value":1758064},{"id":"HeapAlloc","type":"gauge","value":343728},{"id":"HeapIdle","type":"gauge","value":2490368},{"id":"HeapInuse","type":"gauge","value":1179648},{"id":"HeapObjects","type":"gauge","value":1959},{"id":"HeapReleased","type":"gauge","value":2490368},{"id":"HeapSys","type":"gauge","value":3670016},{"id":"LastGC","type":"gauge","value":0},{"id":"Lookups","type":"gauge","value":0},{"id":"MCacheInuse","type":"gauge","value":4800},{"id":"MCacheSys","type":"gauge","value":15600},{"id":"MSpanInuse","type":"gauge","value":54400},{"id":"MSpanSys","type":"gauge","value":65280},{"id":"Mallocs","type":"gauge","value":2227},{"id":"NextGC","type":"gauge","value":4194304},{"id":"NumForcedGC","type":"gauge","value":0},{"id":"NumGC","type":"gauge","value":0},{"id":"OtherSys","type":"gauge","value":1126423},{"id":"PauseTotalNs","type":"gauge","value":0},{"id":"StackInuse","type":"gauge","value":524288},{"id":"StackSys","type":"gauge","value":524288},{"id":"Sys","type":"gauge","value":7166992},{"id":"TotalAlloc","type":"gauge","value":343728},{"id":"RandomValue","type":"gauge","value":0.5116380300334399},{"id":"TotalMemory","type":"gauge","value":33518669824},{"id":"FreeMemory","type":"gauge","value":3527917568},{"id":"CPUutilization1","type":"gauge","value":59.793814433156726},{"id":"CPUutilization2","type":"gauge","value":46.487603307343086},{"id":"CPUutilization3","type":"gauge","value":42.47422680367953},{"id":"CPUutilization4","type":"gauge","value":25.63559321940101},{"id":"PollCount","type":"counter","delta":62}]`
+	var metrics []MetricForUnmarshal
 	_ = json.Unmarshal([]byte(batch), &metrics)
 
-	for _, metric := range metrics {
+	for _, m := range metrics {
+		metric := &pb.UpdateMetricExtRequest{
+			Id:    m.ID,
+			Mtype: m.MType,
+			Delta: m.Delta,
+			Value: m.Value,
+		}
 		_ = stream.Send(metric)
 		resp, err2 := stream.Recv()
 		if err2 == io.EOF {

@@ -78,3 +78,6 @@ func (f *fl) RateLimit() int {
 func (f *fl) AsymPubKeyPath() string {
 	return ""
 }
+func (f *fl) GrpcRunAddr() string {
+	return ""
+}

@@ -24,6 +24,7 @@ const (
 	Metrics_GetMetricExt_FullMethodName        = "/proto.Metrics/GetMetricExt"
 	Metrics_UpdateMetricExt_FullMethodName     = "/proto.Metrics/UpdateMetricExt"
 	Metrics_GetAllMetrics_FullMethodName       = "/proto.Metrics/GetAllMetrics"
+	Metrics_UpdateMetricsBatch_FullMethodName  = "/proto.Metrics/UpdateMetricsBatch"
 	Metrics_UpdateMetricsStream_FullMethodName = "/proto.Metrics/UpdateMetricsStream"
 )
 
@@ -36,6 +37,7 @@ type MetricsClient interface {
 	GetMetricExt(ctx context.Context, in *GetMetricExtRequest, opts ...grpc.CallOption) (*GetMetricExtResponse, error)
 	UpdateMetricExt(ctx context.Context, in *UpdateMetricExtRequest, opts ...grpc.CallOption) (*UpdateMetricExtResponse, error)
 	GetAllMetrics(ctx context.Context, in *GetAllMetricsRequest, opts ...grpc.CallOption) (*GetAllMetricsResponse, error)
+	UpdateMetricsBatch(ctx context.Context, in *UpdateMetricBatchRequest, opts ...grpc.CallOption) (*UpdateMetricBatchResponse, error)
 	UpdateMetricsStream(ctx context.Context, opts ...grpc.CallOption) (Metrics_UpdateMetricsStreamClient, error)
 }
 
@@ -92,6 +94,15 @@ func (c *metricsClient) GetAllMetrics(ctx context.Context, in *GetAllMetricsRequ
 	return out, nil
 }
 
+func (c *metricsClient) UpdateMetricsBatch(ctx context.Context, in *UpdateMetricBatchRequest, opts ...grpc.CallOption) (*UpdateMetricBatchResponse, error) {
+	out := new(UpdateMetricBatchResponse)
+	err := c.cc.Invoke(ctx, Metrics_UpdateMetricsBatch_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *metricsClient) UpdateMetricsStream(ctx context.Context, opts ...grpc.CallOption) (Metrics_UpdateMetricsStreamClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Metrics_ServiceDesc.Streams[0], Metrics_UpdateMetricsStream_FullMethodName, opts...)
 	if err != nil {
@@ -132,6 +143,7 @@ type MetricsServer interface {
 	GetMetricExt(context.Context, *GetMetricExtRequest) (*GetMetricExtResponse, error)
 	UpdateMetricExt(context.Context, *UpdateMetricExtRequest) (*UpdateMetricExtResponse, error)
 	GetAllMetrics(context.Context, *GetAllMetricsRequest) (*GetAllMetricsResponse, error)
+	UpdateMetricsBatch(context.Context, *UpdateMetricBatchRequest) (*UpdateMetricBatchResponse, error)
 	UpdateMetricsStream(Metrics_UpdateMetricsStreamServer) error
 	mustEmbedUnimplementedMetricsServer()
 }
@@ -154,6 +166,9 @@ func (UnimplementedMetricsServer) UpdateMetricExt(context.Context, *UpdateMetric
 }
 func (UnimplementedMetricsServer) GetAllMetrics(context.Context, *GetAllMetricsRequest) (*GetAllMetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllMetrics not implemented")
+}
+func (UnimplementedMetricsServer) UpdateMetricsBatch(context.Context, *UpdateMetricBatchRequest) (*UpdateMetricBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMetricsBatch not implemented")
 }
 func (UnimplementedMetricsServer) UpdateMetricsStream(Metrics_UpdateMetricsStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method UpdateMetricsStream not implemented")
@@ -261,6 +276,24 @@ func _Metrics_GetAllMetrics_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Metrics_UpdateMetricsBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMetricBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetricsServer).UpdateMetricsBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Metrics_UpdateMetricsBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetricsServer).UpdateMetricsBatch(ctx, req.(*UpdateMetricBatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Metrics_UpdateMetricsStream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	return srv.(MetricsServer).UpdateMetricsStream(&metricsUpdateMetricsStreamServer{stream})
 }
@@ -313,6 +346,10 @@ var Metrics_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAllMetrics",
 			Handler:    _Metrics_GetAllMetrics_Handler,
+		},
+		{
+			MethodName: "UpdateMetricsBatch",
+			Handler:    _Metrics_UpdateMetricsBatch_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

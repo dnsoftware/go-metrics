@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -16,7 +17,7 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/constants"
 
 	pb "github.com/dnsoftware/go-metrics/internal/proto"
-	//	_ "google.golang.org/grpc/encoding/gzip"
+	_ "google.golang.org/grpc/encoding/gzip" // для активации декомпрессора
 )
 
 type GRPCServer struct {
@@ -43,7 +44,7 @@ func NewGRPCServer(collector Collector, cryptoKey string, certificateKeyPath str
 	}
 
 	var opts []grpc.ServerOption
-	opts = append(opts, grpc.ChainUnaryInterceptor(trustedSubnetInterceptor, checkSignInterceptor, loggingInterceptor))
+	opts = append(opts, grpc.ChainUnaryInterceptor(trustedSubnetInterceptor, checkSignInterceptor, loggingInterceptor) /**, grpc.ChainStreamInterceptor(checkSignStreamInterceptor) /**/)
 
 	if certificateKeyPath != "" && privateKeyPath != "" {
 		creds, err := credentials.NewServerTLSFromFile(certificateKeyPath, privateKeyPath)
@@ -245,4 +246,28 @@ func (g *GRPCServer) UpdateMetricsStream(stream pb.Metrics_UpdateMetricsStreamSe
 
 }
 
-// TODO если останется время - сделать вариант обычной передачи, когда клиент шлет массив метрик, а сервер пакетом этот массив сохраняет
+func (g *GRPCServer) UpdateMetricsBatch(ctx context.Context, in *pb.UpdateMetricBatchRequest) (*pb.UpdateMetricBatchResponse, error) {
+	var response pb.UpdateMetricBatchResponse
+
+	var temp []Metrics
+	for _, m := range in.Metrics {
+		temp = append(temp, Metrics{
+			ID:    m.Id,
+			MType: m.Mtype,
+			Delta: &m.Delta,
+			Value: &m.Value,
+		})
+	}
+
+	data, err := json.Marshal(temp)
+	if err != nil {
+		return nil, err
+	}
+
+	err = g.collector.SetBatchMetrics(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}

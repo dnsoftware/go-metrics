@@ -60,7 +60,8 @@ const (
 	CryptoPublicFilePath  string = ""
 	CryptoPrivateFilePath string = ""
 	TrustedSubnet         string = ""
-	GRPCDefault           string = "localhost:8090" // адрес:порт gRpc сервера по умолчанию
+	GRPCDefault           string = "127.0.0.1:8090" // адрес:порт gRRC сервера по умолчанию
+	ServerApi             string = "http"           // по какому протоколу клиент будет общаться с сервером (http || grpc) (флаг запуска -server-api, переменная окружения SERVER_API)
 )
 
 // Логгер.
@@ -74,6 +75,8 @@ const (
 	TextPlain       string = "text/plain"
 	TextHTML        string = "text/html"
 	ApplicationJSON string = "application/json"
+	ServerApiHTTP   string = "http"
+	ServerApiGRPC   string = "grpc"
 )
 
 // Encoding

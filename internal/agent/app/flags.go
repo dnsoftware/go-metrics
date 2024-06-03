@@ -15,6 +15,8 @@ type AgentFlags struct {
 	flagCryptoKey      string
 	flagRateLimit      int
 	flagAsymPubKeyPath string // путь к файлу с публичным асимметричным ключом
+	flagGrpcAddress    string // адрес:порт на котором работает gRPC сервер
+	flagServerApi      string // по какому протоколу клиент будет общаться с сервером (http || grpc) (флаг запуска -server-api, переменная окружения SERVER_API)
 }
 
 // NewAgentFlags обрабатывает аргументы командной строки
@@ -27,7 +29,9 @@ func NewAgentFlags() AgentFlags {
 		PollInterval   int64  `env:"POLL_INTERVAL"`
 		CryptoKey      string `env:"KEY"`
 		RateLimit      int    `env:"RATE_LIMIT"`
-		AsymPubKeyPath string `env:"CRYPTO_KEY"` // путь к файлу с публичным асимметричным ключом
+		AsymPubKeyPath string `env:"CRYPTO_KEY"`   // путь к файлу с публичным асимметричным ключом
+		GrpcAddress    string `env:"GRPC_ADDRESS"` // адрес:порт на котором работает gRPC сервер
+		ServerApi      string `env:"SERVER_API"`   // "http" или "grpc"
 	}
 
 	var (
@@ -53,6 +57,8 @@ func NewAgentFlags() AgentFlags {
 	flag.StringVar(&flags.flagCryptoKey, "k", "", "crypto key")
 	flag.IntVar(&flags.flagRateLimit, "l", constants.RateLimit, "poll interval")
 	flag.StringVar(&flags.flagAsymPubKeyPath, "crypto-key", "", "asymmetric crypto key")
+	flag.StringVar(&flags.flagGrpcAddress, "g", constants.GRPCDefault, "grpc address")
+	flag.StringVar(&flags.flagServerApi, "server-api", constants.ServerApi, "server protocol")
 
 	flag.Parse()
 
@@ -100,6 +106,18 @@ func NewAgentFlags() AgentFlags {
 			flags.flagCryptoKey = cfg.CryptoKey
 		}
 
+		if jsonConf.GrpcAddress != "" {
+			cfg.GrpcAddress = jsonConf.GrpcAddress
+		} else {
+			cfg.GrpcAddress = constants.GRPCDefault
+		}
+
+		if jsonConf.ServerApi != "" {
+			cfg.ServerApi = jsonConf.ServerApi
+		} else {
+			cfg.ServerApi = constants.ServerApi
+		}
+
 	} else {
 		if flags.flagRunAddr == "" {
 			flags.flagRunAddr = constants.ServerDefault
@@ -112,6 +130,12 @@ func NewAgentFlags() AgentFlags {
 		}
 		if flags.flagCryptoKey == "" {
 			flags.flagCryptoKey = constants.CryptoPublicFilePath
+		}
+		if flags.flagGrpcAddress == "" {
+			flags.flagGrpcAddress = constants.GRPCDefault
+		}
+		if flags.flagServerApi == "" {
+			flags.flagServerApi = constants.ServerApi
 		}
 	}
 
@@ -140,6 +164,14 @@ func NewAgentFlags() AgentFlags {
 		flags.flagAsymPubKeyPath = cfgEnv.AsymPubKeyPath
 	}
 
+	if cfgEnv.GrpcAddress != "" {
+		flags.flagGrpcAddress = cfgEnv.GrpcAddress
+	}
+
+	if cfgEnv.ServerApi != "" {
+		flags.flagServerApi = cfgEnv.ServerApi
+	}
+
 	return flags
 }
 
@@ -165,4 +197,8 @@ func (f *AgentFlags) RateLimit() int {
 
 func (f *AgentFlags) AsymPubKeyPath() string {
 	return f.flagAsymPubKeyPath
+}
+
+func (f *AgentFlags) GrpcRunAddr() string {
+	return f.flagGrpcAddress
 }

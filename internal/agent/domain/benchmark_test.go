@@ -72,7 +72,7 @@ func updateMetricsSetup() *Metrics {
 		gopcMetricsList = append(gopcMetricsList, constants.CPUutilization+strconv.Itoa(i))
 	}
 
-	metrics := NewMetrics(repository, &sender, &flg)
+	metrics := NewMetrics(repository, sender, &flg)
 
 	return &metrics
 }
@@ -98,5 +98,8 @@ func (f *fl) RateLimit() int {
 }
 
 func (f *fl) AsymPubKeyPath() string {
+	return ""
+}
+func (f *fl) GrpcRunAddr() string {
 	return ""
 }

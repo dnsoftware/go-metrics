@@ -2,5 +2,7 @@
   "address": "localhost:8080",
   "report_interval": "1s",
   "poll_interval": "1s",
-  "crypto_key": "/home/dmitry/go/src/go-metrics/internal/crypto/certificate.pem"
+  "crypto_key": "/home/dmitry/go/src/go-metrics/internal/crypto/certificate.pem",
+  "grpc_address": "localhost:8090",
+  "server_api": "http"
 }

@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 
@@ -23,9 +24,13 @@ type JSONConfig struct {
 
 func newJSONConfigServer(configFile string) (*JSONConfig, error) {
 
+	if configFile == "" {
+		return nil, nil
+	}
+
 	conf, err := os.Open(configFile)
 	if err != nil {
-		logger.Log().Error("json config file open error: " + err.Error())
+		logger.Log().Error(fmt.Sprintf("json config file %v open error: %v", configFile, err.Error()))
 		return nil, err
 	}
 	defer conf.Close()

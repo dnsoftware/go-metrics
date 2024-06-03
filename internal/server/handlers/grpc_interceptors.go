@@ -60,6 +60,38 @@ func checkSignInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	return handler(ctx, req)
 }
 
+/* потоковый перехватчик, в SendMsg(m interface{}) ПУСТОЕ сообщение почему-то... *
+
+type wrappedStream struct {
+	grpc.ServerStream
+}
+
+func newWrappedStream(s grpc.ServerStream) grpc.ServerStream {
+	return &wrappedStream{s}
+}
+
+func (w *wrappedStream) RecvMsg(m interface{}) error {
+	fmt.Printf("mess: %v", m)
+	// тут обработка сообщения
+	return w.ServerStream.RecvMsg(m)
+}
+
+func (w *wrappedStream) SendMsg(m interface{}) error {
+	fmt.Printf("mess: %v", m)
+	// тут обработка сообщения
+	return w.ServerStream.SendMsg(m)
+}
+
+func checkSignStreamInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+
+	fmt.Printf("gRPC method: %s,", info.FullMethod)
+	err := handler(srv, newWrappedStream(ss))
+	fmt.Printf("gRPC method: %s", info.FullMethod)
+	return err
+}
+
+/* end потоковый перехватчик */
+
 func loggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 	data, _ := json.Marshal(req)

@@ -4,8 +4,6 @@ import (
 	"compress/gzip"
 	"io"
 	"net/http"
-
-	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 // compressWriter реализует интерфейс http.ResponseWriter и позволяет прозрачно для сервера
@@ -15,6 +13,7 @@ type compressWriter struct {
 	zw *gzip.Writer
 }
 
+/*
 func NewCompressWriter(w http.ResponseWriter) *compressWriter {
 	return &compressWriter{
 		w:  w,
@@ -39,6 +38,7 @@ func (c *compressWriter) WriteHeader(statusCode int) {
 func (c *compressWriter) Close() error {
 	return c.zw.Close()
 }
+*/
 
 // compressReader реализует интерфейс io.ReadCloser и позволяет прозрачно для сервера
 // декомпрессировать получаемые от клиента данные

@@ -15,9 +15,15 @@ type JSONConfig struct {
 	PollIntervalStr   string `json:"poll_interval"`
 	PollInterval      int64
 	AsymCryptoKey     string `json:"crypto_key"`
+	GrpcAddress       string `json:"grpc_address"`
+	ServerApi         string `json:"server_api"` // по какому протоколу клиент будет общаться с сервером (http || grpc) (флаг запуска -server-api, переменная окружения SERVER_API)
 }
 
 func newJSONConfig(configFile string) (*JSONConfig, error) {
+
+	if configFile == "" {
+		return nil, nil
+	}
 
 	conf, err := os.Open(configFile)
 	if err != nil {

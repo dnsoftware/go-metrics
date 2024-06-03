@@ -24,10 +24,22 @@ func AgentRun() {
 		logger.Log().Error(err.Error() + ": " + flags.flagAsymPubKeyPath)
 	}
 
-	// для нового API - constants.ApplicationJson (для старого - constants.TextPlain)
-	sender := infrastructure.NewWebSender("http", &flags, constants.ApplicationJSON, publicCryptoKey)
+	// в зависимости от конфига общаемся с сервером по http или gRPC
+	var sender domain.MetricsSender
+	switch flags.flagServerApi {
+	case constants.ServerApiHTTP:
+		// для нового API - constants.ApplicationJson (для старого - constants.TextPlain)
+		sender = infrastructure.NewWebSender("http", &flags, constants.ApplicationJSON, publicCryptoKey)
+	case constants.ServerApiGRPC:
+		sender, err = infrastructure.NewGRPCSender(&flags, flags.flagAsymPubKeyPath)
+		if err != nil {
+			logger.Log().Fatal("Ошибка инициализации NewGRPCSender: " + err.Error())
+		}
+	default:
+		logger.Log().Fatal("Ошибка запуска AgentRun, неверный протокол общения с сервером: " + flags.flagServerApi)
+	}
 
-	metrics := domain.NewMetrics(repository, &sender, &flags)
+	metrics := domain.NewMetrics(repository, sender, &flags)
 
 	go func() {
 		http.ListenAndServe(constants.AgentPprofAddr, nil) // запускаем сервер для pprof

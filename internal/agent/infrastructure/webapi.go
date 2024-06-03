@@ -22,6 +22,15 @@ type Flags interface {
 	RunAddr() string
 	CryptoKey() string
 	AsymPubKeyPath() string
+	GrpcRunAddr() string
+}
+
+// Metrics структура для отправки json данных на сервер
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
 // WebSender отправляет данные на сервер.
@@ -33,17 +42,9 @@ type WebSender struct {
 	publicKey   *rsa.PublicKey // публичный асимметричный ключ
 }
 
-// Metrics структура для отправки json данных на сервер
-type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
-}
+func NewWebSender(protocol string, flags Flags, contentType string, publicKey *rsa.PublicKey) *WebSender {
 
-func NewWebSender(protocol string, flags Flags, contentType string, publicKey *rsa.PublicKey) WebSender {
-
-	return WebSender{
+	return &WebSender{
 		protocol:    protocol,
 		domain:      flags.RunAddr(),
 		contentType: contentType,

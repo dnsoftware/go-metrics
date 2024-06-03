@@ -28,7 +28,7 @@ message UpdateMetricResponse {
 // запрос единичной метрики, расширенный вариант (аналог getMetricValueJSON)
 message GetMetricExtRequest {
     string id = 1;         // название метрики
-    string mtype = 2;      // параметр, принимающий значение gauge или counter
+    string mtype = 2;     // параметр, принимающий значение gauge или counter
     int64 delta = 3;       // значение метрики в случае передачи counter
     double value = 4;      // значение метрики в случае передачи gauge
 }
@@ -53,6 +53,16 @@ message UpdateMetricExtResponse {
   string error = 1;
 }
 
+// обновление метрик пакетом
+message UpdateMetricBatchRequest {
+  repeated UpdateMetricExtRequest metrics = 1;
+}
+
+message UpdateMetricBatchResponse {
+  string error = 1;
+}
+
+// получение всех метрик
 message GetAllMetricsRequest {
 }
 
@@ -68,5 +78,7 @@ service Metrics {
   rpc UpdateMetricExt(UpdateMetricExtRequest) returns (UpdateMetricExtResponse);
 
   rpc GetAllMetrics(GetAllMetricsRequest) returns (GetAllMetricsResponse);
+  rpc UpdateMetricsBatch(UpdateMetricBatchRequest) returns (UpdateMetricBatchResponse);
+
   rpc UpdateMetricsStream(stream UpdateMetricExtRequest) returns (stream UpdateMetricExtResponse);
 }
