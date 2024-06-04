@@ -67,7 +67,7 @@ const (
 // Логгер.
 const (
 	LogFile  string = "./log.log"
-	LogLevel        = zapcore.ErrorLevel
+	LogLevel        = zapcore.InfoLevel
 )
 
 // Типы контента.
@@ -75,8 +75,8 @@ const (
 	TextPlain       string = "text/plain"
 	TextHTML        string = "text/html"
 	ApplicationJSON string = "application/json"
-	ServerApiHTTP   string = "http"
-	ServerApiGRPC   string = "grpc"
+	ServerAPIHTTP   string = "http"
+	ServerAPIGRPC   string = "grpc"
 )
 
 // Encoding

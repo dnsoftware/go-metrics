@@ -23,10 +23,10 @@ func initMetrics(flags AgentFlags) (*domain.Metrics, error) {
 	// в зависимости от конфига общаемся с сервером по http или gRPC
 	var sender domain.MetricsSender
 	switch flags.flagServerAPI {
-	case constants.ServerApiHTTP:
+	case constants.ServerAPIHTTP:
 		// для нового API - constants.ApplicationJson (для старого - constants.TextPlain)
 		sender = infrastructure.NewWebSender("http", &flags, constants.ApplicationJSON, publicCryptoKey)
-	case constants.ServerApiGRPC:
+	case constants.ServerAPIGRPC:
 		sender, err = infrastructure.NewGRPCSender(&flags, flags.flagAsymPubKeyPath)
 		if err != nil {
 			mess := fmt.Sprintf("Ошибка инициализации NewGRPCSender: %v", err.Error())

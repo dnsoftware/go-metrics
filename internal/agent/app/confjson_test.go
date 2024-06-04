@@ -63,7 +63,7 @@ func TestConsolidate(t *testing.T) {
 		flagRateLimit:      0,
 		flagAsymPubKeyPath: "",
 		flagGrpcAddress:    "",
-		flagServerApi:      "",
+		flagServerAPI:      "",
 	}
 
 	cfgEnv := Config{
@@ -86,7 +86,7 @@ func TestConsolidate(t *testing.T) {
 	assert.Equal(t, 0, newFlags.flagRateLimit)
 	assert.Equal(t, "", newFlags.flagAsymPubKeyPath)
 	assert.Equal(t, "127.0.0.1:8090", newFlags.flagGrpcAddress)
-	assert.Equal(t, "http", newFlags.flagServerApi)
+	assert.Equal(t, "http", newFlags.flagServerAPI)
 
 	flags.flagRunAddr = ""
 	jsonConf.Address = "localhost:8081"
@@ -113,19 +113,19 @@ func TestConsolidate(t *testing.T) {
 	newFlags = consolidateConfig(jsonConf, cfg, flags, cfgEnv)
 	assert.Equal(t, ":8099", newFlags.flagGrpcAddress)
 
-	flags.flagServerApi = ""
+	flags.flagServerAPI = ""
 	jsonConf.ServerApi = "grpc"
 	newFlags = consolidateConfig(jsonConf, cfg, flags, cfgEnv)
-	assert.Equal(t, "grpc", newFlags.flagServerApi)
+	assert.Equal(t, "grpc", newFlags.flagServerAPI)
 
 	jsonConf = nil
 	flags.flagGrpcAddress = ""
 	newFlags = consolidateConfig(jsonConf, cfg, flags, cfgEnv)
 	assert.Equal(t, "127.0.0.1:8090", newFlags.flagGrpcAddress)
 
-	flags.flagServerApi = ""
+	flags.flagServerAPI = ""
 	newFlags = consolidateConfig(jsonConf, cfg, flags, cfgEnv)
-	assert.Equal(t, "http", newFlags.flagServerApi)
+	assert.Equal(t, "http", newFlags.flagServerAPI)
 
 	cfgEnv = Config{
 		RunAddr:        ":8080",
@@ -146,6 +146,6 @@ func TestConsolidate(t *testing.T) {
 	assert.Equal(t, 14, newFlags.flagRateLimit)
 	assert.Equal(t, "/path", newFlags.flagAsymPubKeyPath)
 	assert.Equal(t, ":8090", newFlags.flagGrpcAddress)
-	assert.Equal(t, "grpc", newFlags.flagServerApi)
+	assert.Equal(t, "grpc", newFlags.flagServerAPI)
 
 }

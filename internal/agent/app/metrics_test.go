@@ -9,20 +9,20 @@ import (
 )
 
 func TestMetrics(t *testing.T) {
-	flags := AgentFlags{flagServerApi: constants.ServerApiGRPC}
+	flags := AgentFlags{flagServerAPI: constants.ServerAPIGRPC}
 	_, err := initMetrics(flags)
 	assert.NoError(t, err)
 
-	flags = AgentFlags{flagServerApi: constants.ServerApiHTTP}
+	flags = AgentFlags{flagServerAPI: constants.ServerAPIHTTP}
 	_, err = initMetrics(flags)
 	assert.NoError(t, err)
 
-	flags = AgentFlags{flagServerApi: "bad"}
+	flags = AgentFlags{flagServerAPI: "bad"}
 	_, err = initMetrics(flags)
 	assert.Error(t, err)
 
 	flags = AgentFlags{
-		flagServerApi:      constants.ServerApiGRPC,
+		flagServerAPI:      constants.ServerAPIGRPC,
 		flagAsymPubKeyPath: "nopath",
 	}
 	_, err = initMetrics(flags)
