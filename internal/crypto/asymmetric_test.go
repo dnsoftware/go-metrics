@@ -60,3 +60,21 @@ func TestEncryptDescript(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, testMessage, string(decryptedBytes))
 }
+
+func TestNegative(t *testing.T) {
+	_, err := MakePublicKey("")
+	assert.Error(t, err)
+
+	_, err = MakePublicKey("./_certificate.pem")
+	assert.Error(t, err)
+
+	_, err = MakePrivateKey("./_certificate.pem")
+	assert.Error(t, err)
+
+	_, err = MakePrivateKey("")
+	assert.Error(t, err)
+
+	_, _, err = CertFilesGenerate("", "")
+	require.Error(t, err)
+
+}

@@ -47,11 +47,22 @@ func TestWebapi(t *testing.T) {
 	err = sender.SendJSON(ctx, constants.Gauge, "Alloc", "123.456")
 	assert.NoError(t, err)
 
+	err = sender.SendJSON(ctx, constants.Counter, "PollCount", "123456")
+	assert.NoError(t, err)
+
 	err = sender.SendDataBatch(ctx, []byte("{}"))
 	assert.NoError(t, err)
 
 	err = sender.SendData(ctx, constants.Gauge, "Alloc", "123.456")
 	assert.NoError(t, err)
+
+	sender = NewWebSender("http", &flg, constants.TextPlain, publicCryptoKey)
+	err = sender.SendData(ctx, constants.Gauge, "Alloc", "123.456")
+	assert.NoError(t, err)
+
+	sender = NewWebSender("http", &flg, "badtype", publicCryptoKey)
+	err = sender.SendData(ctx, constants.Gauge, "Alloc", "123.456")
+	assert.Error(t, err)
 
 }
 

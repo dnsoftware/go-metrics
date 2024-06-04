@@ -266,15 +266,15 @@ func (c *Collector) LoadFromDump() error {
 }
 
 // startBackup периодическое сохранение метрик
-func (c *Collector) startBackup() {
+func (c *Collector) startBackup() string {
 	// если обновление синхронное - не запускаем периодическое обновление
 	if c.cfg.StoreInterval == constants.BackupPeriodSync {
-		return
+		return "sync"
 	}
 
 	// если файл не указан - не запускаем сохранение на диск
 	if c.cfg.FileStoragePath == "" {
-		return
+		return "no"
 	}
 
 	backupPeriod := time.Duration(c.cfg.StoreInterval) * time.Second
@@ -289,6 +289,8 @@ func (c *Collector) startBackup() {
 			}
 		}
 	}()
+
+	return "periodical"
 }
 
 // DatabasePing проверка работоспособности СУБД

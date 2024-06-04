@@ -2,9 +2,11 @@ package infrastructure
 
 import (
 	"context"
+	"crypto/rsa"
 	"errors"
 	"log"
 	"net"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,6 +19,7 @@ import (
 	"github.com/dnsoftware/go-metrics/internal/server/handlers"
 	"github.com/dnsoftware/go-metrics/internal/storage"
 	"github.com/stretchr/testify/require"
+	_ "google.golang.org/grpc/encoding/gzip" // для активации декомпрессора
 	"google.golang.org/grpc/test/bufconn"
 )
 
@@ -25,6 +28,7 @@ const bufSize = 1024 * 64
 var listen *bufconn.Listener
 
 type flags struct {
+	cryptoKey   string
 	grpcRunAddr string
 }
 
@@ -88,6 +92,7 @@ func TestSendData(t *testing.T) {
 
 	ctx := context.Background()
 	flg := &flags{
+		cryptoKey:   "qwerty",
 		grpcRunAddr: "localhost:8090",
 	}
 
@@ -109,12 +114,25 @@ func TestGetLocalIP(t *testing.T) {
 	assert.NotEqual(t, "", ip)
 }
 
+func TestNewAgent(t *testing.T) {
+	ctx := context.Background()
+	_, err := NewAgentRequest(ctx, http.MethodPost, "", []byte("data"), "", &rsa.PublicKey{})
+	assert.Error(t, err)
+
+	_, err = NewAgentRequest(ctx, "@#$!`~", "", []byte("data"), "aaa", nil)
+	assert.Error(t, err)
+
+	_, err = NewAgentRequest(ctx, http.MethodPost, "", []byte("data"), "xxczxczxc", nil)
+	assert.NoError(t, err)
+
+}
+
 func (f *flags) RunAddr() string {
 	return ""
 }
 
 func (f *flags) CryptoKey() string {
-	return ""
+	return f.cryptoKey
 }
 
 func (f *flags) ReportInterval() int64 {

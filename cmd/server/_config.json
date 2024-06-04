@@ -1,0 +1,11 @@
+{
+  "address": "localhost:8080",
+  "restore": true,
+  "store_interval": "s",
+  "store_file": "/tmp/metrics-db.json",
+  "database_dsn": "",
+  "crypto_cert": "/home/dmitry/go/src/go-metrics/internal/crypto/certificate.pem",
+  "crypto_key": "/home/dmitry/go/src/go-metrics/internal/crypto/privatekey.pem",
+  "trusted_subnet": "0.0.0.0/0",
+  "grpc_address": "localhost:8090"
+}

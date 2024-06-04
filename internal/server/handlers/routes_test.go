@@ -185,8 +185,20 @@ func TestRouter(t *testing.T) {
 	defer respGet.Body.Close()
 
 	assert.Equal(t, http.StatusOK, respGet.StatusCode)
-
 	assert.Equal(t, postData, get)
+
+	respGet, get = testRequest(t, ts, "POST", "/update/bad/testGet33/222", nil)
+	assert.Equal(t, http.StatusBadRequest, respGet.StatusCode)
+
+	respGet, get = testRequest(t, ts, "POST", "/update/gauge/testGet33/www", nil)
+	assert.Equal(t, http.StatusBadRequest, respGet.StatusCode)
+
+	respGet, get = testRequest(t, ts, "POST", "/update/counter/testGet33/www", nil)
+	assert.Equal(t, http.StatusBadRequest, respGet.StatusCode)
+
+	respGet, get = testRequest(t, ts, "GET", "/ping", nil)
+	assert.Equal(t, http.StatusInternalServerError, respGet.StatusCode)
+
 }
 
 // Тестирование принадлежности IP адреса клиента к подсети

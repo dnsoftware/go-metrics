@@ -18,4 +18,5 @@ func TestRestoreFromDump(t *testing.T) {
 	assert.Equal(t, constants.PollInterval, flags.PollInterval())
 	assert.Equal(t, "", flags.CryptoKey())
 	assert.Equal(t, constants.RateLimit, flags.RateLimit())
+	assert.Equal(t, "", flags.AsymPubKeyPath())
 }

@@ -89,3 +89,25 @@ func TestSetBatch(t *testing.T) {
 
 	//	fmt.Println(m.Gauges, res)
 }
+
+func TestNegative(t *testing.T) {
+	m := NewMemStorage()
+	ctx := context.Background()
+	_, err := m.GetGauge(ctx, "nometric")
+	assert.Error(t, err)
+
+	batch := `["badid":"_Alloc"}]`
+
+	err = m.SetBatch(ctx, []byte(batch))
+	assert.Error(t, err)
+
+	_, err = m.GetCounter(ctx, "nometric")
+	assert.Error(t, err)
+
+	err = m.RestoreFromDump(ctx, `["badid":"_Alloc"}]`)
+	assert.Error(t, err)
+
+	ok := m.DatabasePing(ctx)
+	assert.False(t, ok)
+
+}

@@ -10,6 +10,8 @@ import (
 	"net"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"google.golang.org/grpc/credentials"
 
 	"google.golang.org/grpc/encoding/gzip"
@@ -568,4 +570,74 @@ func TestLoggingInterceptor(t *testing.T) {
 	findStr := fmt.Sprintf("%v", testVal)
 	require.Contains(t, line, findStr)
 
+}
+
+func TestNegative(t *testing.T) {
+	cfg := config.ServerConfig{
+		ServerAddress:   "localhost:8090",
+		StoreInterval:   constants.BackupPeriod,
+		FileStoragePath: constants.FileStoragePath,
+		RestoreSaved:    false,
+		DatabaseDSN:     "",
+	}
+	repository := storage.NewMemStorage()
+	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
+	collect, _ := collector.NewCollector(&cfg, repository, backupStorage)
+	server, err := NewGRPCServer(collect, "qwerty", "111", "222", "")
+	assert.Error(t, err)
+
+	serv := &GRPCServer{
+		collector:          collect,
+		CryptoKey:          "qwerty",
+		CertificateKeyPath: "",
+		PrivateKeyPath:     "",
+		TrustedSubnet:      "",
+	}
+
+	ctx := context.Background()
+	req := &pb.GetMetricRequest{
+		MetricType: "",
+		MetricName: "",
+	}
+	_, err = serv.GetMetricValue(ctx, req)
+	assert.Error(t, err)
+
+	req2 := &pb.UpdateMetricRequest{
+		MetricType:  "",
+		MetricName:  "",
+		MetricValue: "",
+	}
+	_, err = serv.UpdateMetric(ctx, req2)
+	assert.Error(t, err)
+
+	req2.MetricType = constants.Gauge
+	req2.MetricValue = "bad"
+	_, err = serv.UpdateMetric(ctx, req2)
+	assert.Error(t, err)
+
+	req2.MetricType = constants.Counter
+	req2.MetricValue = "bad"
+	_, err = serv.UpdateMetric(ctx, req2)
+	assert.Error(t, err)
+
+	req3 := &pb.GetMetricExtRequest{
+		Id:    "",
+		Mtype: "",
+		Delta: 0,
+		Value: 0,
+	}
+	_, err = serv.GetMetricExt(ctx, req3)
+	assert.Error(t, err)
+
+	req4 := &pb.UpdateMetricExtRequest{
+		Id:    "",
+		Mtype: "",
+		Delta: 0,
+		Value: 0,
+	}
+
+	_, err = serv.UpdateMetricExt(ctx, req4)
+	assert.Error(t, err)
+
+	_ = server
 }

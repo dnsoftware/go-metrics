@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/dnsoftware/go-metrics/internal/constants"
+
 	"github.com/dnsoftware/go-metrics/internal/logger"
 )
 
@@ -54,4 +56,119 @@ func newJSONConfig(configFile string) (*JSONConfig, error) {
 	cfg.PollInterval = int64(p.Seconds())
 
 	return &cfg, err
+}
+
+// объединение конфигураций
+func consolidateConfig(jsonConf *JSONConfig, cfg Config, flags AgentFlags, cfgEnv Config) AgentFlags {
+	if jsonConf != nil {
+		if jsonConf.Address != "" {
+			cfg.RunAddr = jsonConf.Address
+		} else {
+			cfg.RunAddr = constants.ServerDefault
+		}
+
+		if jsonConf.ReportInterval != 0 {
+			cfg.ReportInterval = jsonConf.ReportInterval
+		} else {
+			cfg.ReportInterval = constants.ReportInterval
+		}
+
+		if jsonConf.PollInterval != 0 {
+			cfg.PollInterval = jsonConf.PollInterval
+		} else {
+			cfg.PollInterval = constants.PollInterval
+		}
+
+		if jsonConf.AsymCryptoKey != "" {
+			cfg.CryptoKey = jsonConf.AsymCryptoKey
+		} else {
+			cfg.CryptoKey = constants.CryptoPublicFilePath
+		}
+
+		if jsonConf.GrpcAddress != "" {
+			cfg.GrpcAddress = jsonConf.GrpcAddress
+		} else {
+			cfg.GrpcAddress = constants.GRPCDefault
+		}
+
+		if jsonConf.ServerApi != "" {
+			cfg.ServerApi = jsonConf.ServerApi
+		} else {
+			cfg.ServerApi = constants.ServerApi
+		}
+
+		if flags.flagRunAddr == "" {
+			flags.flagRunAddr = cfg.RunAddr
+		}
+		if flags.flagReportInterval == 0 {
+			flags.flagReportInterval = cfg.ReportInterval
+		}
+		if flags.flagPollInterval == 0 {
+			flags.flagPollInterval = cfg.PollInterval
+		}
+		if flags.flagCryptoKey == "" {
+			flags.flagCryptoKey = cfg.CryptoKey
+		}
+		if flags.flagGrpcAddress == "" {
+			flags.flagGrpcAddress = cfg.GrpcAddress
+		}
+		if flags.flagServerApi == "" {
+			flags.flagServerApi = cfg.ServerApi
+		}
+
+	} else {
+		if flags.flagRunAddr == "" {
+			flags.flagRunAddr = constants.ServerDefault
+		}
+		if flags.flagReportInterval == 0 {
+			flags.flagReportInterval = constants.ReportInterval
+		}
+		if flags.flagPollInterval == 0 {
+			flags.flagPollInterval = constants.PollInterval
+		}
+		if flags.flagCryptoKey == "" {
+			flags.flagCryptoKey = constants.CryptoPublicFilePath
+		}
+		if flags.flagGrpcAddress == "" {
+			flags.flagGrpcAddress = constants.GRPCDefault
+		}
+		if flags.flagServerApi == "" {
+			flags.flagServerApi = constants.ServerApi
+		}
+	}
+
+	// переменные окружения
+	if cfgEnv.RunAddr != "" {
+		flags.flagRunAddr = cfgEnv.RunAddr
+	}
+
+	if cfgEnv.ReportInterval != 0 {
+		flags.flagReportInterval = cfgEnv.ReportInterval
+	}
+
+	if cfgEnv.PollInterval != 0 {
+		flags.flagPollInterval = cfgEnv.PollInterval
+	}
+
+	if cfgEnv.CryptoKey != "" {
+		flags.flagCryptoKey = cfgEnv.CryptoKey
+	}
+
+	if cfgEnv.RateLimit != 0 {
+		flags.flagRateLimit = cfgEnv.RateLimit
+	}
+
+	if cfgEnv.AsymPubKeyPath != "" {
+		flags.flagAsymPubKeyPath = cfgEnv.AsymPubKeyPath
+	}
+
+	if cfgEnv.GrpcAddress != "" {
+		flags.flagGrpcAddress = cfgEnv.GrpcAddress
+	}
+
+	if cfgEnv.ServerApi != "" {
+		flags.flagServerApi = cfgEnv.ServerApi
+	}
+
+	return flags
 }

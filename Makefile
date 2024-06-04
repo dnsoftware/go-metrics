@@ -22,7 +22,7 @@ cover2:
 	rm coverage.out
 
 cover3:
-	go test $(go list ./... | grep -v /proto/) -coverprofile=coverage.out -covermode=count ./...
+	go test $(go list ./... | grep -v /proto) -coverprofile=coverage.out -covermode=count ./...
 	go tool cover -func coverage.out | grep total | awk '{print $3}'
 
 .PHONY: staticlint

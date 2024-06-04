@@ -103,6 +103,8 @@ func TestCollector_GetAll(t *testing.T) {
 
 	assert.Equal(t, "Alloc: 123.456000\nPollCount: 123\n", all)
 
+	_, _, err = c.GetAllByTypes(ctx)
+	assert.NoError(t, err)
 }
 
 func TestCollector_Dump(t *testing.T) {
@@ -141,4 +143,34 @@ func setup(t *testing.T) (*Collector, error) {
 	}
 
 	return collect, nil
+}
+
+func TestCollector_Negative(t *testing.T) {
+	cfg := &config.ServerConfig{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	backupStorage := mock_collector.NewMockBackupStorage(ctrl)
+	repo := storage.NewMemStorage()
+	collect, _ := NewCollector(cfg, repo, backupStorage)
+	collect.cfg.StoreInterval = 10
+	status := collect.startBackup()
+	assert.Equal(t, "no", status)
+
+	collect.cfg.FileStoragePath = "_tmp"
+	status = collect.startBackup()
+	assert.Equal(t, "periodical", status)
+}
+
+func TestCollector_DatabasePing(t *testing.T) {
+	ctx := context.Background()
+	cfg := &config.ServerConfig{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	backupStorage := mock_collector.NewMockBackupStorage(ctrl)
+	repo := storage.NewMemStorage()
+	collect, _ := NewCollector(cfg, repo, backupStorage)
+
+	p := collect.DatabasePing(ctx)
+	assert.False(t, p)
+
 }

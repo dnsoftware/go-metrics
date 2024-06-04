@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"errors"
 	"math/big"
 	"net"
 	"os"
@@ -29,12 +28,7 @@ func MakePublicKey(fullPathCert string) (*rsa.PublicKey, error) {
 		return nil, err
 	}
 
-	pk, ok := cert.PublicKey.(*rsa.PublicKey)
-	if !ok {
-		return nil, errors.New("no rsa publickey type")
-	}
-
-	//	enc, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pk, []byte("super secret message"), nil)
+	pk, _ := cert.PublicKey.(*rsa.PublicKey)
 
 	return pk, nil
 }
@@ -130,10 +124,7 @@ func CertFilesGenerate(fullPathCert, fullPathPriv string) (string, string, error
 
 // DefaultCryptoFilesName генерация путей по умолчанию к файлам асимметричных ключей
 func DefaultCryptoFilesName() (string, string, error) {
-	workDir, err := os.Getwd()
-	if err != nil {
-		return "", "", err
-	}
+	workDir, _ := os.Getwd()
 
 	fullPathCert := workDir + "/" + constants.CryptoPublicFile
 	fullPathPriv := workDir + "/" + constants.CryptoPrivateFile

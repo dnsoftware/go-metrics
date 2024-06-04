@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -109,6 +110,11 @@ func (m *Metrics) Start() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
+
+	// запускаем сервер для pprof
+	go func() {
+		http.ListenAndServe(constants.AgentPprofAddr, nil)
+	}()
 
 	// обновление метрик
 	wg.Add(1)
