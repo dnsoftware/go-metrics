@@ -41,7 +41,7 @@ func TestConsolidate(t *testing.T) {
 		PollInterval:      0,
 		AsymCryptoKey:     "",
 		GrpcAddress:       "",
-		ServerApi:         "",
+		ServerAPI:         "",
 	}
 
 	cfg := Config{
@@ -52,7 +52,7 @@ func TestConsolidate(t *testing.T) {
 		RateLimit:      0,
 		AsymPubKeyPath: "",
 		GrpcAddress:    "",
-		ServerApi:      "",
+		ServerAPI:      "",
 	}
 
 	flags := AgentFlags{
@@ -74,7 +74,7 @@ func TestConsolidate(t *testing.T) {
 		RateLimit:      0,
 		AsymPubKeyPath: "",
 		GrpcAddress:    "",
-		ServerApi:      "",
+		ServerAPI:      "",
 	}
 
 	newFlags := consolidateConfig(jsonConf, cfg, flags, cfgEnv)
@@ -114,7 +114,7 @@ func TestConsolidate(t *testing.T) {
 	assert.Equal(t, ":8099", newFlags.flagGrpcAddress)
 
 	flags.flagServerAPI = ""
-	jsonConf.ServerApi = "grpc"
+	jsonConf.ServerAPI = "grpc"
 	newFlags = consolidateConfig(jsonConf, cfg, flags, cfgEnv)
 	assert.Equal(t, "grpc", newFlags.flagServerAPI)
 
@@ -135,7 +135,7 @@ func TestConsolidate(t *testing.T) {
 		RateLimit:      14,
 		AsymPubKeyPath: "/path",
 		GrpcAddress:    ":8090",
-		ServerApi:      "grpc",
+		ServerAPI:      "grpc",
 	}
 
 	newFlags = consolidateConfig(jsonConf, cfg, flags, cfgEnv)
