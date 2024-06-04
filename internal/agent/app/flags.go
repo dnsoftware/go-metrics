@@ -27,7 +27,7 @@ type Config struct {
 	RateLimit      int    `env:"RATE_LIMIT"`
 	AsymPubKeyPath string `env:"CRYPTO_KEY"`   // путь к файлу с публичным асимметричным ключом
 	GrpcAddress    string `env:"GRPC_ADDRESS"` // адрес:порт на котором работает gRPC сервер
-	ServerApi      string `env:"SERVER_API"`   // "http" или "grpc"
+	ServerAPI      string `env:"SERVER_API"`   // "http" или "grpc"
 }
 
 // NewAgentFlags обрабатывает аргументы командной строки
