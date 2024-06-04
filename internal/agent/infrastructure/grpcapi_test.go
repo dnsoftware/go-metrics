@@ -74,7 +74,7 @@ func TestSendData(t *testing.T) {
 		DatabaseDSN:     "",
 	}
 
-	lis, err := net.Listen("tcp", ":8090")
+	lis, _ := net.Listen("tcp", ":8090")
 
 	repository := storage.NewMemStorage()
 	backupStorage, _ := storage.NewBackupStorage(cfg.FileStoragePath)
@@ -97,7 +97,7 @@ func TestSendData(t *testing.T) {
 	}
 
 	// отправка метрики
-	sender, err := NewGRPCSender(flg, "")
+	sender, _ := NewGRPCSender(flg, "")
 	testVal := "123.456"
 	err = sender.SendData(ctx, constants.Gauge, "Alloc", testVal)
 	require.NoError(t, err)

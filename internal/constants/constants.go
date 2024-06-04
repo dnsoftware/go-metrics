@@ -61,7 +61,7 @@ const (
 	CryptoPrivateFilePath string = ""
 	TrustedSubnet         string = ""
 	GRPCDefault           string = "127.0.0.1:8090" // адрес:порт gRRC сервера по умолчанию
-	ServerApi             string = "http"           // по какому протоколу клиент будет общаться с сервером (http || grpc) (флаг запуска -server-api, переменная окружения SERVER_API)
+	ServerAPI             string = "http"           // по какому протоколу клиент будет общаться с сервером (http || grpc) (флаг запуска -server-api, переменная окружения SERVER_API)
 )
 
 // Логгер.

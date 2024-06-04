@@ -16,7 +16,7 @@ type AgentFlags struct {
 	flagRateLimit      int
 	flagAsymPubKeyPath string // путь к файлу с публичным асимметричным ключом
 	flagGrpcAddress    string // адрес:порт на котором работает gRPC сервер
-	flagServerApi      string // по какому протоколу клиент будет общаться с сервером (http || grpc) (флаг запуска -server-api, переменная окружения SERVER_API)
+	flagServerAPI      string // по какому протоколу клиент будет общаться с сервером (http || grpc) (флаг запуска -server-api, переменная окружения SERVER_API)
 }
 
 type Config struct {
@@ -59,7 +59,7 @@ func NewAgentFlags() AgentFlags {
 	flag.IntVar(&flags.flagRateLimit, "l", constants.RateLimit, "poll interval")
 	flag.StringVar(&flags.flagAsymPubKeyPath, "crypto-key", "", "asymmetric crypto key")
 	flag.StringVar(&flags.flagGrpcAddress, "g", constants.GRPCDefault, "grpc address")
-	flag.StringVar(&flags.flagServerApi, "server-api", constants.ServerApi, "server protocol")
+	flag.StringVar(&flags.flagServerAPI, "server-api", constants.ServerAPI, "server protocol")
 
 	flag.Parse()
 

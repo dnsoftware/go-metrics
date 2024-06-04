@@ -187,16 +187,20 @@ func TestRouter(t *testing.T) {
 	assert.Equal(t, http.StatusOK, respGet.StatusCode)
 	assert.Equal(t, postData, get)
 
-	respGet, get = testRequest(t, ts, "POST", "/update/bad/testGet33/222", nil)
+	respGet, _ = testRequest(t, ts, "POST", "/update/bad/testGet33/222", nil)
+	defer respGet.Body.Close()
 	assert.Equal(t, http.StatusBadRequest, respGet.StatusCode)
 
-	respGet, get = testRequest(t, ts, "POST", "/update/gauge/testGet33/www", nil)
+	respGet, _ = testRequest(t, ts, "POST", "/update/gauge/testGet33/www", nil)
+	defer respGet.Body.Close()
 	assert.Equal(t, http.StatusBadRequest, respGet.StatusCode)
 
-	respGet, get = testRequest(t, ts, "POST", "/update/counter/testGet33/www", nil)
+	respGet, _ = testRequest(t, ts, "POST", "/update/counter/testGet33/www", nil)
+	defer respGet.Body.Close()
 	assert.Equal(t, http.StatusBadRequest, respGet.StatusCode)
 
-	respGet, get = testRequest(t, ts, "GET", "/ping", nil)
+	respGet, _ = testRequest(t, ts, "GET", "/ping", nil)
+	defer respGet.Body.Close()
 	assert.Equal(t, http.StatusInternalServerError, respGet.StatusCode)
 
 }

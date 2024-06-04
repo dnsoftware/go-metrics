@@ -94,7 +94,7 @@ func consolidateConfig(jsonConf *JSONConfig, cfg Config, flags AgentFlags, cfgEn
 		if jsonConf.ServerApi != "" {
 			cfg.ServerApi = jsonConf.ServerApi
 		} else {
-			cfg.ServerApi = constants.ServerApi
+			cfg.ServerApi = constants.ServerAPI
 		}
 
 		if flags.flagRunAddr == "" {
@@ -112,8 +112,8 @@ func consolidateConfig(jsonConf *JSONConfig, cfg Config, flags AgentFlags, cfgEn
 		if flags.flagGrpcAddress == "" {
 			flags.flagGrpcAddress = cfg.GrpcAddress
 		}
-		if flags.flagServerApi == "" {
-			flags.flagServerApi = cfg.ServerApi
+		if flags.flagServerAPI == "" {
+			flags.flagServerAPI = cfg.ServerApi
 		}
 
 	} else {
@@ -132,8 +132,8 @@ func consolidateConfig(jsonConf *JSONConfig, cfg Config, flags AgentFlags, cfgEn
 		if flags.flagGrpcAddress == "" {
 			flags.flagGrpcAddress = constants.GRPCDefault
 		}
-		if flags.flagServerApi == "" {
-			flags.flagServerApi = constants.ServerApi
+		if flags.flagServerAPI == "" {
+			flags.flagServerAPI = constants.ServerAPI
 		}
 	}
 
@@ -167,7 +167,7 @@ func consolidateConfig(jsonConf *JSONConfig, cfg Config, flags AgentFlags, cfgEn
 	}
 
 	if cfgEnv.ServerApi != "" {
-		flags.flagServerApi = cfgEnv.ServerApi
+		flags.flagServerAPI = cfgEnv.ServerApi
 	}
 
 	return flags

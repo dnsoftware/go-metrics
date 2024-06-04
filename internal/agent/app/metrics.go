@@ -22,7 +22,7 @@ func initMetrics(flags AgentFlags) (*domain.Metrics, error) {
 
 	// в зависимости от конфига общаемся с сервером по http или gRPC
 	var sender domain.MetricsSender
-	switch flags.flagServerApi {
+	switch flags.flagServerAPI {
 	case constants.ServerApiHTTP:
 		// для нового API - constants.ApplicationJson (для старого - constants.TextPlain)
 		sender = infrastructure.NewWebSender("http", &flags, constants.ApplicationJSON, publicCryptoKey)
@@ -33,7 +33,7 @@ func initMetrics(flags AgentFlags) (*domain.Metrics, error) {
 			return nil, errors.New(mess)
 		}
 	default:
-		mess := fmt.Sprintf("Ошибка запуска AgentRun, неверный протокол общения с сервером: %v", flags.flagServerApi)
+		mess := fmt.Sprintf("Ошибка запуска AgentRun, неверный протокол общения с сервером: %v", flags.flagServerAPI)
 		return nil, errors.New(mess)
 	}
 

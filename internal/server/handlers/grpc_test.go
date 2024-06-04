@@ -258,7 +258,7 @@ func TestUpdateMetricsBatch(t *testing.T) {
 
 	require.NoError(t, err)
 	// проверяем наличие внесенных метрик
-	m, err := client.GetMetricExt(ctx, &pb.GetMetricExtRequest{
+	m, _ := client.GetMetricExt(ctx, &pb.GetMetricExtRequest{
 		Mtype: constants.Gauge,
 		Id:    "Alloc",
 	})
