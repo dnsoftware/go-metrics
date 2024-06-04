@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -544,32 +545,32 @@ func TestAsymmetricCryptoGrpc(t *testing.T) {
 
 }
 
-//func TestLoggingInterceptor(t *testing.T) {
-//	setup("", "", "", "")
-//	ctx := context.Background()
-//	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
-//	if err != nil {
-//		t.Fatalf("Failed to dial : %v", err)
-//	}
-//	defer conn.Close()
-//	client := pb.NewMetricsClient(conn)
-//
-//	testVal := 12321.45654
-//	respUpd, err := client.UpdateMetricExt(ctx, &pb.UpdateMetricExtRequest{
-//		Mtype: constants.Gauge,
-//		Id:    "Alloc",
-//		Value: testVal,
-//	})
-//
-//	require.NotNil(t, respUpd)
-//	require.NoError(t, err)
-//
-//	line := getLastLineWithSeek(constants.LogFile)
-//
-//	findStr := fmt.Sprintf("%v", testVal)
-//	require.Contains(t, line, findStr)
-//
-//}
+func TestLoggingInterceptor(t *testing.T) {
+	setup("", "", "", "")
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Failed to dial : %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewMetricsClient(conn)
+
+	testVal := 12321.45654
+	respUpd, err := client.UpdateMetricExt(ctx, &pb.UpdateMetricExtRequest{
+		Mtype: constants.Gauge,
+		Id:    "Alloc",
+		Value: testVal,
+	})
+
+	require.NotNil(t, respUpd)
+	require.NoError(t, err)
+
+	line := getLastLineWithSeek(constants.LogFile)
+
+	findStr := fmt.Sprintf("%v", testVal)
+	require.Contains(t, line, findStr)
+
+}
 
 func TestNegative(t *testing.T) {
 	cfg := config.ServerConfig{
