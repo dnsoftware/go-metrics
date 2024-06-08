@@ -7,9 +7,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/dnsoftware/go-metrics/internal/constants"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 type logger struct {

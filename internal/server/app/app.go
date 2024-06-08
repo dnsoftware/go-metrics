@@ -11,7 +11,6 @@ import (
 	"syscall"
 
 	"github.com/dnsoftware/go-metrics/internal/crypto"
-
 	"github.com/dnsoftware/go-metrics/internal/logger"
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
 	"github.com/dnsoftware/go-metrics/internal/server/config"

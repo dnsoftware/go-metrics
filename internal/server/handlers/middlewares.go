@@ -12,9 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/dnsoftware/go-metrics/internal/logger"
-	"go.uber.org/zap"
 )
 
 type Middleware func(http.Handler) http.Handler

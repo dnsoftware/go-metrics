@@ -9,16 +9,14 @@ import (
 	"testing"
 	"time"
 
-	mock_domain "github.com/dnsoftware/go-metrics/internal/agent/domain/mocks"
-
 	"github.com/golang/mock/gomock"
-
 	"github.com/shirou/gopsutil/v3/cpu"
-
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/dnsoftware/go-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	mock_domain "github.com/dnsoftware/go-metrics/internal/agent/domain/mocks"
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/storage"
 )
 
 func TestMetrics_repo(t *testing.T) {

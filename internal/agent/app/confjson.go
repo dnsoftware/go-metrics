@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
-
 	"github.com/dnsoftware/go-metrics/internal/logger"
 )
 

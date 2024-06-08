@@ -11,27 +11,21 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"google.golang.org/grpc/credentials"
-
-	"google.golang.org/grpc/encoding/gzip"
-
-	"google.golang.org/grpc/metadata"
-
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/encoding/gzip"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/dnsoftware/go-metrics/internal/server/config"
-
 	pb "github.com/dnsoftware/go-metrics/internal/proto"
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
+	"github.com/dnsoftware/go-metrics/internal/server/config"
 	"github.com/dnsoftware/go-metrics/internal/storage"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/test/bufconn"
 )
 
 const bufSize = 1024 * 64

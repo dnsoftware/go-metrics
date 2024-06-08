@@ -10,17 +10,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/dnsoftware/go-metrics/internal/logger"
+	"github.com/stretchr/testify/require"
+	_ "google.golang.org/grpc/encoding/gzip" // для активации декомпрессора
+	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
 	"github.com/dnsoftware/go-metrics/internal/server/collector"
 	"github.com/dnsoftware/go-metrics/internal/server/config"
 	"github.com/dnsoftware/go-metrics/internal/server/handlers"
 	"github.com/dnsoftware/go-metrics/internal/storage"
-	"github.com/stretchr/testify/require"
-	_ "google.golang.org/grpc/encoding/gzip" // для активации декомпрессора
-	"google.golang.org/grpc/test/bufconn"
 )
 
 const bufSize = 1024 * 64

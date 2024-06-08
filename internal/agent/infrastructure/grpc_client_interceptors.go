@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/dnsoftware/go-metrics/internal/constants"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding/gzip"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 func setIPInterceptor(ctx context.Context, method string, req interface{},

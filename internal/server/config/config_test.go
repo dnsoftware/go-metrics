@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dnsoftware/go-metrics/internal/constants"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 func TestConfig(t *testing.T) {

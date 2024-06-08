@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/dnsoftware/go-metrics/internal/staticlint/noosexit"
 	"github.com/nunnatsa/ginkgolinter"
 	"github.com/timakin/bodyclose/passes/bodyclose"
 	"golang.org/x/tools/go/analysis"
@@ -51,6 +50,8 @@ import (
 	"honnef.co/go/tools/simple"
 	"honnef.co/go/tools/staticcheck"
 	"honnef.co/go/tools/stylecheck"
+
+	"github.com/dnsoftware/go-metrics/internal/staticlint/noosexit"
 )
 
 func Analyzers() []*analysis.Analyzer {

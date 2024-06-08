@@ -6,12 +6,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/dnsoftware/go-metrics/internal/crypto"
+	"github.com/shirou/gopsutil/v3/cpu"
 
 	"github.com/dnsoftware/go-metrics/internal/agent/infrastructure"
 	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/crypto"
 	"github.com/dnsoftware/go-metrics/internal/storage"
-	"github.com/shirou/gopsutil/v3/cpu"
 )
 
 func BenchmarkSetBatch(b *testing.B) {

@@ -10,16 +10,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dnsoftware/go-metrics/internal/logger"
 	"go.uber.org/zap"
-
-	"github.com/dnsoftware/go-metrics/internal/constants"
-
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
 )
 
 func trustedSubnetInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {

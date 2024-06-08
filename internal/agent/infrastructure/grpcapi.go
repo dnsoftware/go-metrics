@@ -6,12 +6,12 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/dnsoftware/go-metrics/internal/constants"
-
-	pb "github.com/dnsoftware/go-metrics/internal/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	pb "github.com/dnsoftware/go-metrics/internal/proto"
 )
 
 // WebSender отправляет данные на сервер.

@@ -7,17 +7,14 @@ import (
 	"io"
 	"strconv"
 
-	"google.golang.org/grpc/credentials"
-
 	"google.golang.org/grpc"
-
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	_ "google.golang.org/grpc/encoding/gzip" // для активации декомпрессора
 	"google.golang.org/grpc/status"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
-
 	pb "github.com/dnsoftware/go-metrics/internal/proto"
-	_ "google.golang.org/grpc/encoding/gzip" // для активации декомпрессора
 )
 
 type GRPCServer struct {
@@ -178,6 +175,7 @@ func (g *GRPCServer) GetAllMetrics(ctx context.Context, in *pb.GetAllMetricsRequ
 
 	gauges, counters, err := g.collector.GetAllByTypes(ctx)
 	_, _ = gauges, counters
+
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, `GetAllMetrics error %s`, err.Error())
 	}
@@ -249,7 +247,7 @@ func (g *GRPCServer) UpdateMetricsStream(stream pb.Metrics_UpdateMetricsStreamSe
 func (g *GRPCServer) UpdateMetricsBatch(ctx context.Context, in *pb.UpdateMetricBatchRequest) (*pb.UpdateMetricBatchResponse, error) {
 	var response pb.UpdateMetricBatchResponse
 
-	var temp []Metrics
+	temp := make([]Metrics, 0, len(in.Metrics))
 	for _, m := range in.Metrics {
 		temp = append(temp, Metrics{
 			ID:    m.Id,

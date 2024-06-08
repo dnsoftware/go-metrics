@@ -5,13 +5,12 @@ import (
 	"context"
 	"crypto/rsa"
 	"net/http"
+	_ "net/http/pprof"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/go-chi/chi/v5"
-
-	_ "net/http/pprof"
 )
 
 // Collector сборщик метрик. Сохраняет метрики в хранилище. Получает метрики из  хранилища.

@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+
 	mock_collector "github.com/dnsoftware/go-metrics/internal/server/collector/mocks"
 	"github.com/dnsoftware/go-metrics/internal/server/config"
 	"github.com/dnsoftware/go-metrics/internal/storage"
-	"github.com/golang/mock/gomock"
 )
 
 func BenchmarkGetAll(b *testing.B) {

@@ -3,8 +3,9 @@ package logger
 import (
 	"testing"
 
-	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 func TestLogger(t *testing.T) {

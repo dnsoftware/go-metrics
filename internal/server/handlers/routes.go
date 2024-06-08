@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dnsoftware/go-metrics/internal/constants"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
 )
 
 func NewRouter() chi.Router {

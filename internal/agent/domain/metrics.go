@@ -18,10 +18,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dnsoftware/go-metrics/internal/constants"
-	"github.com/dnsoftware/go-metrics/internal/logger"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
+
+	"github.com/dnsoftware/go-metrics/internal/constants"
+	"github.com/dnsoftware/go-metrics/internal/logger"
 )
 
 // AgentStorage интерфейс хранилаща для агента.
