@@ -384,10 +384,9 @@ func (m *Metrics) sendMetricsBatch(ctx context.Context, jobsCh chan []byte) {
 	default:
 	}
 
-	var batch []MetricsItem
-
 	// gauges
 	allGaugeMetrics := append(gaugeMetricsList, m.gopcMetricsList...)
+	var batch = make([]MetricsItem, 0, len(allGaugeMetrics))
 	for _, metricName := range allGaugeMetrics {
 		val, err := m.storage.GetGauge(ctx, metricName)
 		if err != nil {
@@ -418,7 +417,7 @@ func (m *Metrics) sendMetricsBatch(ctx context.Context, jobsCh chan []byte) {
 
 	// отправляем задачи, упакованные в мелкие пакеты, воркерам
 	var (
-		miniBatch []MetricsItem
+		miniBatch = make([]MetricsItem, 0, constants.BatchItemCount)
 		batchData []byte
 	)
 

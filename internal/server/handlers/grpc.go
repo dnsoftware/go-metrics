@@ -171,10 +171,9 @@ func (g *GRPCServer) UpdateMetricExt(ctx context.Context, in *pb.UpdateMetricExt
 }
 
 func (g *GRPCServer) GetAllMetrics(ctx context.Context, in *pb.GetAllMetricsRequest) (*pb.GetAllMetricsResponse, error) {
-	var metrics []*pb.GetMetricExtResponse
 
 	gauges, counters, err := g.collector.GetAllByTypes(ctx)
-	_, _ = gauges, counters
+	var metrics = make([]*pb.GetMetricExtResponse, 0, len(gauges)+len(counters))
 
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, `GetAllMetrics error %s`, err.Error())

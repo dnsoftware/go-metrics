@@ -240,6 +240,7 @@ func TestUpdateMetricsBatch(t *testing.T) {
 	_ = json.Unmarshal([]byte(batch), &metrics)
 	metricsToSend := &pb.UpdateMetricBatchRequest{}
 
+	metricsToSend.Metrics = make([]*pb.UpdateMetricExtRequest, 0, len(metrics))
 	for _, m := range metrics {
 		metricsToSend.Metrics = append(metricsToSend.Metrics, &pb.UpdateMetricExtRequest{
 			Id:    m.ID,
